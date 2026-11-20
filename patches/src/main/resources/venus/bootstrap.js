@@ -24029,12 +24029,6 @@
         const pinStr = String(settings.appLockPin || "");
         const hasPin = pinStr.length >= 4;
         const timeouts = [[0, "Immediately"], [30, "After 30 seconds"], [60, "After 1 minute"], [300, "After 5 minutes"], [900, "After 15 minutes"]];
-        const animChoices = [
-            ["slideUp", "Lock opens & slides up", "Opens the padlock icon and slides the lock screen up."],
-            ["fadeScale", "Fade & zoom", "Gently fades and zooms out after unlocking."],
-            ["curtain", "Split & dissolve", "Slides the header up and keypad down in opposite directions."],
-            ["none", "Instant", "Closes immediately with no animation."]
-        ];
         const openPinSheet = () => {
             if (!on) return;
             haptic("SELECTION");
@@ -24065,7 +24059,12 @@
                     onValueChange:v => { haptic("SELECTION"); setSetting("appLockBiometric", !!v); }}) : null,
                 hasPin ? actionRow(ui, "clearPin", "Remove PIN", "Clears your custom PIN passcode.", clearPin, !on, true) : null),
             radioGroup(ui, "timeout", "Relock timeout", "appLockTimeout", on, timeouts),
-            radioGroup(ui, "anim", "Unlock animation", "appLockAnim", on, animChoices),
+            radioGroup(ui, "anim", "Unlock animation", "appLockAnim", on, [
+                ["slideUp", "Lock opens & slides up", "Opens the padlock icon and slides the lock screen up."],
+                ["fadeScale", "Fade & zoom", "Gently fades and zooms out after unlocking."],
+                ["curtain", "Split & dissolve", "Slides the header up and keypad down in opposite directions."],
+                ["none", "Instant", "Closes immediately with no animation."]
+            ]),
             el(Group, {key:"test", title:tr("Test")},
                 actionRow(ui, "testLock", "Test lock screen now", "Opens the native lock overlay right now to verify your PIN.",
                     () => { haptic("SELECTION"); appLockSync(false); diagCall("lockTest", "").catch(() => {}); }, !on, false, rowIcon(8771, "LockIcon"))),
