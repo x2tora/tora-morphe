@@ -1576,43 +1576,37 @@ object Diagnostics {
 
             val root = LinearLayout(activity)
             root.orientation = LinearLayout.VERTICAL
-            root.gravity = Gravity.CENTER
+            root.gravity = Gravity.CENTER_HORIZONTAL
             root.setBackgroundColor(BG)
-            root.setPadding(dpPx(activity, 24), dpPx(activity, 24), dpPx(activity, 24), dpPx(activity, 24))
+            root.setPadding(dpPx(activity, 24), dpPx(activity, 36), dpPx(activity, 24), dpPx(activity, 32))
 
-            val card = LinearLayout(activity)
-            card.orientation = LinearLayout.VERTICAL
-            card.gravity = Gravity.CENTER_HORIZONTAL
-            card.setPadding(dpPx(activity, 20), dpPx(activity, 24), dpPx(activity, 20), dpPx(activity, 20))
-            val cardBg = GradientDrawable()
-            cardBg.setColor(CARD)
-            cardBg.cornerRadius = dpPx(activity, 20).toFloat()
-            cardBg.setStroke(dpPx(activity, 1), CARD_EDGE)
-            card.background = cardBg
+            val headerArea = LinearLayout(activity)
+            headerArea.orientation = LinearLayout.VERTICAL
+            headerArea.gravity = Gravity.CENTER
 
             // Native Discord lock drawable inside circular badge.
             val badgeWrap = LinearLayout(activity)
             badgeWrap.gravity = Gravity.CENTER
             val badgeBg = GradientDrawable()
+            badgeBg.shape = GradientDrawable.OVAL
             badgeBg.setColor(0x265865F2)
-            badgeBg.cornerRadius = dpPx(activity, 28).toFloat()
             badgeWrap.background = badgeBg
             val lockImg = android.widget.ImageView(activity)
             val lockResId = activity.resources.getIdentifier("lock", "drawable", activity.packageName)
             lockImg.setImageResource(if (lockResId != 0) lockResId else android.R.drawable.ic_lock_lock)
             lockImg.setColorFilter(BRAND, android.graphics.PorterDuff.Mode.SRC_IN)
             badgeWrap.addView(lockImg, LinearLayout.LayoutParams(dpPx(activity, 28), dpPx(activity, 28)))
-            val badgeLp = LinearLayout.LayoutParams(dpPx(activity, 56), dpPx(activity, 56))
-            badgeLp.bottomMargin = dpPx(activity, 14)
-            card.addView(badgeWrap, badgeLp)
+            val badgeLp = LinearLayout.LayoutParams(dpPx(activity, 60), dpPx(activity, 60))
+            badgeLp.bottomMargin = dpPx(activity, 16)
+            headerArea.addView(badgeWrap, badgeLp)
 
             val title = TextView(activity)
             title.text = lockLabelTitle
-            title.textSize = 20f
+            title.textSize = 21f
             title.setTextColor(TEXT)
             title.typeface = Typeface.create("sans-serif-medium", Typeface.BOLD)
             title.gravity = Gravity.CENTER
-            card.addView(title)
+            headerArea.addView(title)
 
             val hasPin = appLockPin.length >= 4
             val sub = TextView(activity)
@@ -1622,8 +1616,8 @@ object Diagnostics {
             sub.gravity = Gravity.CENTER
             val subLp = LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT)
             subLp.topMargin = dpPx(activity, 6)
-            subLp.bottomMargin = dpPx(activity, 18)
-            card.addView(sub, subLp)
+            subLp.bottomMargin = dpPx(activity, 22)
+            headerArea.addView(sub, subLp)
 
             val errView = TextView(activity)
             errView.text = ""
@@ -1632,13 +1626,41 @@ object Diagnostics {
             errView.gravity = Gravity.CENTER
             errView.visibility = View.INVISIBLE
 
+            var unlocking = false
+            val dotViews = ArrayList<View>()
             val unlockNow = object : Runnable {
                 override fun run() {
-                    lockRequired = false
-                    appLockUnlockedInSession = true
-                    lockShowing = false
-                    appLockDialog = null
-                    try { dialog.dismiss() } catch (_: Throwable) { }
+                    if (unlocking) return
+                    unlocking = true
+                    // Fill all dots + tint badge green for clear unlock confirmation before fading out.
+                    for (i in 0 until dotViews.size) {
+                        val gd = GradientDrawable()
+                        gd.shape = GradientDrawable.OVAL
+                        gd.setColor(0xFF23A55A.toInt())
+                        dotViews.get(i).background = gd
+                    }
+                    val okBg = GradientDrawable()
+                    okBg.shape = GradientDrawable.OVAL
+                    okBg.setColor(0x2623A55A)
+                    badgeWrap.background = okBg
+                    lockImg.setColorFilter(0xFF23A55A.toInt(), android.graphics.PorterDuff.Mode.SRC_IN)
+                    badgeWrap.animate().scaleX(1.12f).scaleY(1.12f).setDuration(110L).start()
+                    root.animate()
+                        .alpha(0f)
+                        .scaleX(1.06f)
+                        .scaleY(1.06f)
+                        .setStartDelay(80L)
+                        .setDuration(200L)
+                        .withEndAction(object : Runnable {
+                            override fun run() {
+                                lockRequired = false
+                                appLockUnlockedInSession = true
+                                lockShowing = false
+                                appLockDialog = null
+                                try { dialog.dismiss() } catch (_: Throwable) { }
+                            }
+                        })
+                        .start()
                 }
             }
 
@@ -1647,9 +1669,8 @@ object Diagnostics {
                 val dotsRow = LinearLayout(activity)
                 dotsRow.orientation = LinearLayout.HORIZONTAL
                 dotsRow.gravity = Gravity.CENTER
-                val dotViews = ArrayList<View>()
-                val dotSize = dpPx(activity, 13)
-                val dotGap = dpPx(activity, 6)
+                val dotSize = dpPx(activity, 14)
+                val dotGap = dpPx(activity, 7)
                 for (i in 0 until pinLen) {
                     val dot = View(activity)
                     val lp = LinearLayout.LayoutParams(dotSize, dotSize)
@@ -1659,16 +1680,19 @@ object Diagnostics {
                     dotViews.add(dot)
                 }
                 val dotsLp = LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT)
-                dotsLp.bottomMargin = dpPx(activity, 10)
-                card.addView(dotsRow, dotsLp)
+                dotsLp.bottomMargin = dpPx(activity, 12)
+                headerArea.addView(dotsRow, dotsLp)
 
                 val errLp = LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT)
-                errLp.bottomMargin = dpPx(activity, 12)
-                card.addView(errView, errLp)
+                errLp.bottomMargin = dpPx(activity, 8)
+                headerArea.addView(errView, errLp)
+
+                root.addView(headerArea, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1f))
 
                 val enteredBuf = StringBuilder()
                 val refreshDots = object : Runnable {
                     override fun run() {
+                        if (unlocking) return
                         val filledLen = enteredBuf.length
                         for (i in 0 until dotViews.size) {
                             val gd = GradientDrawable()
@@ -1694,13 +1718,15 @@ object Diagnostics {
                 )
                 val keyContainer = LinearLayout(activity)
                 keyContainer.orientation = LinearLayout.VERTICAL
-                val rowGap = dpPx(activity, 8)
-                val colGap = dpPx(activity, 8)
-                val keyHeight = dpPx(activity, 54)
+                keyContainer.gravity = Gravity.CENTER_HORIZONTAL
+                val keySize = dpPx(activity, 72)
+                val rowGap = dpPx(activity, 14)
+                val colGap = dpPx(activity, 20)
 
                 for (r in 0 until rows.size) {
                     val rowView = LinearLayout(activity)
                     rowView.orientation = LinearLayout.HORIZONTAL
+                    rowView.gravity = Gravity.CENTER
                     val rowArr = rows[r]
                     for (cIdx in 0 until rowArr.size) {
                         val code = rowArr[cIdx]
@@ -1710,7 +1736,7 @@ object Diagnostics {
                         keyBtn.typeface = Typeface.create("sans-serif-medium", Typeface.BOLD)
                         if ((code as java.lang.String).equals("DEL")) {
                             keyBtn.text = "\u232B"
-                            keyBtn.textSize = 18f
+                            keyBtn.textSize = 20f
                         } else if (code.equals("CLR")) {
                             keyBtn.text = lockLabelClear
                             keyBtn.textSize = 13f
@@ -1718,18 +1744,27 @@ object Diagnostics {
                         } else if (code.equals("BIO")) {
                             keyBtn.text = lockLabelUseBio
                             keyBtn.textSize = 13f
-                            keyBtn.setTextColor(0xFFB5BAC1.toInt())
+                            keyBtn.setTextColor(0xFFDDE2FF.toInt())
                         } else {
                             keyBtn.text = code
-                            keyBtn.textSize = 21f
+                            keyBtn.textSize = 24f
                         }
-                        val kBg = GradientDrawable()
-                        kBg.setColor(if (code.equals("BIO")) 0x335865F2 else 0xFF2B2D31.toInt())
-                        kBg.cornerRadius = dpPx(activity, 14).toFloat()
-                        kBg.setStroke(dpPx(activity, 1), 0x1AFFFFFF)
-                        keyBtn.background = kBg
+                        val normalBg = GradientDrawable()
+                        normalBg.shape = GradientDrawable.OVAL
+                        normalBg.setColor(if (code.equals("BIO")) 0x335865F2 else CARD)
+                        normalBg.setStroke(dpPx(activity, 1), if (code.equals("BIO")) 0x555865F2 else 0x1FFFFFFF)
+                        val pressedBg = GradientDrawable()
+                        pressedBg.shape = GradientDrawable.OVAL
+                        pressedBg.setColor(if (code.equals("BIO")) 0x665865F2 else 0xFF3A3D45.toInt())
+                        pressedBg.setStroke(dpPx(activity, 1), 0x44FFFFFF)
+                        val states = android.graphics.drawable.StateListDrawable()
+                        states.addState(intArrayOf(android.R.attr.state_pressed), pressedBg)
+                        states.addState(IntArray(0), normalBg)
+                        keyBtn.background = states
+
                         keyBtn.setOnClickListener(object : View.OnClickListener {
                             override fun onClick(v: View?) {
+                                if (unlocking) return
                                 if ((code as java.lang.String).equals("BIO")) {
                                     launchBiometricPrompt(activity, unlockNow)
                                     return
@@ -1759,43 +1794,47 @@ object Diagnostics {
                                     } else {
                                         errView.text = lockLabelWrong
                                         errView.visibility = View.VISIBLE
+                                        android.animation.ObjectAnimator.ofFloat(
+                                            dotsRow, "translationX",
+                                            0f, -18f, 18f, -14f, 14f, -8f, 8f, 0f
+                                        ).setDuration(260L).start()
                                         enteredBuf.setLength(0)
-                                        main.postDelayed(refreshDots, 180L)
+                                        main.postDelayed(refreshDots, 200L)
                                     }
                                 }
                             }
                         })
-                        val kLp = LinearLayout.LayoutParams(0, keyHeight, 1f)
+                        val kLp = LinearLayout.LayoutParams(keySize, keySize)
                         if (cIdx > 0) kLp.leftMargin = colGap
                         rowView.addView(keyBtn, kLp)
                     }
-                    val rLp = LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT)
+                    val rLp = LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT)
                     if (r > 0) rLp.topMargin = rowGap
                     keyContainer.addView(rowView, rLp)
                 }
-                card.addView(keyContainer, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT))
+                val padLp = LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT)
+                padLp.bottomMargin = dpPx(activity, 12)
+                root.addView(keyContainer, padLp)
             } else {
+                root.addView(headerArea, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1f))
                 val btn = TextView(activity)
                 btn.text = lockLabelUnlock
                 btn.textSize = 15f
                 btn.setTextColor(Color.WHITE)
                 btn.typeface = Typeface.create("sans-serif-medium", Typeface.BOLD)
                 btn.gravity = Gravity.CENTER
-                btn.setPadding(dpPx(activity, 24), dpPx(activity, 13), dpPx(activity, 24), dpPx(activity, 13))
+                btn.setPadding(dpPx(activity, 24), dpPx(activity, 14), dpPx(activity, 24), dpPx(activity, 14))
                 val btnBg = GradientDrawable()
                 btnBg.setColor(BRAND)
-                btnBg.cornerRadius = dpPx(activity, 12).toFloat()
+                btnBg.cornerRadius = dpPx(activity, 14).toFloat()
                 btn.background = btnBg
                 btn.setOnClickListener(object : View.OnClickListener {
                     override fun onClick(v: View?) { unlockNow.run() }
                 })
-                card.addView(btn, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT))
+                val btnLp = LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT)
+                btnLp.bottomMargin = dpPx(activity, 16)
+                root.addView(btn, btnLp)
             }
-
-            val cardLp = LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT)
-            cardLp.leftMargin = dpPx(activity, 8)
-            cardLp.rightMargin = dpPx(activity, 8)
-            root.addView(card, cardLp)
 
             dialog.setContentView(root)
             val w = dialog.window

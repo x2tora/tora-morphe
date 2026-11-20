@@ -87,7 +87,7 @@
     if (features.appLock) selectModules([1385]);
     if (features.mediaEditor) selectModules([8311, 8333, 9901, 10366, 10680]);
     if (features.latexRender) selectModules([572, 6226, 8481, 10340, 11763]);
-    const revision = "1.23.1";
+    const revision = "1.23.2";
     // The Discord build these patches are pinned to (DiscordPatches.kt compatibleWith); shown on the About page.
     const DISCORD_VERSION = "354.12";
     // Module 120 owns setUpDefaltReactNativeEnvironment in this exact asset.
@@ -23939,29 +23939,33 @@
             const label = code === "DEL" ? "\u232B" : code === "CLR" ? tr("Clear") : code;
             const isAction = code === "DEL" || code === "CLR";
             return el(Press, {key:code, onPress:() => onKey(code),
-                style:[k.card, {flex:1, height:52, borderRadius:14, borderWidth:1, alignItems:"center", justifyContent:"center"}]},
-                el(RN.Text, {style:[s.name, {fontSize:isAction ? 14 : 20, color:isAction ? s.muted.color : s.name.color}]}, label));
+                style:state => [k.card, {width:68, height:68, borderRadius:34, borderWidth:1, alignItems:"center", justifyContent:"center",
+                    opacity:state && state.pressed ? 0.65 : 1, transform:state && state.pressed ? [{scale:0.94}] : [{scale:1}]}]},
+                el(RN.Text, {style:[s.name, {fontSize:isAction ? 14 : 22, color:isAction ? s.muted.color : s.name.color}]}, label));
         };
-        const content = el(RN.View, {style:{paddingHorizontal:16, paddingBottom:24, gap:14, alignItems:"center"}},
-            el(RN.View, {style:[k.secondary, {width:46, height:46, borderRadius:23, alignItems:"center", justifyContent:"center"}]},
-                el(Lock, {size:"md", color:k.brandFg.color})),
-            el(RN.Text, {style:[s.muted, {textAlign:"center"}]},
-                step === 1 ? tr("Choose a 4 to 8 digit PIN using the keypad below.") : tr("Re-enter the same {n}-digit PIN to confirm.", {n:firstPin.length})),
-            el(RN.View, {style:{flexDirection:"row", gap:10, marginVertical:4}},
-                Array.from({length:targetDots}, (_, idx) => {
-                    const filled = idx < activePin.length;
-                    return el(RN.View, {key:String(idx), style:{
-                        width:14, height:14, borderRadius:7,
-                        backgroundColor:filled ? k.brandBg.backgroundColor : "transparent",
-                        borderWidth:1.5, borderColor:filled ? k.brandBg.backgroundColor : k.iconMuted.color
-                    }});
-                })),
-            mismatch ? el(RN.Text, {style:{color:"#f23f43", fontSize:13, fontWeight:"600"}}, tr("PINs do not match. Try again.")) : null,
-            el(RN.View, {style:{width:"100%", gap:8}},
-                rows.map((r, idx) => el(RN.View, {key:String(idx), style:{flexDirection:"row", gap:8}}, r.map(keyBtn)))),
-            step === 1
-                ? (Button ? el(Button, {text:tr("Next"), size:"lg", variant:"primary", style:{width:"100%"}, disabled:firstPin.length < 4, onPress:goNext}) : null)
-                : (Button ? el(Button, {text:tr("Start over"), size:"md", variant:"secondary", style:{width:"100%"}, onPress:restart}) : null)
+        const brandColor = (k.brand && k.brand.backgroundColor) || "#5865f2";
+        const content = el(RN.View, {style:{minHeight:470, justifyContent:"space-between", paddingHorizontal:16, paddingTop:10, paddingBottom:28, gap:18, alignItems:"center"}},
+            el(RN.View, {style:{alignItems:"center", gap:12, width:"100%"}},
+                el(RN.View, {style:[k.secondary, {width:48, height:48, borderRadius:24, alignItems:"center", justifyContent:"center"}]},
+                    el(Lock, {size:"md", color:k.brandFg.color})),
+                el(RN.Text, {style:[s.muted, {textAlign:"center"}]},
+                    step === 1 ? tr("Choose a 4 to 8 digit PIN using the keypad below.") : tr("Re-enter the same {n}-digit PIN to confirm.", {n:firstPin.length})),
+                el(RN.View, {style:{flexDirection:"row", gap:10, marginTop:4}},
+                    Array.from({length:targetDots}, (_, idx) => {
+                        const filled = idx < activePin.length;
+                        return el(RN.View, {key:String(idx), style:{
+                            width:14, height:14, borderRadius:7,
+                            backgroundColor:filled ? brandColor : "transparent",
+                            borderWidth:1.5, borderColor:filled ? brandColor : k.iconMuted.color
+                        }});
+                    })),
+                mismatch ? el(RN.Text, {style:{color:"#f23f43", fontSize:13, fontWeight:"600"}}, tr("PINs do not match. Try again.")) : null),
+            el(RN.View, {style:{width:"100%", alignItems:"center", gap:14}},
+                el(RN.View, {style:{alignItems:"center", gap:12}},
+                    rows.map((r, idx) => el(RN.View, {key:String(idx), style:{flexDirection:"row", justifyContent:"center", gap:18}}, r.map(keyBtn)))),
+                step === 1
+                    ? (Button ? el(Button, {text:tr("Next"), size:"lg", variant:"primary", style:{width:"100%"}, disabled:firstPin.length < 4, onPress:goNext}) : null)
+                    : (Button ? el(Button, {text:tr("Start over"), size:"md", variant:"secondary", style:{width:"100%"}, onPress:restart}) : null))
         );
         return serverEditScroll(ui, header, content);
     }

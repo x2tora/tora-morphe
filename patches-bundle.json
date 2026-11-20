@@ -1,8 +1,8 @@
 {
-  "created_at": "2026-11-20T15:09:34",
-  "description": "### \u2728 New Features\n\n* **Discord - App lock:** Added a custom numeric keypad UI for setting (with 2-step confirmation) and unlocking 4\u20138 digit PINs, auto-unlock on matching PIN entry, native Discord lock icon, and optional biometric (fingerprint/face) unlock with PIN fallback\n",
-  "download_url": "https://github.com/x2tora/tora-morphe/releases/download/v1.23.1/patches-1.23.1.mpp",
-  "page_url": "https://github.com/x2tora/tora-morphe/releases/tag/v1.23.1",
+  "created_at": "2026-11-20T15:20:51",
+  "description": "### \ud83d\udc1b Bug Fixes\n\n* **Discord - App lock:** Fixed a crash (`Cannot read property 'backgroundColor' of undefined`) when opening the PIN setup keypad sheet\n\n### \ud83d\udd27 Improvements\n\n* **Discord - App lock:** Positioned the PIN keypad lower with 1:1 circular buttons and added unlock fade/scale and wrong-PIN shake animations\n",
+  "download_url": "https://github.com/x2tora/tora-morphe/releases/download/v1.23.2/patches-1.23.2.mpp",
+  "page_url": "https://github.com/x2tora/tora-morphe/releases/tag/v1.23.2",
   "signature_download_url": "",
-  "version": "1.23.1"
+  "version": "1.23.2"
 }

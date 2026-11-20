@@ -1,3 +1,13 @@
+## [1.23.2](https://github.com/x2tora/tora-morphe/compare/v1.23.1...v1.23.2) (2026-11-21)
+
+### 🐛 Bug Fixes
+
+* **Discord - App lock:** Fixed a crash (`Cannot read property 'backgroundColor' of undefined`) when opening the PIN setup keypad sheet
+
+### 🔧 Improvements
+
+* **Discord - App lock:** Positioned the PIN keypad lower with 1:1 circular buttons and added unlock fade/scale and wrong-PIN shake animations
+
 ## [1.23.1](https://github.com/x2tora/tora-morphe/compare/v1.23.0...v1.23.1) (2026-11-21)
 
 ### ✨ New Features
