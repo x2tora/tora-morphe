@@ -87,7 +87,7 @@
     if (features.appLock) selectModules([1385]);
     if (features.mediaEditor) selectModules([8311, 8333, 9901, 10366, 10680]);
     if (features.latexRender) selectModules([572, 6226, 8481, 10340, 11763]);
-    const revision = "1.23.0";
+    const revision = "1.23.1";
     // The Discord build these patches are pinned to (DiscordPatches.kt compatibleWith); shown on the About page.
     const DISCORD_VERSION = "354.12";
     // Module 120 owns setUpDefaltReactNativeEnvironment in this exact asset.
@@ -115,7 +115,7 @@
         privacyBlur:false, privacyBlurImages:true, privacyBlurEmbeds:true, privacyBlurAvatars:false,
         batchMediaSave:false, stripExif:false, stripExifToast:true,
         zipPreview:false, reminders:false,
-        appLock:false, appLockTimeout:0, appLockPin:"",
+        appLock:false, appLockTimeout:0, appLockPin:"", appLockBiometric:false,
         mediaEditor:false, mediaEditorMode:"ask", mediaEditorDefaultMute:false,
         latexRender:false, latexRenderInline:true };
     // The settings every feature starts from, for Reset to defaults on the Backup page.
@@ -141,7 +141,7 @@
             privacyBlur: false, privacyBlurImages: true, privacyBlurEmbeds: true, privacyBlurAvatars: false,
             batchMediaSave: false, stripExif: false, stripExifToast: true,
             zipPreview: false, reminders: false,
-            appLock: false, appLockTimeout: 0, appLockPin: "",
+            appLock: false, appLockTimeout: 0, appLockPin: "", appLockBiometric: false,
             mediaEditor: false, mediaEditorMode: "ask", mediaEditorDefaultMute: false,
             latexRender: false, latexRenderInline: true
         }));
@@ -23843,29 +23843,139 @@
     }
 
     // ------------------------------------------------- 8. App lock
+    const APP_LOCK_PIN_SHEET = "VenusAppLockPin";
     function appLockSync(lockNow) {
         diagCall("lockConfig", JSON.stringify({
             enabled:enabled("appLock"),
             timeoutSec:Number(settings.appLockTimeout) || 0,
             pin:String(settings.appLockPin || ""),
+            biometric:!!settings.appLockBiometric,
             lockNow:!!lockNow,
             title:tr("Discord is Locked"),
             subtitle:tr("Enter your PIN passcode to unlock"),
             hint:tr("Enter PIN"),
             wrongPin:tr("Incorrect PIN. Try again."),
             unlock:tr("Unlock"),
-            noPin:tr("No PIN set yet. Tap Unlock to close, and set a PIN in Venus \u2192 App lock.")
+            noPin:tr("No PIN set yet. Tap Unlock to close, and set a PIN in Venus \u2192 App lock."),
+            bioTitle:tr("Unlock with biometrics"),
+            bioSub:tr("Verify your fingerprint or face, or cancel to enter PIN"),
+            usePin:tr("Use PIN"),
+            clear:tr("Clear"),
+            useBio:tr("Biometric")
         })).catch(() => {});
+    }
+    function PinSetupSheet() {
+        useLanguage();
+        const ui = reviewUI(), s = useChatPreviewStyles(), k = usePreviewChrome();
+        if (!RN) return null;
+        const Button = ui.Button, Press = RN.Pressable || RN.TouchableOpacity, Lock = venusIcon(8771, "LockIcon");
+        const [step, setStep] = React.useState(1);
+        const [firstPin, setFirstPin] = React.useState("");
+        const [confirmPin, setConfirmPin] = React.useState("");
+        const [mismatch, setMismatch] = React.useState(false);
+
+        const activePin = step === 1 ? firstPin : confirmPin;
+        const targetDots = step === 1 ? Math.max(4, Math.min(8, firstPin.length || 4)) : firstPin.length;
+        const closeSheet = () => {
+            if (ui.ActionSheetActionCreators?.hideActionSheet) ui.ActionSheetActionCreators.hideActionSheet(APP_LOCK_PIN_SHEET);
+        };
+        const goNext = () => {
+            if (firstPin.length < 4) return;
+            haptic("SELECTION");
+            setStep(2);
+            setConfirmPin("");
+            setMismatch(false);
+        };
+        const restart = () => {
+            haptic("SELECTION");
+            setStep(1);
+            setFirstPin("");
+            setConfirmPin("");
+            setMismatch(false);
+        };
+        const onKey = code => {
+            haptic("IMPACT_LIGHT");
+            if (code === "CLR") {
+                if (step === 1) setFirstPin("");
+                else setConfirmPin("");
+                setMismatch(false);
+                return;
+            }
+            if (code === "DEL") {
+                if (step === 1) setFirstPin(p => p.slice(0, -1));
+                else setConfirmPin(p => p.slice(0, -1));
+                setMismatch(false);
+                return;
+            }
+            if (step === 1) {
+                if (firstPin.length >= 8) return;
+                setFirstPin(firstPin + code);
+            } else {
+                if (confirmPin.length >= firstPin.length) return;
+                const next = confirmPin + code;
+                setConfirmPin(next);
+                setMismatch(false);
+                if (next.length === firstPin.length) {
+                    if (next === firstPin) {
+                        haptic("SELECTION");
+                        setSetting("appLockPin", next);
+                        reviewToast(ui, tr("App lock PIN saved"), Lock);
+                        closeSheet();
+                    } else {
+                        haptic("IMPACT_MEDIUM");
+                        setMismatch(true);
+                        setConfirmPin("");
+                    }
+                }
+            }
+        };
+
+        const header = ui.BottomSheetTitleHeader
+            ? el(ui.BottomSheetTitleHeader, {title:tr(step === 1 ? "Enter new PIN (4-8 digits)" : "Confirm your PIN"),
+                trailing:ui.ActionSheetCloseButton ? el(ui.ActionSheetCloseButton, {onPress:closeSheet}) : null})
+            : null;
+        const rows = [["1", "2", "3"], ["4", "5", "6"], ["7", "8", "9"], ["CLR", "0", "DEL"]];
+        const keyBtn = code => {
+            const label = code === "DEL" ? "\u232B" : code === "CLR" ? tr("Clear") : code;
+            const isAction = code === "DEL" || code === "CLR";
+            return el(Press, {key:code, onPress:() => onKey(code),
+                style:[k.card, {flex:1, height:52, borderRadius:14, borderWidth:1, alignItems:"center", justifyContent:"center"}]},
+                el(RN.Text, {style:[s.name, {fontSize:isAction ? 14 : 20, color:isAction ? s.muted.color : s.name.color}]}, label));
+        };
+        const content = el(RN.View, {style:{paddingHorizontal:16, paddingBottom:24, gap:14, alignItems:"center"}},
+            el(RN.View, {style:[k.secondary, {width:46, height:46, borderRadius:23, alignItems:"center", justifyContent:"center"}]},
+                el(Lock, {size:"md", color:k.brandFg.color})),
+            el(RN.Text, {style:[s.muted, {textAlign:"center"}]},
+                step === 1 ? tr("Choose a 4 to 8 digit PIN using the keypad below.") : tr("Re-enter the same {n}-digit PIN to confirm.", {n:firstPin.length})),
+            el(RN.View, {style:{flexDirection:"row", gap:10, marginVertical:4}},
+                Array.from({length:targetDots}, (_, idx) => {
+                    const filled = idx < activePin.length;
+                    return el(RN.View, {key:String(idx), style:{
+                        width:14, height:14, borderRadius:7,
+                        backgroundColor:filled ? k.brandBg.backgroundColor : "transparent",
+                        borderWidth:1.5, borderColor:filled ? k.brandBg.backgroundColor : k.iconMuted.color
+                    }});
+                })),
+            mismatch ? el(RN.Text, {style:{color:"#f23f43", fontSize:13, fontWeight:"600"}}, tr("PINs do not match. Try again.")) : null,
+            el(RN.View, {style:{width:"100%", gap:8}},
+                rows.map((r, idx) => el(RN.View, {key:String(idx), style:{flexDirection:"row", gap:8}}, r.map(keyBtn)))),
+            step === 1
+                ? (Button ? el(Button, {text:tr("Next"), size:"lg", variant:"primary", style:{width:"100%"}, disabled:firstPin.length < 4, onPress:goNext}) : null)
+                : (Button ? el(Button, {text:tr("Start over"), size:"md", variant:"secondary", style:{width:"100%"}, onPress:restart}) : null)
+        );
+        return serverEditScroll(ui, header, content);
     }
     function AppLockPreview(props) {
         const s = useChatPreviewStyles(), k = usePreviewChrome(), Lock = venusIcon(8771, "LockIcon");
-        const hasPin = !!String(settings.appLockPin || "");
+        const pinLen = String(settings.appLockPin || "").length;
+        const hasPin = pinLen >= 4;
         return previewScreen(s, "lockPreview", "App lock preview", [
             el(RN.View, {style:[k.card, {margin:12, padding:16, borderRadius:14, borderWidth:1, alignItems:"center", gap:8}]},
                 el(RN.View, {style:[k.secondary, {width:42, height:42, borderRadius:21, alignItems:"center", justifyContent:"center"}]},
                     el(Lock, {size:"md", color:props.on ? k.brandFg.color : k.iconMuted.color})),
                 el(RN.Text, {style:[s.name, {fontSize:15}]}, tr("Discord is Locked")),
-                el(RN.Text, {style:s.muted}, hasPin ? "\u2022 \u2022 \u2022 \u2022" : tr("Set a 4-8 digit PIN below")))
+                el(RN.Text, {style:s.muted}, hasPin ? Array(pinLen).fill("\u2022").join(" ") : tr("Set a 4-8 digit PIN below")),
+                hasPin && settings.appLockBiometric ? el(RN.Text, {style:[s.muted, {fontSize:12, color:k.brandFg.color}]}, tr("Biometrics + PIN keypad")) : null)
         ]);
     }
     function AppLockSettings() {
@@ -23873,30 +23983,43 @@
         useLanguage();
         const ui = reviewUI(), on = enabled("appLock");
         if (!RN) return null;
-        const Group = ui.TableRowGroup || RN.View, Radio = ui.TableRadioRow;
-        const [pinDraft, setPinDraft] = React.useState("");
-        const cleanPin = String(pinDraft || "").replace(/\D/g, "");
-        const hasPin = String(settings.appLockPin || "").length >= 4;
+        const Group = ui.TableRowGroup || RN.View, Radio = ui.TableRadioRow, Switch = ui.TableSwitchRow;
+        const [bioSupported, setBioSupported] = React.useState(null);
+        React.useEffect(() => {
+            diagCall("biometricCheck", "").then(res => setBioSupported(res === "1")).catch(() => setBioSupported(false));
+        }, []);
+        const pinStr = String(settings.appLockPin || "");
+        const hasPin = pinStr.length >= 4;
         const timeouts = [[0, "Immediately"], [30, "After 30 seconds"], [60, "After 1 minute"], [300, "After 5 minutes"], [900, "After 15 minutes"]];
-        const savePin = () => {
-            if (cleanPin.length < 4) return;
+        const openPinSheet = () => {
+            if (!on) return;
             haptic("SELECTION");
-            setSetting("appLockPin", cleanPin);
-            setPinDraft("");
-            reviewToast(ui, tr("App lock PIN saved"), venusIcon(8771, "LockIcon"));
+            if (typeof ui.showSheet === "function" && ui.ActionSheet) {
+                ui.showSheet({key:APP_LOCK_PIN_SHEET, content:el(PinSetupSheet), stackingBehavior:"stack"});
+            }
+        };
+        const clearPin = () => {
+            haptic("SELECTION");
+            setSetting("appLockPin", "");
+            if (settings.appLockBiometric) setSetting("appLockBiometric", false);
         };
         const groups = [
             on ? null : offCard("status", venusIcon(8771, "LockIcon"), "appLock"),
             on && !hasPin ? statusCard("noPinWarn", "Set a 4 to 8 digit PIN below so Discord cannot be unlocked without it.", {title:tr("PIN not set yet"), IconComponent:venusIcon(8771, "LockIcon")}) : null,
             el(AppLockPreview, {key:"preview", on}),
             el(Group, {key:"pinSetup", title:hasPin ? tr("PIN passcode (Active)") : tr("PIN passcode")},
-                el(RN.View, {style:{paddingHorizontal:4, paddingVertical:4}},
-                    inputWithButton(ui, "pinIn", {value:pinDraft, secureTextEntry:true, keyboardType:"number-pad", maxLength:8,
-                        label:tr(hasPin ? "Change PIN (4-8 digits)" : "New PIN (4-8 digits)"), placeholder:"\u2022\u2022\u2022\u2022",
-                        editable:on, isDisabled:!on, returnKeyType:"done", onSubmitEditing:savePin},
-                        t => setPinDraft(String(t || "").replace(/\D/g, "").slice(0, 8)), "Save PIN", savePin, !on || cleanPin.length < 4)),
-                hasPin ? actionRow(ui, "clearPin", "Remove PIN", "Clears your custom PIN passcode.",
-                    () => { haptic("SELECTION"); setSetting("appLockPin", ""); }, !on, true) : null),
+                actionRow(ui, "setPin", hasPin ? "Change PIN (4-8 digits)" : "Set PIN (4-8 digits)",
+                    hasPin ? tr("{n}-digit PIN configured", {n:pinStr.length}) : tr("Opens custom keypad to set and confirm a 4-8 digit PIN."),
+                    openPinSheet, !on, false, rowIcon(8771, "LockIcon")),
+                Switch ? el(Switch, {key:"bio", label:tr("Unlock with biometrics"),
+                    subLabel:!hasPin ? tr("Set a PIN first so you always have a fallback.")
+                        : bioSupported === false ? tr("Fingerprint or face recognition is unavailable or not enrolled on this device.")
+                        : tr("Use fingerprint or face recognition to unlock. You can cancel anytime to enter your PIN."),
+                    value:!!settings.appLockBiometric && hasPin,
+                    disabled:!on || !hasPin || bioSupported === false,
+                    icon:rowIcon(15004, "ShieldLockIcon"),
+                    onValueChange:v => { haptic("SELECTION"); setSetting("appLockBiometric", !!v); }}) : null,
+                hasPin ? actionRow(ui, "clearPin", "Remove PIN", "Clears your custom PIN passcode.", clearPin, !on, true) : null),
             el(Group, {key:"timeout", title:tr("Relock timeout")},
                 timeouts.map(([sec, label]) => Radio ? el(Radio, {key:String(sec), label:tr(label), selected:settings.appLockTimeout === sec,
                     disabled:!on, onPress:() => { haptic("SELECTION"); setSetting("appLockTimeout", sec); }}) : null)),
@@ -23905,7 +24028,7 @@
                     () => { haptic("SELECTION"); appLockSync(false); diagCall("lockTest", "").catch(() => {}); }, !on, false, rowIcon(8771, "LockIcon"))),
             footnote("hint", "Locks Discord automatically on startup and whenever you return to the app after the selected timeout.")
         ];
-        return settingsBody(ui, groups, {keyboardShouldPersistTaps:"handled"});
+        return settingsBody(ui, groups);
     }
 
     // ------------------------------------------------- 9. Media editor (trim & mute) + Attachment sheet hook

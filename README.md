@@ -103,7 +103,7 @@ You can also import `patches-<version>.mpp` from [Releases](https://github.com/x
 | | Keep Bluetooth audio clear in calls | Keeps headphones in music quality during calls |
 | | Voice channel options | Join volume, audio output, join chimes and a goodbye sound |
 | | Fake deafen | Look deafened while still hearing the call (by maayan080) |
-| | App lock | Lock Discord behind a PIN passcode on startup or when returning from background |
+| | App lock | Lock Discord behind a 4-8 digit PIN (custom keypad) or biometrics on startup or resume |
 
 Venus settings also have **Language** (30 languages), **Backup and restore**, and **About** with debug logs and a crash screen.
 

@@ -1,8 +1,8 @@
 {
-  "created_at": "2026-11-20T12:35:18",
-  "description": "### \u2728 New Features\n\n* **Discord:** Added **Keyword notifications** with a structured match-mode rule builder, server exclusion switches and live preview\n* **Discord:** Added **Message bookmarks** with in-chat gold highlight, optional You-tab shortcut, offline search and jump-to-message\n* **Discord:** Added **Privacy blur** using Discord's native spoiler overlay for chat media and rich embed previews until tapped\n* **Discord:** Added **Save all media** to download every image, video or embed media attachment from a message in one tap\n* **Discord:** Added **Strip image metadata** with automatic pre-upload EXIF stripping and an in-sheet inspection/strip option on attached photos\n* **Discord:** Added **Preview ZIP archives** with an inline file-list dropdown under `.zip` attachments and a full folder/text inspector sheet\n* **Discord:** Added **Message reminders** with relative delays, timezone-aware specific clock times (`HH:MM`) and custom memos\n* **Discord:** Added **App lock** with a native `FLAG_SECURE` PIN passcode overlay on launch and resume\n* **Discord:** Added **Trim and mute media** directly inside the attachment preview sheet (and on Send) using lossless keyframe trimming\n* **Discord:** Added **Render LaTeX math** to format inline `$...$` and block `$$...$$` math in chat (ignoring prices like `$10`) and open a MathML formula viewer\n",
-  "download_url": "https://github.com/x2tora/tora-morphe/releases/download/v1.23.0/patches-1.23.0.mpp",
-  "page_url": "https://github.com/x2tora/tora-morphe/releases/tag/v1.23.0",
+  "created_at": "2026-11-20T15:09:34",
+  "description": "### \u2728 New Features\n\n* **Discord - App lock:** Added a custom numeric keypad UI for setting (with 2-step confirmation) and unlocking 4\u20138 digit PINs, auto-unlock on matching PIN entry, native Discord lock icon, and optional biometric (fingerprint/face) unlock with PIN fallback\n",
+  "download_url": "https://github.com/x2tora/tora-morphe/releases/download/v1.23.1/patches-1.23.1.mpp",
+  "page_url": "https://github.com/x2tora/tora-morphe/releases/tag/v1.23.1",
   "signature_download_url": "",
-  "version": "1.23.0"
+  "version": "1.23.1"
 }

@@ -8,8 +8,10 @@ import app.morphe.patcher.patch.AppTarget
 import app.morphe.patcher.patch.Compatibility
 import app.morphe.patcher.patch.bytecodePatch
 import app.morphe.patcher.patch.rawResourcePatch
+import app.morphe.patcher.patch.resourcePatch
 import app.morphe.patcher.patch.PatchException
 import app.morphe.patcher.patch.PatchBuilder
+import org.w3c.dom.Element
 
 private const val INSTANCE = "Lcom/facebook/react/runtime/ReactInstance;"
 internal val discord = Compatibility(
@@ -1319,9 +1321,37 @@ val zipPreview = bundledPlugin("zipPreview", "Preview ZIP archives",
 val localReminders = bundledPlugin("reminders", "Message reminders",
     "Set a reminder on any message from the hold menu to get notified at a set delay or clock time.")
 
+private val appLockManifest = resourcePatch {
+    execute {
+        document("AndroidManifest.xml").use { manifest ->
+            val root = manifest.documentElement
+            val application = manifest.getElementsByTagName("application").item(0) as Element
+            val permissions = manifest.getElementsByTagName("uses-permission")
+            val existing = HashSet<String>()
+            for (i in 0 until permissions.length) {
+                existing += (permissions.item(i) as Element).getAttribute("android:name")
+            }
+            for (perm in listOf("android.permission.USE_BIOMETRIC", "android.permission.USE_FINGERPRINT")) {
+                if (perm !in existing) {
+                    val el = manifest.createElement("uses-permission")
+                    el.setAttribute("android:name", perm)
+                    root.insertBefore(el, application)
+                }
+            }
+        }
+    }
+}
+
 @Suppress("unused")
-val appLock = bundledPlugin("appLock", "App lock",
-    "Lock Discord behind a PIN passcode or your device screen lock when opening or returning to the app.")
+val appLock = bytecodePatch(
+    name = "App lock",
+    description = "Lock Discord behind a 4-8 digit PIN or biometrics (fingerprint/face) when opening or returning to the app."
+) {
+    compatibleWith(discord)
+    section(PLUGINS)
+    dependsOn(venusSettings, appLockManifest)
+    execute { additionalSelections += "appLock" }
+}
 
 @Suppress("unused")
 val mediaEditor = bytecodePatch(

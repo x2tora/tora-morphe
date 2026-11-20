@@ -1,3 +1,9 @@
+## [1.23.1](https://github.com/x2tora/tora-morphe/compare/v1.23.0...v1.23.1) (2026-11-21)
+
+### ✨ New Features
+
+* **Discord - App lock:** Added a custom numeric keypad UI for setting (with 2-step confirmation) and unlocking 4–8 digit PINs, auto-unlock on matching PIN entry, native Discord lock icon, and optional biometric (fingerprint/face) unlock with PIN fallback
+
 ## [1.23.0](https://github.com/x2tora/tora-morphe/compare/v1.22.0...v1.23.0) (2026-11-20)
 
 ### ✨ New Features

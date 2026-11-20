@@ -98,6 +98,7 @@ object Diagnostics {
     @Volatile private var appLockOn = false
     @Volatile private var appLockTimeoutMs = 0L
     @Volatile private var appLockPin = ""
+    @Volatile private var appLockBiometric = false
     @Volatile private var appLockUnlockedInSession = false
     @Volatile private var lockRequired = false
     @Volatile private var lockShowing = false
@@ -133,6 +134,7 @@ object Diagnostics {
                 val sec = json.optInt("timeoutSec", 0)
                 appLockTimeoutMs = if (sec > 0) sec.toLong() * 1000L else 0L
                 appLockPin = json.optString("pin", "")
+                appLockBiometric = json.optBoolean("biometric", false)
                 if (appLockOn) {
                     appLockUnlockedInSession = false
                     lockRequired = true
@@ -145,6 +147,7 @@ object Diagnostics {
             val sec = json.optInt("appLockTimeout", 0)
             appLockTimeoutMs = if (sec > 0) sec.toLong() * 1000L else 0L
             appLockPin = json.optString("appLockPin", "")
+            appLockBiometric = json.optBoolean("appLockBiometric", false)
             if (appLockOn) {
                 appLockUnlockedInSession = false
                 lockRequired = true
@@ -1001,6 +1004,9 @@ object Diagnostics {
                 showLockOverlay(activity, true)
                 promise.resolve("ok")
             } })
+            "biometricCheck" -> {
+                promise.resolve(if (canUseBiometric(c)) "1" else "0")
+            }
             "mediaProbe" -> Thread(object : Runnable { override fun run() {
                 try { promise.resolve(probeMediaFile(c, argument ?: "")) } catch (error: Throwable) { promise.reject("VENUS_DIAG", error.toString()) }
             } }, "venus-media-probe").start()
@@ -1437,6 +1443,52 @@ object Diagnostics {
     @Volatile private var lockLabelWrong = "Incorrect PIN. Try again."
     @Volatile private var lockLabelUnlock = "Unlock"
     @Volatile private var lockLabelNoPin = "No PIN set yet. Tap Unlock to close, and set a PIN in Venus -> App lock."
+    @Volatile private var lockLabelBioTitle = "Unlock with biometrics"
+    @Volatile private var lockLabelBioSub = "Verify your fingerprint or face, or cancel to enter PIN"
+    @Volatile private var lockLabelUsePin = "Use PIN"
+    @Volatile private var lockLabelClear = "Clear"
+    @Volatile private var lockLabelUseBio = "Bio"
+
+    private fun canUseBiometric(c: Context): Boolean {
+        if (Build.VERSION.SDK_INT < 28) return false
+        return try {
+            if (Build.VERSION.SDK_INT >= 29) {
+                val bm = c.getSystemService(android.hardware.biometrics.BiometricManager::class.java)
+                bm != null && bm.canAuthenticate() == android.hardware.biometrics.BiometricManager.BIOMETRIC_SUCCESS
+            } else {
+                c.packageManager.hasSystemFeature(android.content.pm.PackageManager.FEATURE_FINGERPRINT)
+            }
+        } catch (_: Throwable) {
+            false
+        }
+    }
+
+    private fun launchBiometricPrompt(activity: Activity, onUnlocked: Runnable) {
+        if (Build.VERSION.SDK_INT < 28) return
+        try {
+            val builder = android.hardware.biometrics.BiometricPrompt.Builder(activity)
+                .setTitle(lockLabelBioTitle)
+                .setSubtitle(lockLabelBioSub)
+                .setNegativeButton(
+                    lockLabelUsePin,
+                    activity.mainExecutor,
+                    object : android.content.DialogInterface.OnClickListener {
+                        override fun onClick(d: android.content.DialogInterface?, which: Int) { }
+                    }
+                )
+            builder.build().authenticate(
+                android.os.CancellationSignal(),
+                activity.mainExecutor,
+                object : android.hardware.biometrics.BiometricPrompt.AuthenticationCallback() {
+                    override fun onAuthenticationSucceeded(result: android.hardware.biometrics.BiometricPrompt.AuthenticationResult?) {
+                        main.post(onUnlocked)
+                    }
+                    override fun onAuthenticationError(errorCode: Int, errString: CharSequence?) { }
+                    override fun onAuthenticationFailed() { }
+                }
+            )
+        } catch (_: Throwable) { }
+    }
 
     private fun updateLockConfig(c: Context, arg: String) {
         val req = JSONObject(arg)
@@ -1445,23 +1497,35 @@ object Diagnostics {
         val sec = req.optInt("timeoutSec", 0)
         appLockTimeoutMs = if (sec > 0) sec.toLong() * 1000L else 0L
         if (req.has("pin")) appLockPin = req.optString("pin", "")
+        if (req.has("biometric")) appLockBiometric = req.optBoolean("biometric", false)
         if (req.optString("title", "").length > 0) lockLabelTitle = req.optString("title")
         if (req.optString("subtitle", "").length > 0) lockLabelSub = req.optString("subtitle")
         if (req.optString("hint", "").length > 0) lockLabelPinHint = req.optString("hint")
         if (req.optString("wrongPin", "").length > 0) lockLabelWrong = req.optString("wrongPin")
         if (req.optString("unlock", "").length > 0) lockLabelUnlock = req.optString("unlock")
         if (req.optString("noPin", "").length > 0) lockLabelNoPin = req.optString("noPin")
+        if (req.optString("bioTitle", "").length > 0) lockLabelBioTitle = req.optString("bioTitle")
+        if (req.optString("bioSub", "").length > 0) lockLabelBioSub = req.optString("bioSub")
+        if (req.optString("usePin", "").length > 0) lockLabelUsePin = req.optString("usePin")
+        if (req.optString("clear", "").length > 0) lockLabelClear = req.optString("clear")
+        if (req.optString("useBio", "").length > 0) lockLabelUseBio = req.optString("useBio")
         try {
             val saved = JSONObject()
                 .put("enabled", appLockOn)
                 .put("timeoutSec", sec)
                 .put("pin", appLockPin)
+                .put("biometric", appLockBiometric)
                 .put("title", lockLabelTitle)
                 .put("subtitle", lockLabelSub)
                 .put("hint", lockLabelPinHint)
                 .put("wrongPin", lockLabelWrong)
                 .put("unlock", lockLabelUnlock)
                 .put("noPin", lockLabelNoPin)
+                .put("bioTitle", lockLabelBioTitle)
+                .put("bioSub", lockLabelBioSub)
+                .put("usePin", lockLabelUsePin)
+                .put("clear", lockLabelClear)
+                .put("useBio", lockLabelUseBio)
             write(File(c.filesDir, LOCK_FILE), saved.toString())
         } catch (_: Throwable) { }
         if (!appLockOn) {
@@ -1514,29 +1578,33 @@ object Diagnostics {
             root.orientation = LinearLayout.VERTICAL
             root.gravity = Gravity.CENTER
             root.setBackgroundColor(BG)
-            root.setPadding(dpPx(activity, 28), dpPx(activity, 28), dpPx(activity, 28), dpPx(activity, 28))
+            root.setPadding(dpPx(activity, 24), dpPx(activity, 24), dpPx(activity, 24), dpPx(activity, 24))
 
             val card = LinearLayout(activity)
             card.orientation = LinearLayout.VERTICAL
             card.gravity = Gravity.CENTER_HORIZONTAL
-            card.setPadding(dpPx(activity, 24), dpPx(activity, 28), dpPx(activity, 24), dpPx(activity, 24))
+            card.setPadding(dpPx(activity, 20), dpPx(activity, 24), dpPx(activity, 20), dpPx(activity, 20))
             val cardBg = GradientDrawable()
             cardBg.setColor(CARD)
-            cardBg.cornerRadius = dpPx(activity, 18).toFloat()
+            cardBg.cornerRadius = dpPx(activity, 20).toFloat()
             cardBg.setStroke(dpPx(activity, 1), CARD_EDGE)
             card.background = cardBg
 
-            val badge = TextView(activity)
-            badge.text = "\uD83D\uDD12"
-            badge.textSize = 26f
-            badge.gravity = Gravity.CENTER
+            // Native Discord lock drawable inside circular badge.
+            val badgeWrap = LinearLayout(activity)
+            badgeWrap.gravity = Gravity.CENTER
             val badgeBg = GradientDrawable()
             badgeBg.setColor(0x265865F2)
             badgeBg.cornerRadius = dpPx(activity, 28).toFloat()
-            badge.background = badgeBg
+            badgeWrap.background = badgeBg
+            val lockImg = android.widget.ImageView(activity)
+            val lockResId = activity.resources.getIdentifier("lock", "drawable", activity.packageName)
+            lockImg.setImageResource(if (lockResId != 0) lockResId else android.R.drawable.ic_lock_lock)
+            lockImg.setColorFilter(BRAND, android.graphics.PorterDuff.Mode.SRC_IN)
+            badgeWrap.addView(lockImg, LinearLayout.LayoutParams(dpPx(activity, 28), dpPx(activity, 28)))
             val badgeLp = LinearLayout.LayoutParams(dpPx(activity, 56), dpPx(activity, 56))
-            badgeLp.bottomMargin = dpPx(activity, 16)
-            card.addView(badge, badgeLp)
+            badgeLp.bottomMargin = dpPx(activity, 14)
+            card.addView(badgeWrap, badgeLp)
 
             val title = TextView(activity)
             title.text = lockLabelTitle
@@ -1546,15 +1614,15 @@ object Diagnostics {
             title.gravity = Gravity.CENTER
             card.addView(title)
 
-            val hasPin = appLockPin.length > 0
+            val hasPin = appLockPin.length >= 4
             val sub = TextView(activity)
             sub.text = if (hasPin) lockLabelSub else lockLabelNoPin
-            sub.textSize = 14f
+            sub.textSize = 13f
             sub.setTextColor(MUTED)
             sub.gravity = Gravity.CENTER
             val subLp = LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT)
-            subLp.topMargin = dpPx(activity, 8)
-            subLp.bottomMargin = dpPx(activity, 20)
+            subLp.topMargin = dpPx(activity, 6)
+            subLp.bottomMargin = dpPx(activity, 18)
             card.addView(sub, subLp)
 
             val errView = TextView(activity)
@@ -1562,59 +1630,10 @@ object Diagnostics {
             errView.textSize = 13f
             errView.setTextColor(RED)
             errView.gravity = Gravity.CENTER
-            errView.visibility = View.GONE
+            errView.visibility = View.INVISIBLE
 
-            var pinInput: android.widget.EditText? = null
-            if (hasPin) {
-                val input = android.widget.EditText(activity)
-                pinInput = input
-                input.hint = lockLabelPinHint
-                input.setHintTextColor(MUTED)
-                input.setTextColor(TEXT)
-                input.textSize = 20f
-                input.gravity = Gravity.CENTER
-                input.inputType = android.text.InputType.TYPE_CLASS_NUMBER or android.text.InputType.TYPE_NUMBER_VARIATION_PASSWORD
-                input.imeOptions = android.view.inputmethod.EditorInfo.IME_ACTION_DONE
-                input.filters = arrayOf(android.text.InputFilter.LengthFilter(8))
-                input.setPadding(dpPx(activity, 16), dpPx(activity, 14), dpPx(activity, 16), dpPx(activity, 14))
-                val inBg = GradientDrawable()
-                inBg.setColor(BG)
-                inBg.cornerRadius = dpPx(activity, 12).toFloat()
-                inBg.setStroke(dpPx(activity, 1), 0x33FFFFFF)
-                input.background = inBg
-                val inLp = LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT)
-                inLp.bottomMargin = dpPx(activity, 10)
-                card.addView(input, inLp)
-
-                val errLp = LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT)
-                errLp.bottomMargin = dpPx(activity, 12)
-                card.addView(errView, errLp)
-            }
-
-            val btn = TextView(activity)
-            btn.text = lockLabelUnlock
-            btn.textSize = 15f
-            btn.setTextColor(Color.WHITE)
-            btn.typeface = Typeface.create("sans-serif-medium", Typeface.BOLD)
-            btn.gravity = Gravity.CENTER
-            btn.setPadding(dpPx(activity, 24), dpPx(activity, 13), dpPx(activity, 24), dpPx(activity, 13))
-            val btnBg = GradientDrawable()
-            btnBg.setColor(BRAND)
-            btnBg.cornerRadius = dpPx(activity, 12).toFloat()
-            btn.background = btnBg
-            card.addView(btn, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT))
-
-            val verifyAction = object : Runnable {
+            val unlockNow = object : Runnable {
                 override fun run() {
-                    if (hasPin) {
-                        val entered = (pinInput?.text?.toString() ?: "") as java.lang.String
-                        if (!entered.equals(appLockPin)) {
-                            errView.text = lockLabelWrong
-                            errView.visibility = View.VISIBLE
-                            pinInput?.setText("")
-                            return
-                        }
-                    }
                     lockRequired = false
                     appLockUnlockedInSession = true
                     lockShowing = false
@@ -1622,19 +1641,160 @@ object Diagnostics {
                     try { dialog.dismiss() } catch (_: Throwable) { }
                 }
             }
-            btn.setOnClickListener(object : View.OnClickListener {
-                override fun onClick(v: View?) { verifyAction.run() }
-            })
-            pinInput?.setOnEditorActionListener(object : TextView.OnEditorActionListener {
-                override fun onEditorAction(v: TextView?, actionId: Int, event: android.view.KeyEvent?): Boolean {
-                    verifyAction.run()
-                    return true
+
+            if (hasPin) {
+                val pinLen = appLockPin.length
+                val dotsRow = LinearLayout(activity)
+                dotsRow.orientation = LinearLayout.HORIZONTAL
+                dotsRow.gravity = Gravity.CENTER
+                val dotViews = ArrayList<View>()
+                val dotSize = dpPx(activity, 13)
+                val dotGap = dpPx(activity, 6)
+                for (i in 0 until pinLen) {
+                    val dot = View(activity)
+                    val lp = LinearLayout.LayoutParams(dotSize, dotSize)
+                    lp.leftMargin = dotGap
+                    lp.rightMargin = dotGap
+                    dotsRow.addView(dot, lp)
+                    dotViews.add(dot)
                 }
-            })
+                val dotsLp = LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT)
+                dotsLp.bottomMargin = dpPx(activity, 10)
+                card.addView(dotsRow, dotsLp)
+
+                val errLp = LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT)
+                errLp.bottomMargin = dpPx(activity, 12)
+                card.addView(errView, errLp)
+
+                val enteredBuf = StringBuilder()
+                val refreshDots = object : Runnable {
+                    override fun run() {
+                        val filledLen = enteredBuf.length
+                        for (i in 0 until dotViews.size) {
+                            val gd = GradientDrawable()
+                            gd.shape = GradientDrawable.OVAL
+                            if (i < filledLen) {
+                                gd.setColor(BRAND)
+                            } else {
+                                gd.setColor(0x18FFFFFF)
+                                gd.setStroke(dpPx(activity, 1), 0x44FFFFFF)
+                            }
+                            dotViews.get(i).background = gd
+                        }
+                    }
+                }
+                refreshDots.run()
+
+                val bioAvailable = appLockBiometric && canUseBiometric(activity)
+                val rows = arrayOf(
+                    arrayOf("1", "2", "3"),
+                    arrayOf("4", "5", "6"),
+                    arrayOf("7", "8", "9"),
+                    arrayOf(if (bioAvailable) "BIO" else "CLR", "0", "DEL")
+                )
+                val keyContainer = LinearLayout(activity)
+                keyContainer.orientation = LinearLayout.VERTICAL
+                val rowGap = dpPx(activity, 8)
+                val colGap = dpPx(activity, 8)
+                val keyHeight = dpPx(activity, 54)
+
+                for (r in 0 until rows.size) {
+                    val rowView = LinearLayout(activity)
+                    rowView.orientation = LinearLayout.HORIZONTAL
+                    val rowArr = rows[r]
+                    for (cIdx in 0 until rowArr.size) {
+                        val code = rowArr[cIdx]
+                        val keyBtn = TextView(activity)
+                        keyBtn.gravity = Gravity.CENTER
+                        keyBtn.setTextColor(TEXT)
+                        keyBtn.typeface = Typeface.create("sans-serif-medium", Typeface.BOLD)
+                        if ((code as java.lang.String).equals("DEL")) {
+                            keyBtn.text = "\u232B"
+                            keyBtn.textSize = 18f
+                        } else if (code.equals("CLR")) {
+                            keyBtn.text = lockLabelClear
+                            keyBtn.textSize = 13f
+                            keyBtn.setTextColor(MUTED)
+                        } else if (code.equals("BIO")) {
+                            keyBtn.text = lockLabelUseBio
+                            keyBtn.textSize = 13f
+                            keyBtn.setTextColor(0xFFB5BAC1.toInt())
+                        } else {
+                            keyBtn.text = code
+                            keyBtn.textSize = 21f
+                        }
+                        val kBg = GradientDrawable()
+                        kBg.setColor(if (code.equals("BIO")) 0x335865F2 else 0xFF2B2D31.toInt())
+                        kBg.cornerRadius = dpPx(activity, 14).toFloat()
+                        kBg.setStroke(dpPx(activity, 1), 0x1AFFFFFF)
+                        keyBtn.background = kBg
+                        keyBtn.setOnClickListener(object : View.OnClickListener {
+                            override fun onClick(v: View?) {
+                                if ((code as java.lang.String).equals("BIO")) {
+                                    launchBiometricPrompt(activity, unlockNow)
+                                    return
+                                }
+                                if (code.equals("CLR")) {
+                                    enteredBuf.setLength(0)
+                                    errView.visibility = View.INVISIBLE
+                                    refreshDots.run()
+                                    return
+                                }
+                                if (code.equals("DEL")) {
+                                    if (enteredBuf.length > 0) {
+                                        enteredBuf.setLength(enteredBuf.length - 1)
+                                        errView.visibility = View.INVISIBLE
+                                        refreshDots.run()
+                                    }
+                                    return
+                                }
+                                if (enteredBuf.length >= pinLen) return
+                                enteredBuf.append(code)
+                                errView.visibility = View.INVISIBLE
+                                refreshDots.run()
+                                if (enteredBuf.length == pinLen) {
+                                    val candidate = enteredBuf.toString() as java.lang.String
+                                    if (candidate.equals(appLockPin)) {
+                                        unlockNow.run()
+                                    } else {
+                                        errView.text = lockLabelWrong
+                                        errView.visibility = View.VISIBLE
+                                        enteredBuf.setLength(0)
+                                        main.postDelayed(refreshDots, 180L)
+                                    }
+                                }
+                            }
+                        })
+                        val kLp = LinearLayout.LayoutParams(0, keyHeight, 1f)
+                        if (cIdx > 0) kLp.leftMargin = colGap
+                        rowView.addView(keyBtn, kLp)
+                    }
+                    val rLp = LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT)
+                    if (r > 0) rLp.topMargin = rowGap
+                    keyContainer.addView(rowView, rLp)
+                }
+                card.addView(keyContainer, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT))
+            } else {
+                val btn = TextView(activity)
+                btn.text = lockLabelUnlock
+                btn.textSize = 15f
+                btn.setTextColor(Color.WHITE)
+                btn.typeface = Typeface.create("sans-serif-medium", Typeface.BOLD)
+                btn.gravity = Gravity.CENTER
+                btn.setPadding(dpPx(activity, 24), dpPx(activity, 13), dpPx(activity, 24), dpPx(activity, 13))
+                val btnBg = GradientDrawable()
+                btnBg.setColor(BRAND)
+                btnBg.cornerRadius = dpPx(activity, 12).toFloat()
+                btn.background = btnBg
+                btn.setOnClickListener(object : View.OnClickListener {
+                    override fun onClick(v: View?) { unlockNow.run() }
+                })
+                card.addView(btn, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT))
+            }
 
             val cardLp = LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT)
-            cardLp.leftMargin = dpPx(activity, 12)
-            cardLp.rightMargin = dpPx(activity, 12)
+            cardLp.leftMargin = dpPx(activity, 8)
+            cardLp.rightMargin = dpPx(activity, 8)
             root.addView(card, cardLp)
 
             dialog.setContentView(root)
@@ -1644,10 +1804,14 @@ object Diagnostics {
                 w.addFlags(android.view.WindowManager.LayoutParams.FLAG_SECURE)
                 w.statusBarColor = BG
                 w.navigationBarColor = BG
-                if (hasPin) w.setSoftInputMode(android.view.WindowManager.LayoutParams.SOFT_INPUT_STATE_VISIBLE)
+                w.setSoftInputMode(android.view.WindowManager.LayoutParams.SOFT_INPUT_STATE_HIDDEN)
             }
             dialog.show()
-            if (hasPin) pinInput?.requestFocus()
+            if (hasPin && appLockBiometric && canUseBiometric(activity)) {
+                main.post(object : Runnable {
+                    override fun run() { launchBiometricPrompt(activity, unlockNow) }
+                })
+            }
         } catch (_: Throwable) {
             lockShowing = false
             appLockDialog = null
