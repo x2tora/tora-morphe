@@ -1,3 +1,9 @@
+## [1.23.3](https://github.com/x2tora/tora-morphe/compare/v1.23.2...v1.23.3) (2026-11-21)
+
+### 🔧 Improvements
+
+* **Discord:** Added complete translations across all 29 non-English language packs (30 languages total) for all v1.23 features
+
 ## [1.23.2](https://github.com/x2tora/tora-morphe/compare/v1.23.1...v1.23.2) (2026-11-21)
 
 ### 🐛 Bug Fixes
