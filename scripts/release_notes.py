@@ -13,7 +13,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 CHANGELOG = ROOT / "CHANGELOG.md"
-REPO = "https://github.com/VenusIsJaded/Venus-Patches"
+REPO = "https://github.com/x2tora/Venus-Patches-xitora"
 
 # The headings Morphe Manager maps to its own icons and titles, in the order they're written. App support comes
 # first, so the Discord version a release works with is the first thing you read.
@@ -52,7 +52,7 @@ def check():
             raise SystemExit(f"CHANGELOG.md: {version} is listed twice")
         seen.add(version)
         url = HEADING.match(heading).group("url")
-        if url and not url.startswith(f"{REPO}/compare/v") or url and not url.endswith(f"...v{version}"):
+        if url and not (url.startswith(f"{REPO}/compare/v") or url.startswith("https://github.com/VenusIsJaded/Venus-Patches/compare/v")) or url and not url.endswith(f"...v{version}"):
             raise SystemExit(f"CHANGELOG.md: {version} compare link should end in ...v{version}")
         order, section, bullets = [], None, 0
         for line in body.splitlines():

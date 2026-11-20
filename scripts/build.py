@@ -903,10 +903,10 @@ def build():
         "--output", dex, classes)
     # Same JVM classes + classes.dex layout and manifest keys as the official plugin.
     manifest = "\r\n".join([
-        "Manifest-Version: 1.0", "Name: Venus Patches (xitora)",
+        "Manifest-Version: 1.0", "Name: Venus-Patches-xitora",
         "Description: Extra features and privacy options for Discord on Android.",
         f"Version: {VERSION}", "Patcher-Version: 1.15.0",
-        "Source: https://github.com/x2tora/Venus-Patches",
+        "Source: https://github.com/x2tora/Venus-Patches-xitora",
         "Author: xitora", "License: GPL-3.0", "", "",
     ])
     bundle = libs / ASSET_NAME
@@ -994,7 +994,7 @@ def check_metadata(metadata):
     # Morphe Manager parses created_at as a kotlinx LocalDateTime: no UTC offset or "Z".
     if not re.fullmatch(r"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(:\d{2}(\.\d{1,9})?)?", metadata["created_at"]):
         raise SystemExit("patches-bundle.json: created_at must be a LocalDateTime without a UTC offset")
-    if not metadata["download_url"].startswith("https://github.com/x2tora/Venus-Patches/releases/download/"):
+    if not metadata["download_url"].startswith("https://github.com/x2tora/Venus-Patches-xitora/releases/download/"):
         raise SystemExit("patches-bundle.json: unexpected download_url")
     # The fallback release notes must split into Morphe's sections, like CHANGELOG.md does.
     if not re.search(r"^### \S", metadata["description"], re.M) or not re.search(r"^\* \*\*Discord", metadata["description"], re.M):
@@ -1013,8 +1013,8 @@ def release_metadata():
     metadata = {
         "created_at": created_at,
         "description": release_summary(),
-        "download_url": f"https://github.com/x2tora/Venus-Patches/releases/download/{RELEASE_TAG}/{ASSET_NAME}",
-        "page_url": f"https://github.com/x2tora/Venus-Patches/releases/tag/{RELEASE_TAG}",
+        "download_url": f"https://github.com/x2tora/Venus-Patches-xitora/releases/download/{RELEASE_TAG}/{ASSET_NAME}",
+        "page_url": f"https://github.com/x2tora/Venus-Patches-xitora/releases/tag/{RELEASE_TAG}",
         "signature_download_url": "",
         "version": VERSION,
     }

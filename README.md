@@ -1,20 +1,20 @@
-# Venus Patches
+# Venus-Patches-xitora
 
 Extra features and privacy options for Discord on Android, patched in with **[Morphe](https://morphe.software)**. No tracking, and everything works offline except ReviewDB, Translate messages, Fix link previews and Bring back Tenor GIFs.
 
-[**Add to Morphe**](https://morphe.software/add-source?github=VenusIsJaded/Venus-Patches&name=Venus%20Patches) · [Downloads](https://github.com/VenusIsJaded/Venus-Patches/releases) · [What's new](CHANGELOG.md) · [Report a problem](https://github.com/VenusIsJaded/Venus-Patches/issues)
+[**Add to Morphe**](https://morphe.software/add-source?github=x2tora/Venus-Patches-xitora&name=Venus-Patches-xitora) · [Downloads](https://github.com/x2tora/Venus-Patches-xitora/releases) · [What's new](CHANGELOG.md) · [Report a problem](https://github.com/x2tora/Venus-Patches-xitora/issues)
 
 **Works with:** Discord **354.12 - Stable** (the original APKM).
 
 ## Install
 
 1. Install [Morphe Manager](https://github.com/MorpheApp/morphe-manager/releases).
-2. Tap **[Add to Morphe](https://morphe.software/add-source?github=VenusIsJaded/Venus-Patches&name=Venus%20Patches)**, or add `https://github.com/VenusIsJaded/Venus-Patches` as a source.
+2. Tap **[Add to Morphe](https://morphe.software/add-source?github=x2tora/Venus-Patches-xitora&name=Venus-Patches-xitora)**, or add `https://github.com/x2tora/Venus-Patches-xitora` as a source.
 3. Pick the **original** Discord 351.11 APKM, not an already patched one.
 4. Keep the default selection (everything except **Custom branding**), then patch and install.
 5. Open **Discord Settings → Venus → Features** and turn on what you want. Everything starts off.
 
-You can also import `patches-<version>.mpp` from [Releases](https://github.com/VenusIsJaded/Venus-Patches/releases) under **Sources → + → Local**.
+You can also import `patches-<version>.mpp` from [Releases](https://github.com/x2tora/Venus-Patches-xitora/releases) under **Sources → + → Local**.
 
 > The patched app is signed with your key, so you may need to uninstall official Discord first (which deletes its local data), unless you use [Custom branding](#custom-branding). Keep the same signing key so updates install over the top.
 

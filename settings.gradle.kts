@@ -1,1 +1,1 @@
-rootProject.name = "venus-patches"
+rootProject.name = "venus-patches-xitora"
