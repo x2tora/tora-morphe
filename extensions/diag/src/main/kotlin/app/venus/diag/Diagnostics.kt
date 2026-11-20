@@ -99,6 +99,7 @@ object Diagnostics {
     @Volatile private var appLockTimeoutMs = 0L
     @Volatile private var appLockPin = ""
     @Volatile private var appLockBiometric = false
+    @Volatile private var appLockAnim = "slideUp"
     @Volatile private var appLockUnlockedInSession = false
     @Volatile private var lockRequired = false
     @Volatile private var lockShowing = false
@@ -135,6 +136,8 @@ object Diagnostics {
                 appLockTimeoutMs = if (sec > 0) sec.toLong() * 1000L else 0L
                 appLockPin = json.optString("pin", "")
                 appLockBiometric = json.optBoolean("biometric", false)
+                val anim = json.optString("anim", "slideUp")
+                if (anim.length > 0) appLockAnim = anim
                 if (appLockOn) {
                     appLockUnlockedInSession = false
                     lockRequired = true
@@ -148,6 +151,8 @@ object Diagnostics {
             appLockTimeoutMs = if (sec > 0) sec.toLong() * 1000L else 0L
             appLockPin = json.optString("appLockPin", "")
             appLockBiometric = json.optBoolean("appLockBiometric", false)
+            val anim = json.optString("appLockAnim", "slideUp")
+            if (anim.length > 0) appLockAnim = anim
             if (appLockOn) {
                 appLockUnlockedInSession = false
                 lockRequired = true
@@ -166,27 +171,41 @@ object Diagnostics {
         }
     }
 
+    private fun maybeLockActivity(activity: Activity) {
+        if (!appLockOn) return
+        val now = System.currentTimeMillis()
+        val timedOut = lastPausedAt > 0L && now - lastPausedAt >= appLockTimeoutMs
+        if (!appLockUnlockedInSession || lockRequired || timedOut) {
+            appLockUnlockedInSession = false
+            lockRequired = true
+            lastPausedAt = 0L
+            try { activity.window?.addFlags(android.view.WindowManager.LayoutParams.FLAG_SECURE) } catch (_: Throwable) { }
+            if (Looper.myLooper() == Looper.getMainLooper()) {
+                showLockOverlay(activity, false)
+            } else {
+                main.post(object : Runnable { override fun run() { showLockOverlay(activity, false) } })
+            }
+        }
+    }
+
     private class Lifecycle : Application.ActivityLifecycleCallbacks {
         override fun onActivityCreated(activity: Activity, state: Bundle?) { }
         override fun onActivityStarted(activity: Activity) {
             activeCount++
+            current = WeakReference(activity)
+            maybeLockActivity(activity)
         }
         override fun onActivityResumed(activity: Activity) {
             current = WeakReference(activity)
-            if (appLockOn) {
-                val now = System.currentTimeMillis()
-                val timedOut = lastPausedAt > 0L && now - lastPausedAt >= appLockTimeoutMs
-                if (!appLockUnlockedInSession || lockRequired || timedOut) {
-                    appLockUnlockedInSession = false
-                    lockRequired = true
-                    lastPausedAt = 0L
-                    main.post(object : Runnable { override fun run() { showLockOverlay(activity, false) } })
-                }
-            }
+            maybeLockActivity(activity)
             // After Discord's first frames, so the page lands on top of its splash instead of under it.
             main.postDelayed(object : Runnable { override fun run() { showPending() } }, 700)
         }
-        override fun onActivityPaused(activity: Activity) { }
+        override fun onActivityPaused(activity: Activity) {
+            if (appLockOn) {
+                try { activity.window?.addFlags(android.view.WindowManager.LayoutParams.FLAG_SECURE) } catch (_: Throwable) { }
+            }
+        }
         override fun onActivityStopped(activity: Activity) {
             activeCount = Math.max(0, activeCount - 1)
             if (activeCount == 0) lastPausedAt = System.currentTimeMillis()
@@ -1498,6 +1517,10 @@ object Diagnostics {
         appLockTimeoutMs = if (sec > 0) sec.toLong() * 1000L else 0L
         if (req.has("pin")) appLockPin = req.optString("pin", "")
         if (req.has("biometric")) appLockBiometric = req.optBoolean("biometric", false)
+        if (req.has("anim")) {
+            val a = req.optString("anim", "slideUp")
+            if (a.length > 0) appLockAnim = a
+        }
         if (req.optString("title", "").length > 0) lockLabelTitle = req.optString("title")
         if (req.optString("subtitle", "").length > 0) lockLabelSub = req.optString("subtitle")
         if (req.optString("hint", "").length > 0) lockLabelPinHint = req.optString("hint")
@@ -1515,6 +1538,7 @@ object Diagnostics {
                 .put("timeoutSec", sec)
                 .put("pin", appLockPin)
                 .put("biometric", appLockBiometric)
+                .put("anim", appLockAnim)
                 .put("title", lockLabelTitle)
                 .put("subtitle", lockLabelSub)
                 .put("hint", lockLabelPinHint)
@@ -1628,11 +1652,32 @@ object Diagnostics {
 
             var unlocking = false
             val dotViews = ArrayList<View>()
+            var keyContainerRef: LinearLayout? = null
+            val finishUnlock = object : Runnable {
+                override fun run() {
+                    lockRequired = false
+                    appLockUnlockedInSession = true
+                    lockShowing = false
+                    appLockDialog = null
+                    try {
+                        val win = activity.window
+                        if (win != null) {
+                            win.clearFlags(android.view.WindowManager.LayoutParams.FLAG_SECURE)
+                        }
+                    } catch (_: Throwable) { }
+                    try { dialog.dismiss() } catch (_: Throwable) { }
+                }
+            }
             val unlockNow = object : Runnable {
                 override fun run() {
                     if (unlocking) return
                     unlocking = true
-                    // Fill all dots + tint badge green for clear unlock confirmation before fading out.
+                    val animMode = appLockAnim as java.lang.String
+                    if (animMode.equals("none")) {
+                        finishUnlock.run()
+                        return
+                    }
+                    // Fill all dots + tint badge green for clear unlock confirmation.
                     for (i in 0 until dotViews.size) {
                         val gd = GradientDrawable()
                         gd.shape = GradientDrawable.OVAL
@@ -1644,23 +1689,66 @@ object Diagnostics {
                     okBg.setColor(0x2623A55A)
                     badgeWrap.background = okBg
                     lockImg.setColorFilter(0xFF23A55A.toInt(), android.graphics.PorterDuff.Mode.SRC_IN)
-                    badgeWrap.animate().scaleX(1.12f).scaleY(1.12f).setDuration(110L).start()
-                    root.animate()
-                        .alpha(0f)
-                        .scaleX(1.06f)
-                        .scaleY(1.06f)
-                        .setStartDelay(80L)
-                        .setDuration(200L)
-                        .withEndAction(object : Runnable {
-                            override fun run() {
-                                lockRequired = false
-                                appLockUnlockedInSession = true
-                                lockShowing = false
-                                appLockDialog = null
-                                try { dialog.dismiss() } catch (_: Throwable) { }
-                            }
-                        })
-                        .start()
+
+                    if (animMode.equals("slideUp")) {
+                        val openResId = activity.resources.getIdentifier("lock_open", "drawable", activity.packageName)
+                        if (openResId != 0) lockImg.setImageResource(openResId)
+                        lockImg.animate()
+                            .translationY(-dpPx(activity, 3).toFloat())
+                            .rotation(-14f)
+                            .scaleX(1.15f)
+                            .scaleY(1.15f)
+                            .setDuration(130L)
+                            .start()
+                        badgeWrap.animate()
+                            .scaleX(1.14f)
+                            .scaleY(1.14f)
+                            .setDuration(130L)
+                            .start()
+                        val dm = activity.resources.displayMetrics
+                        val slideDist = (if (root.height > 0) root.height else dm.heightPixels).toFloat()
+                        root.animate()
+                            .translationY(-slideDist)
+                            .alpha(0.35f)
+                            .setStartDelay(130L)
+                            .setDuration(260L)
+                            .setInterpolator(android.view.animation.AccelerateInterpolator(1.4f))
+                            .withEndAction(finishUnlock)
+                            .start()
+                    } else if (animMode.equals("curtain")) {
+                        badgeWrap.animate().scaleX(1.12f).scaleY(1.12f).setDuration(100L).start()
+                        headerArea.animate()
+                            .translationY(-dpPx(activity, 80).toFloat())
+                            .alpha(0f)
+                            .setStartDelay(70L)
+                            .setDuration(220L)
+                            .start()
+                        val kc = keyContainerRef
+                        if (kc != null) {
+                            kc.animate()
+                                .translationY(dpPx(activity, 80).toFloat())
+                                .alpha(0f)
+                                .setStartDelay(70L)
+                                .setDuration(220L)
+                                .start()
+                        }
+                        root.animate()
+                            .alpha(0f)
+                            .setStartDelay(90L)
+                            .setDuration(220L)
+                            .withEndAction(finishUnlock)
+                            .start()
+                    } else {
+                        badgeWrap.animate().scaleX(1.12f).scaleY(1.12f).setDuration(110L).start()
+                        root.animate()
+                            .alpha(0f)
+                            .scaleX(1.08f)
+                            .scaleY(1.08f)
+                            .setStartDelay(80L)
+                            .setDuration(210L)
+                            .withEndAction(finishUnlock)
+                            .start()
+                    }
                 }
             }
 
@@ -1719,9 +1807,12 @@ object Diagnostics {
                 val keyContainer = LinearLayout(activity)
                 keyContainer.orientation = LinearLayout.VERTICAL
                 keyContainer.gravity = Gravity.CENTER_HORIZONTAL
-                val keySize = dpPx(activity, 72)
+                keyContainerRef = keyContainer
+                val dm = activity.resources.displayMetrics
+                val colGap = dpPx(activity, 16)
                 val rowGap = dpPx(activity, 14)
-                val colGap = dpPx(activity, 20)
+                val availW = dm.widthPixels - dpPx(activity, 48)
+                val keySize = Math.min(dpPx(activity, 90), Math.max(dpPx(activity, 76), (availW - colGap * 2) / 3))
 
                 for (r in 0 until rows.size) {
                     val rowView = LinearLayout(activity)
@@ -1736,31 +1827,41 @@ object Diagnostics {
                         keyBtn.typeface = Typeface.create("sans-serif-medium", Typeface.BOLD)
                         if ((code as java.lang.String).equals("DEL")) {
                             keyBtn.text = "\u232B"
-                            keyBtn.textSize = 20f
+                            keyBtn.textSize = 22f
                         } else if (code.equals("CLR")) {
                             keyBtn.text = lockLabelClear
-                            keyBtn.textSize = 13f
+                            keyBtn.textSize = 14f
                             keyBtn.setTextColor(MUTED)
                         } else if (code.equals("BIO")) {
                             keyBtn.text = lockLabelUseBio
-                            keyBtn.textSize = 13f
+                            keyBtn.textSize = 14f
                             keyBtn.setTextColor(0xFFDDE2FF.toInt())
                         } else {
                             keyBtn.text = code
-                            keyBtn.textSize = 24f
+                            keyBtn.textSize = 27f
                         }
                         val normalBg = GradientDrawable()
                         normalBg.shape = GradientDrawable.OVAL
                         normalBg.setColor(if (code.equals("BIO")) 0x335865F2 else CARD)
                         normalBg.setStroke(dpPx(activity, 1), if (code.equals("BIO")) 0x555865F2 else 0x1FFFFFFF)
-                        val pressedBg = GradientDrawable()
-                        pressedBg.shape = GradientDrawable.OVAL
-                        pressedBg.setColor(if (code.equals("BIO")) 0x665865F2 else 0xFF3A3D45.toInt())
-                        pressedBg.setStroke(dpPx(activity, 1), 0x44FFFFFF)
-                        val states = android.graphics.drawable.StateListDrawable()
-                        states.addState(intArrayOf(android.R.attr.state_pressed), pressedBg)
-                        states.addState(IntArray(0), normalBg)
-                        keyBtn.background = states
+                        val maskBg = GradientDrawable()
+                        maskBg.shape = GradientDrawable.OVAL
+                        maskBg.setColor(Color.WHITE)
+                        val rippleColor = android.content.res.ColorStateList.valueOf(if (code.equals("BIO")) 0x665865F2 else 0x55FFFFFF)
+                        keyBtn.background = android.graphics.drawable.RippleDrawable(rippleColor, normalBg, maskBg)
+                        keyBtn.setOnTouchListener(object : View.OnTouchListener {
+                            override fun onTouch(v: View?, event: android.view.MotionEvent?): Boolean {
+                                if (v == null || event == null) return false
+                                val action = event.actionMasked
+                                if (action == android.view.MotionEvent.ACTION_DOWN) {
+                                    v.animate().scaleX(0.90f).scaleY(0.90f).setDuration(60L).start()
+                                } else if (action == android.view.MotionEvent.ACTION_UP || action == android.view.MotionEvent.ACTION_CANCEL) {
+                                    v.animate().scaleX(1.0f).scaleY(1.0f).setDuration(140L)
+                                        .setInterpolator(android.view.animation.OvershootInterpolator(1.6f)).start()
+                                }
+                                return false
+                            }
+                        })
 
                         keyBtn.setOnClickListener(object : View.OnClickListener {
                             override fun onClick(v: View?) {

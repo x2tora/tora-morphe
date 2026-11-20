@@ -1,3 +1,13 @@
+## [1.23.4](https://github.com/x2tora/tora-morphe/compare/v1.23.3...v1.23.4) (2026-11-21)
+
+### 🐛 Bug Fixes
+
+* **Discord - App lock:** Fixed the underlying chat screen briefly flashing before the lock overlay appeared on launch or resume
+
+### 🔧 Improvements
+
+* **Discord - App lock:** Enlarged the bottom 1:1 circular PIN keypad with touch ripple/pulse feedback and added selectable unlock animations (`Lock opens & slides up`, `Fade & zoom`, `Split & dissolve`, `Instant`)
+
 ## [1.23.3](https://github.com/x2tora/tora-morphe/compare/v1.23.2...v1.23.3) (2026-11-21)
 
 ### 🔧 Improvements

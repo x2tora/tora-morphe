@@ -1,8 +1,8 @@
 {
-  "created_at": "2026-11-20T15:40:47",
-  "description": "### \ud83d\udd27 Improvements\n\n* **Discord:** Added complete translations across all 29 non-English language packs (30 languages total) for all v1.23 features\n",
-  "download_url": "https://github.com/x2tora/tora-morphe/releases/download/v1.23.3/patches-1.23.3.mpp",
-  "page_url": "https://github.com/x2tora/tora-morphe/releases/tag/v1.23.3",
+  "created_at": "2026-11-20T15:56:29",
+  "description": "### \ud83d\udc1b Bug Fixes\n\n* **Discord - App lock:** Fixed the underlying chat screen briefly flashing before the lock overlay appeared on launch or resume\n\n### \ud83d\udd27 Improvements\n\n* **Discord - App lock:** Enlarged the bottom 1:1 circular PIN keypad with touch ripple/pulse feedback and added selectable unlock animations (`Lock opens & slides up`, `Fade & zoom`, `Split & dissolve`, `Instant`)\n",
+  "download_url": "https://github.com/x2tora/tora-morphe/releases/download/v1.23.4/patches-1.23.4.mpp",
+  "page_url": "https://github.com/x2tora/tora-morphe/releases/tag/v1.23.4",
   "signature_download_url": "",
-  "version": "1.23.3"
+  "version": "1.23.4"
 }

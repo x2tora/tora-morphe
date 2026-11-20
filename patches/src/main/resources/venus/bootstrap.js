@@ -87,7 +87,7 @@
     if (features.appLock) selectModules([1385]);
     if (features.mediaEditor) selectModules([8311, 8333, 9901, 10366, 10680]);
     if (features.latexRender) selectModules([572, 6226, 8481, 10340, 11763]);
-    const revision = "1.23.3";
+    const revision = "1.23.4";
     // The Discord build these patches are pinned to (DiscordPatches.kt compatibleWith); shown on the About page.
     const DISCORD_VERSION = "354.12";
     // Module 120 owns setUpDefaltReactNativeEnvironment in this exact asset.
@@ -115,7 +115,7 @@
         privacyBlur:false, privacyBlurImages:true, privacyBlurEmbeds:true, privacyBlurAvatars:false,
         batchMediaSave:false, stripExif:false, stripExifToast:true,
         zipPreview:false, reminders:false,
-        appLock:false, appLockTimeout:0, appLockPin:"", appLockBiometric:false,
+        appLock:false, appLockTimeout:0, appLockPin:"", appLockBiometric:false, appLockAnim:"slideUp",
         mediaEditor:false, mediaEditorMode:"ask", mediaEditorDefaultMute:false,
         latexRender:false, latexRenderInline:true };
     // The settings every feature starts from, for Reset to defaults on the Backup page.
@@ -141,7 +141,7 @@
             privacyBlur: false, privacyBlurImages: true, privacyBlurEmbeds: true, privacyBlurAvatars: false,
             batchMediaSave: false, stripExif: false, stripExifToast: true,
             zipPreview: false, reminders: false,
-            appLock: false, appLockTimeout: 0, appLockPin: "", appLockBiometric: false,
+            appLock: false, appLockTimeout: 0, appLockPin: "", appLockBiometric: false, appLockAnim: "slideUp",
             mediaEditor: false, mediaEditorMode: "ask", mediaEditorDefaultMute: false,
             latexRender: false, latexRenderInline: true
         }));
@@ -500,6 +500,7 @@
         if (key === "keywordNotifyExcluded") return typeof value === "string" && value.length <= 4000 ? value : undefined;
         if (key === "appLockPin") return typeof value === "string" && value.length <= 8 ? value.replace(/\D/g, "") : undefined;
         if (key === "appLockTimeout") return [0, 30, 60, 300, 900].includes(value) ? value : undefined;
+        if (key === "appLockAnim") return ["slideUp", "fadeScale", "curtain", "none"].includes(value) ? value : undefined;
         if (key === "mediaEditorMode") return ["ask", "mute", "manual"].includes(value) ? value : undefined;
         return typeof value === "number" && !Number.isFinite(value) ? undefined : value;
     }
@@ -699,6 +700,11 @@
             if (![0, 30, 60, 300, 900].includes(value)) return false;
             if (settings.appLockTimeout === value && status.storage !== "loading" && status.storage !== "waiting") return true;
             settings.appLockTimeout = value; dirty.add(key); save(); notify(key); appLockSync(false); return true;
+        }
+        if (key === "appLockAnim") {
+            if (!["slideUp", "fadeScale", "curtain", "none"].includes(value)) return false;
+            if (settings.appLockAnim === value && status.storage !== "loading" && status.storage !== "waiting") return true;
+            settings.appLockAnim = value; dirty.add(key); save(); notify(key); appLockSync(false); return true;
         }
         if (key === "mediaEditorMode") {
             if (!["ask", "mute", "manual"].includes(value)) return false;
@@ -23850,6 +23856,7 @@
             timeoutSec:Number(settings.appLockTimeout) || 0,
             pin:String(settings.appLockPin || ""),
             biometric:!!settings.appLockBiometric,
+            anim:String(settings.appLockAnim || "slideUp"),
             lockNow:!!lockNow,
             title:tr("Discord is Locked"),
             subtitle:tr("Enter your PIN passcode to unlock"),
@@ -23934,17 +23941,21 @@
             ? el(ui.BottomSheetTitleHeader, {title:tr(step === 1 ? "Enter new PIN (4-8 digits)" : "Confirm your PIN"),
                 trailing:ui.ActionSheetCloseButton ? el(ui.ActionSheetCloseButton, {onPress:closeSheet}) : null})
             : null;
+        const brandColor = (k.brand && k.brand.backgroundColor) || "#5865f2";
+        const winW = (RN.Dimensions && typeof RN.Dimensions.get === "function" && RN.Dimensions.get("window")?.width) || 360;
+        const keySize = Math.min(86, Math.max(72, Math.floor((winW - 88) / 3)));
         const rows = [["1", "2", "3"], ["4", "5", "6"], ["7", "8", "9"], ["CLR", "0", "DEL"]];
         const keyBtn = code => {
             const label = code === "DEL" ? "\u232B" : code === "CLR" ? tr("Clear") : code;
             const isAction = code === "DEL" || code === "CLR";
             return el(Press, {key:code, onPress:() => onKey(code),
-                style:state => [k.card, {width:68, height:68, borderRadius:34, borderWidth:1, alignItems:"center", justifyContent:"center",
-                    opacity:state && state.pressed ? 0.65 : 1, transform:state && state.pressed ? [{scale:0.94}] : [{scale:1}]}]},
-                el(RN.Text, {style:[s.name, {fontSize:isAction ? 14 : 22, color:isAction ? s.muted.color : s.name.color}]}, label));
+                style:state => [k.card, {width:keySize, height:keySize, borderRadius:keySize / 2, borderWidth:1.2, alignItems:"center", justifyContent:"center",
+                    backgroundColor:state && state.pressed ? (k.secondary && k.secondary.backgroundColor || "#3a3d45") : k.card.backgroundColor,
+                    borderColor:state && state.pressed ? brandColor : k.card.borderColor,
+                    transform:state && state.pressed ? [{scale:0.90}] : [{scale:1}]}]},
+                el(RN.Text, {style:[s.name, {fontSize:isAction ? 14 : 25, color:isAction ? s.muted.color : s.name.color}]}, label));
         };
-        const brandColor = (k.brand && k.brand.backgroundColor) || "#5865f2";
-        const content = el(RN.View, {style:{minHeight:470, justifyContent:"space-between", paddingHorizontal:16, paddingTop:10, paddingBottom:28, gap:18, alignItems:"center"}},
+        const content = el(RN.View, {style:{minHeight:520, justifyContent:"space-between", paddingHorizontal:16, paddingTop:12, paddingBottom:32, gap:20, alignItems:"center"}},
             el(RN.View, {style:{alignItems:"center", gap:12, width:"100%"}},
                 el(RN.View, {style:[k.secondary, {width:48, height:48, borderRadius:24, alignItems:"center", justifyContent:"center"}]},
                     el(Lock, {size:"md", color:k.brandFg.color})),
@@ -24027,6 +24038,17 @@
             el(Group, {key:"timeout", title:tr("Relock timeout")},
                 timeouts.map(([sec, label]) => Radio ? el(Radio, {key:String(sec), label:tr(label), selected:settings.appLockTimeout === sec,
                     disabled:!on, onPress:() => { haptic("SELECTION"); setSetting("appLockTimeout", sec); }}) : null)),
+            el(Group, {key:"anim", title:tr("Unlock animation")},
+                Radio ? [
+                    el(Radio, {key:"slideUp", label:tr("Lock opens & slides up"), subLabel:tr("Opens the padlock icon and slides the lock screen up."),
+                        selected:settings.appLockAnim === "slideUp", disabled:!on, onPress:() => { haptic("SELECTION"); setSetting("appLockAnim", "slideUp"); }}),
+                    el(Radio, {key:"fadeScale", label:tr("Fade & zoom"), subLabel:tr("Gently fades and zooms out after unlocking."),
+                        selected:settings.appLockAnim === "fadeScale", disabled:!on, onPress:() => { haptic("SELECTION"); setSetting("appLockAnim", "fadeScale"); }}),
+                    el(Radio, {key:"curtain", label:tr("Split & dissolve"), subLabel:tr("Slides the header up and keypad down in opposite directions."),
+                        selected:settings.appLockAnim === "curtain", disabled:!on, onPress:() => { haptic("SELECTION"); setSetting("appLockAnim", "curtain"); }}),
+                    el(Radio, {key:"none", label:tr("Instant"), subLabel:tr("Closes immediately with no animation."),
+                        selected:settings.appLockAnim === "none", disabled:!on, onPress:() => { haptic("SELECTION"); setSetting("appLockAnim", "none"); }})
+                ] : null),
             el(Group, {key:"test", title:tr("Test")},
                 actionRow(ui, "testLock", "Test lock screen now", "Opens the native lock overlay right now to verify your PIN.",
                     () => { haptic("SELECTION"); appLockSync(false); diagCall("lockTest", "").catch(() => {}); }, !on, false, rowIcon(8771, "LockIcon"))),
