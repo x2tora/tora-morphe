@@ -87,7 +87,7 @@
     if (features.appLock) selectModules([1385]);
     if (features.mediaEditor) selectModules([8311, 8333, 9901, 10366, 10680]);
     if (features.latexRender) selectModules([572, 6226, 8481, 10340, 11763]);
-    const revision = "1.23.8";
+    const revision = "1.23.9";
     // The Discord build these patches are pinned to (DiscordPatches.kt compatibleWith); shown on the About page.
     const DISCORD_VERSION = "354.12";
     // Module 120 owns setUpDefaltReactNativeEnvironment in this exact asset.
@@ -350,7 +350,8 @@
         notifyCount++;
         const owner = key && key !== "*" ? featureFor(key) : null;
         listeners.forEach(entry => {
-            if (!entry.key || key === "*" || entry.key === key || owner && entry.key === owner) entry.fn();
+            if (!entry.key || key === "*" || entry.key === key || (owner && entry.key === owner) ||
+                (entry.key === "@features" && (key === "hiddenFeatures" || owns(FEATURE_ICONS, key)))) entry.fn();
         });
     };
     const data = (obj, key) => {
@@ -1307,9 +1308,18 @@
     function openLink(url) {
         try { if (RN && RN.Linking && typeof RN.Linking.openURL === "function") RN.Linking.openURL(url).catch(() => {}); } catch (_) {}
     }
+    let activeKeysCache = null, activeKeysCount = -1;
+    function activeFeatureKeys() {
+        const n = Object.keys(features).length;
+        if (!activeKeysCache || activeKeysCount !== n) {
+            activeKeysCount = n;
+            activeKeysCache = Object.keys(FEATURE_ICONS).filter(key => features[key]);
+        }
+        return activeKeysCache;
+    }
     // "5 of 26 features on": main switches only, and only the features that were patched in.
     function featureSummary() {
-        const keys = Object.keys(FEATURE_ICONS).filter(key => features[key]);
+        const keys = activeFeatureKeys();
         const on = keys.filter(key => settings[key]).length;
         return keys.length ? tr("{on} of {total} features on. Turn them on or off in Features.", {on, total:keys.length}) : tr("No features were patched in.");
     }
@@ -1510,10 +1520,17 @@
     let hiddenCache = null;
     function hiddenFeatureKeys() {
         const text = settings.hiddenFeatures || "";
-        if (!hiddenCache || hiddenCache.text !== text) hiddenCache = {text, keys:text ? text.split(",").filter(key => features[key]) : []};
+        if (!hiddenCache || hiddenCache.text !== text) {
+            const keys = text ? text.split(",").filter(key => features[key]) : [];
+            hiddenCache = {text, keys, set:new Set(keys)};
+        }
         return hiddenCache.keys;
     }
-    function featureHidden(key) { return !!settings.hiddenFeatures && hiddenFeatureKeys().indexOf(key) >= 0; }
+    function hiddenFeatureSet() {
+        hiddenFeatureKeys();
+        return hiddenCache.set;
+    }
+    function featureHidden(key) { return !!settings.hiddenFeatures && hiddenFeatureSet().has(key); }
     function setFeatureHidden(key, hide) {
         const keys = (settings.hiddenFeatures ? settings.hiddenFeatures.split(",") : []).filter(entry => entry !== key);
         if (hide) keys.push(key);
@@ -1556,11 +1573,14 @@
     // Under the search bar: how many are on, and Edit list (Done while editing). Its own component, so the header's
     // hooks never change between renders.
     function FeatureListBar() {
-        useFeatureSearch(); useSettings();
+        useFeatureSearch(); useSettings("@features");
         const s = useFeatureBarStyles();
         if (!RN) return null;
         const Text = inspectedExport(5783, "Text"), Press = RN.Pressable || RN.TouchableOpacity || RN.View, edit = featureList.edit;
-        const keys = Object.keys(FEATURE_ICONS).filter(key => features[key]), on = keys.filter(key => settings[key]).length, hidden = hiddenFeatureKeys().length;
+        const keys = activeFeatureKeys();
+        let on = 0;
+        for (let i = 0; i < keys.length; i++) if (settings[keys[i]]) on++;
+        const hidden = hiddenFeatureKeys().length;
         const summary = edit ? tr("Tap the eye to hide or show a feature.") :
             tr("{on} of {total} turned on", {on, total:keys.length}) + (hidden ? " \u00b7 " + pl(hidden, "{n} feature hidden", "{n} features hidden") : "");
         const label = tr(edit ? "Done" : "Edit list"), Icon = edit ? venusIcon(7399, "CheckmarkSmallIcon") : venusIcon(10383, "PencilIcon");
@@ -1592,7 +1612,7 @@
     // the rows that match, still under their group titles, and the search clears when you leave the page.
     // Hidden features leave their groups for one Hidden features row at the bottom that opens to show them, still
     // working; Edit list shows every feature with an eye instead of its switch. Search always looks through all of them.
-    function featuresPage(groups, keyOf) {
+    function featuresPage(groups, keyOf, categoryIds) {
         let header = null, built = null;
         return function VenusFeaturesPage() {
             useFeatureSearch(); useSettings("hiddenFeatures");
@@ -1601,25 +1621,63 @@
             if (!React || !List) return null;
             if (!header) header = el(RN.View, {key:"venus-header"}, el(FeatureSearchBar, {key:"search"}), el(FeatureListBar, {key:"bar"}));
             const query = featureSearch.query.trim(), ids = query ? featureMatches(query) : null, edit = featureList.edit;
-            const hidden = hiddenFeatureKeys(), open = featureList.open;
-            const signature = (edit ? "e" : "v") + "|" + (query ? "q" : "") + "|" + hidden.join(",") + "|" + (open ? 1 : 0);
+            const hiddenSet = hiddenFeatureSet(), hiddenCount = hiddenSet.size, open = featureList.open;
+            const hiddenSig = hiddenCount ? hiddenFeatureKeys().join(",") : "";
+            const signature = (edit ? "e" : "v") + "|" + (query ? "q" : "") + "|" + hiddenSig + "|" + (open ? 1 : 0);
             if (built && built.signature === signature && built.ids === ids) return el(List, {node:built.node});
-            const sections = groups.map(([label, list]) => {
-                let shown = ids ? list.filter(id => ids.has(id)) : list;
-                if (edit) shown = shown.map(id => "VENUS_EDIT_" + keyOf[id]);
-                else if (!ids && hidden.length) shown = shown.filter(id => hidden.indexOf(keyOf[id]) < 0);
-                return section(label, shown);
-            }).filter(entry => entry.settings.length);
-            if (!edit && !ids && hidden.length) {
-                const rows = ["VENUS_HIDDEN_TOGGLE"];
-                if (open) {
-                    groups.forEach(([, list]) => list.forEach(id => { if (hidden.indexOf(keyOf[id]) >= 0) rows.push(id); }));
-                    rows.push("VENUS_HIDDEN_SHOWALL");
+            let sections;
+            if (edit || ids) {
+                sections = groups.map(([label, list]) => {
+                    let shown = ids ? list.filter(id => ids.has(id)) : list;
+                    if (edit) shown = shown.map(id => "VENUS_EDIT_" + keyOf[id]);
+                    return section(label, shown);
+                }).filter(entry => entry.settings.length);
+            } else {
+                sections = [
+                    section("Active features", ["VENUS_CAT_ACTIVE"]),
+                    section("Categories", categoryIds)
+                ].filter(entry => entry.settings.length);
+                if (hiddenCount) {
+                    const rows = ["VENUS_HIDDEN_TOGGLE"];
+                    if (open) {
+                        groups.forEach(([, list]) => list.forEach(id => { if (hiddenSet.has(keyOf[id])) rows.push(id); }));
+                        rows.push("VENUS_HIDDEN_SHOWALL");
+                    }
+                    sections.push(section("Hidden features", rows));
                 }
-                sections.push(section("Hidden features", rows));
             }
             built = {signature, ids, node:{type:"list", ListHeaderComponent:header, sections}};
             return el(List, {node:built.node});
+        };
+    }
+    function categoryPage(label, list, keyOf) {
+        let built = null;
+        return function VenusCategoryPage() {
+            useSettings("hiddenFeatures");
+            const List = SettingsList || (SettingsList = inspectedExport(16937, "SettingsList"));
+            if (!React || !List) return null;
+            const hiddenSet = hiddenFeatureSet();
+            const sig = hiddenSet.size ? hiddenFeatureKeys().join(",") : "";
+            if (built && built.sig === sig) return el(List, {node:built.node});
+            const shown = hiddenSet.size ? list.filter(id => !hiddenSet.has(keyOf[id])) : list;
+            const sections = shown.length ? [section(label, shown)] : [];
+            built = {sig, node:{type:"list", sections}};
+            return el(List, {node:built.node});
+        };
+    }
+    function activeFeaturesPage(groups, keyOf) {
+        return function VenusActiveFeaturesPage() {
+            useSettings("@features");
+            useLanguage();
+            const List = SettingsList || (SettingsList = inspectedExport(16937, "SettingsList"));
+            if (!React || !List) return null;
+            const sections = groups.map(([label, list]) => section(label, list.filter(id => !!settings[keyOf[id]])))
+                .filter(entry => entry.settings.length);
+            if (!sections.length) {
+                const ui = reviewUI();
+                return settingsBody(ui, [statusCard("noActive", "Turn on features from any category or use Search above to find one.", {title:tr("No active features yet"), IconComponent:venusIcon(7399, "CheckmarkSmallIcon")})]);
+            }
+            return el(List, {node:{type:"list", sections}});
         };
     }
     function settingNode(key, title, description, parent) {
@@ -1938,13 +1996,45 @@
             useTitle: () => { useLanguage(); return tr("Show all"); },
             useDescription: () => tr("Puts every hidden feature back in its group."), onPress: showAllFeatures };
         // The nodes above stay for Discord's settings search; the page itself adds the Features search bar.
-        const FeaturesPage = featuresPage(listed, keyOf);
+        const categoryIds = [];
+        FEATURE_GROUPS.forEach(([groupKey, label, iconId, iconName]) => {
+            const list = groups[groupKey], gKeys = groups.keys[groupKey];
+            if (!list || !list.length) return;
+            const catId = "VENUS_CAT_" + groupKey.toUpperCase();
+            categoryIds.push(catId);
+            route(catId, label, [], P, venusIcon(iconId, iconName, icon));
+            next[catId].unsearchable = true;
+            const CatPage = categoryPage(label, list, keyOf);
+            next[catId].screen.getComponent = () => CatPage;
+            next[catId].useDescription = function () {
+                useSettings("@features");
+                useLanguage();
+                let on = 0;
+                for (let i = 0; i < gKeys.length; i++) if (settings[gKeys[i]]) on++;
+                return tr("{on} of {total} turned on", {on, total:gKeys.length});
+            };
+        });
+        route("VENUS_CAT_ACTIVE", "Active features", [], P, venusIcon(7399, "CheckmarkSmallIcon", icon));
+        next.VENUS_CAT_ACTIVE.unsearchable = true;
+        const ActivePage = activeFeaturesPage(listed, keyOf);
+        next.VENUS_CAT_ACTIVE.screen.getComponent = () => ActivePage;
+        next.VENUS_CAT_ACTIVE.useDescription = function () {
+            useSettings("@features");
+            useLanguage();
+            const keys = activeFeatureKeys();
+            let on = 0;
+            for (let i = 0; i < keys.length; i++) if (settings[keys[i]]) on++;
+            return on ? tr("{on} of {total} turned on", {on, total:keys.length}) : tr("No active features yet");
+        };
+        const FeaturesPage = featuresPage(listed, keyOf, categoryIds);
         next[P].screen.getComponent = () => FeaturesPage;
         // "5 of 26 on", right on the entry, so you see at a glance what Venus is doing before opening it.
         next[P].useDescription = function () {
-            useSettings();
-            const keys = Object.keys(FEATURE_ICONS).filter(key => features[key]);
-            return tr("{on} of {total} turned on", {on:keys.filter(key => settings[key]).length, total:keys.length});
+            useSettings("@features");
+            const keys = activeFeatureKeys();
+            let on = 0;
+            for (let i = 0; i < keys.length; i++) if (settings[keys[i]]) on++;
+            return tr("{on} of {total} turned on", {on, total:keys.length});
         };
         // Language: the language Venus settings are shown in, Discord's own by default.
         route("VENUS_LANGUAGE", "Language", [], undefined, venusIcon(9741, "LanguageIcon", icon));

@@ -1688,7 +1688,7 @@ object Diagnostics {
             errView.visibility = View.INVISIBLE
 
             var unlocking = false
-            val dotViews = ArrayList<View>()
+            val dotDrawables = ArrayList<GradientDrawable>()
             var keyContainerRef: LinearLayout? = null
             val finishUnlock = object : Runnable {
                 override fun run() {
@@ -1715,11 +1715,10 @@ object Diagnostics {
                         return
                     }
                     // Fill all dots + tint badge green for clear unlock confirmation.
-                    for (i in 0 until dotViews.size) {
-                        val gd = GradientDrawable()
-                        gd.shape = GradientDrawable.OVAL
+                    for (i in 0 until dotDrawables.size) {
+                        val gd = dotDrawables.get(i)
                         gd.setColor(0xFF23A55A.toInt())
-                        dotViews.get(i).background = gd
+                        gd.setStroke(0, 0)
                     }
                     val okBg = GradientDrawable()
                     okBg.shape = GradientDrawable.OVAL
@@ -1800,13 +1799,19 @@ object Diagnostics {
                 dotsRow.gravity = Gravity.CENTER
                 val dotSize = dpPx(activity, 14)
                 val dotGap = dpPx(activity, 7)
+                val dotStrokePx = dpPx(activity, 1)
                 for (i in 0 until pinLen) {
                     val dot = View(activity)
+                    val gd = GradientDrawable()
+                    gd.shape = GradientDrawable.OVAL
+                    gd.setColor(0x18FFFFFF)
+                    gd.setStroke(dotStrokePx, 0x44FFFFFF)
+                    dot.background = gd
                     val lp = LinearLayout.LayoutParams(dotSize, dotSize)
                     lp.leftMargin = dotGap
                     lp.rightMargin = dotGap
                     dotsRow.addView(dot, lp)
-                    dotViews.add(dot)
+                    dotDrawables.add(gd)
                 }
                 val dotsLp = LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT)
                 dotsLp.bottomMargin = dpPx(activity, 12)
@@ -1823,16 +1828,15 @@ object Diagnostics {
                     override fun run() {
                         if (unlocking) return
                         val filledLen = enteredBuf.length
-                        for (i in 0 until dotViews.size) {
-                            val gd = GradientDrawable()
-                            gd.shape = GradientDrawable.OVAL
+                        for (i in 0 until dotDrawables.size) {
+                            val gd = dotDrawables.get(i)
                             if (i < filledLen) {
                                 gd.setColor(BRAND)
+                                gd.setStroke(0, 0)
                             } else {
                                 gd.setColor(0x18FFFFFF)
-                                gd.setStroke(dpPx(activity, 1), 0x44FFFFFF)
+                                gd.setStroke(dotStrokePx, 0x44FFFFFF)
                             }
-                            dotViews.get(i).background = gd
                         }
                     }
                 }

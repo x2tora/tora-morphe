@@ -1,3 +1,10 @@
+## [1.23.9](https://github.com/x2tora/tora-morphe/compare/v1.23.8...v1.23.9) (2026-11-21)
+
+### 🔧 Improvements
+
+* **Discord - Settings:** Organized the Features page into native category navigation rows and an **Active features** shortcut with live enabled counts while keeping global search and Edit list intact
+* **Discord - Performance:** Cached active feature keys, reduced `FeatureListBar` re-renders via `@features` subscription, switched hidden feature lookups to `Set`, and reused PIN dot `GradientDrawable` instances in `Diagnostics`
+
 ## [1.23.8](https://github.com/x2tora/tora-morphe/compare/v1.23.7...v1.23.8) (2026-11-21)
 
 ### 🐛 Bug Fixes
