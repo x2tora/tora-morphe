@@ -87,7 +87,7 @@
     if (features.appLock) selectModules([1385]);
     if (features.mediaEditor) selectModules([8311, 8333, 9901, 10366, 10680]);
     if (features.latexRender) selectModules([572, 6226, 8481, 10340, 11763]);
-    const revision = "1.23.6";
+    const revision = "1.23.7";
     // The Discord build these patches are pinned to (DiscordPatches.kt compatibleWith); shown on the About page.
     const DISCORD_VERSION = "354.12";
     // Module 120 owns setUpDefaltReactNativeEnvironment in this exact asset.
@@ -23888,7 +23888,7 @@
         useLanguage();
         const ui = reviewUI(), s = useChatPreviewStyles(), k = usePreviewChrome();
         if (!RN) return null;
-        const Button = ui.Button, Press = RN.Pressable || RN.TouchableOpacity, Lock = venusIcon(8771, "LockIcon");
+        const Button = inspectedExport(5790, "Button"), Press = RN.Pressable || RN.TouchableOpacity, Lock = venusIcon(8771, "LockIcon");
         const [step, setStep] = React.useState(1);
         const [firstPin, setFirstPin] = React.useState("");
         const [confirmPin, setConfirmPin] = React.useState("");
@@ -23897,7 +23897,8 @@
         const activePin = step === 1 ? firstPin : confirmPin;
         const targetDots = step === 1 ? Math.max(4, Math.min(8, firstPin.length || 4)) : firstPin.length;
         const closeSheet = () => {
-            if (ui.ActionSheetActionCreators?.hideActionSheet) ui.ActionSheetActionCreators.hideActionSheet(APP_LOCK_PIN_SHEET);
+            if (ui.sheets && typeof ui.sheets.hideActionSheet === "function") ui.sheets.hideActionSheet(APP_LOCK_PIN_SHEET);
+            else if (ui.ActionSheetActionCreators && typeof ui.ActionSheetActionCreators.hideActionSheet === "function") ui.ActionSheetActionCreators.hideActionSheet(APP_LOCK_PIN_SHEET);
         };
         const goNext = () => {
             if (firstPin.length < 4) return;
@@ -23950,9 +23951,10 @@
             }
         };
 
-        const header = ui.BottomSheetTitleHeader
-            ? el(ui.BottomSheetTitleHeader, {title:tr(step === 1 ? "Enter new PIN (4-8 digits)" : "Confirm your PIN"),
-                trailing:ui.ActionSheetCloseButton ? el(ui.ActionSheetCloseButton, {onPress:closeSheet}) : null})
+        const Header = ui.Header || ui.BottomSheetTitleHeader, Close = ui.Close || ui.ActionSheetCloseButton;
+        const header = Header
+            ? el(Header, {title:tr(step === 1 ? "Enter new PIN (4-8 digits)" : "Confirm your PIN"),
+                trailing:Close ? el(Close, {onPress:closeSheet}) : null})
             : null;
         const brandColor = (k.brand && k.brand.backgroundColor) || "#5865f2";
         const winW = (RN.Dimensions && typeof RN.Dimensions.get === "function" && RN.Dimensions.get("window")?.width) || 360;

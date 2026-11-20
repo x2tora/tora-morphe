@@ -1,3 +1,9 @@
+## [1.23.7](https://github.com/x2tora/tora-morphe/compare/v1.23.6...v1.23.7) (2026-11-21)
+
+### 🐛 Bug Fixes
+
+* **Discord - App lock:** Fixed the **Next** / **Start over** action buttons, header, and close handler not rendering in the PIN setup sheet (`inspectedExport(5790, "Button")` and `ui.sheets.hideActionSheet`)
+
 ## [1.23.6](https://github.com/x2tora/tora-morphe/compare/v1.23.5...v1.23.6) (2026-11-21)
 
 ### 🐛 Bug Fixes
