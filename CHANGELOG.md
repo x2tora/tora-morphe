@@ -1,4 +1,4 @@
-## [1.22.0](https://github.com/x2tora/Venus-Patches-xitora/compare/v1.21.1...v1.22.0) (2026-11-20)
+## [1.22.0](https://github.com/x2tora/tora-morphe/compare/v1.21.1...v1.22.0) (2026-11-20)
 
 ### 🚀 Updated App Support
 

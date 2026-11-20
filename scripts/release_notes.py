@@ -13,7 +13,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 CHANGELOG = ROOT / "CHANGELOG.md"
-REPO = "https://github.com/x2tora/Venus-Patches-xitora"
+REPO = "https://github.com/x2tora/tora-morphe"
 
 # The headings Morphe Manager maps to its own icons and titles, in the order they're written. App support comes
 # first, so the Discord version a release works with is the first thing you read.
