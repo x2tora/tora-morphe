@@ -508,6 +508,10 @@ BOOTSTRAP_MODULES = [
     (11226, 'design/components/Icon/native/redesign/generated/FileIcon.tsx', ['FileIcon'], 'FileIcon (View raw data)'),
     (8764, 'design/components/Icon/native/redesign/generated/ForumIcon.tsx', ['ForumIcon'], 'ForumIcon (View raw data)'),
     (15004, 'design/components/Icon/native/redesign/generated/ShieldLockIcon.tsx', ['ShieldLockIcon'], 'ShieldLockIcon (View raw data)'),
+    (8792, 'modules/messages/native/renderer/transformEmbeds.tsx', ['Embed', 'MessageEmbedTypes'], 'transformEmbeds (Privacy blur: embed spoiler obscures)'),
+    (9901, 'actions/UploadAttachmentActionCreators.tsx', ['default', 'addFile', 'addFiles'], 'UploadAttachmentActionCreators (Trim and mute media: update upload item)'),
+    (10680, 'modules/media_uploads/native/UploadPreviewActionSheet.tsx', ['BottomSheet', 'DraftType'], 'UploadPreviewActionSheet (Trim and mute media & Strip EXIF rows)'),
+    (14978, 'modules/main_tabs_v2/native/tabs/you/YouScreenNavIcon.tsx', ['IconComponent', 'PressableScale'], 'YouScreenNavIcon (Message bookmarks: profile shortcut)'),
 ]
 
 

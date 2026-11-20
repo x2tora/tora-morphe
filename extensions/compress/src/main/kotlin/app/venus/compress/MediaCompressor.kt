@@ -644,9 +644,29 @@ object MediaCompressor {
         var muxer: MediaMuxer? = null
         var muxerStarted = false
         var output: File? = null
+        var tempInput: File? = null
         var success = false
         try {
-            extractor.setDataSource(context, uri, null)
+            try {
+                extractor.setDataSource(context, uri, null)
+            } catch (_: Exception) {
+                val input = open(context, uri)
+                val tmp = File(directory, id + "_in.tmp")
+                val out = FileOutputStream(tmp)
+                val buf = ByteArray(32 * 1024)
+                try {
+                    while (true) {
+                        val n = input.read(buf)
+                        if (n < 0) break
+                        out.write(buf, 0, n)
+                    }
+                } finally {
+                    try { out.close() } catch (_: Exception) { }
+                    try { input.close() } catch (_: Exception) { }
+                }
+                tempInput = tmp
+                extractor.setDataSource(tmp.absolutePath)
+            }
             require(extractor.drmInitData == null) { "Protected media is not supported" }
             val trackCount = extractor.trackCount
             val trackMap = IntArray(trackCount)
@@ -756,6 +776,7 @@ object MediaCompressor {
                 try { m.release() } catch (_: Exception) { }
             }
             try { extractor.release() } catch (_: Exception) { }
+            if (tempInput != null) try { tempInput.delete() } catch (_: Exception) { }
             if (!success && output != null) output.delete()
         }
     }

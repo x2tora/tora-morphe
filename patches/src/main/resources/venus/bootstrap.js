@@ -78,16 +78,15 @@
     if (features.hideAnything) selectModules([15076, 16939, 16940, 9745, 10690, 17422, 17511, 14062, 14066, 14070, 14078, 14079, 14832, 15316, 16759, 18457, 16199, 9092, 9328, 11586, 14111, 16139, 16145, 16075, 16149, 12374, 12375, 15309, 11669, 7448, 15290, 15171, 18456, 18561, 14312, 12741, 11569, 19290, 18065, 18563, 19204, 19192, 11812, 10340, 14805, 13656, 11150, 14815, 8770, 10237]);
     if (features.voiceOptions) { targetModules[572] = 1; targetModules[11192] = 1; targetModules[6793] = 1; }
     if (features.keywordNotify) selectModules([572, 1099, 1385, 5019, 5041, 5073, 10362, 15843, 15878]);
-    if (features.bookmarks) selectModules([1099, 1385, 5019, 5041, 6226, 10340]);
-    if (features.privacyBlur) selectModules([572, 6226, 8481, 10340]);
+    if (features.bookmarks) selectModules([572, 1099, 1385, 5019, 5041, 6226, 8481, 9745, 10340, 14978, 18855]);
+    if (features.privacyBlur) selectModules([572, 6226, 8481, 8792, 10340]);
     if (features.batchMediaSave) selectModules([1441, 6226, 10340]);
-    if (features.stripExif) selectModules([8311, 8333, 10366]);
-    if (features.urlUnshortener) selectModules([10340, 11763]);
-    if (features.zipPreview) selectModules([6226, 10340]);
+    if (features.stripExif) selectModules([8311, 8333, 9901, 10366, 10680]);
+    if (features.zipPreview) selectModules([572, 6226, 8481, 10340, 11763]);
     if (features.reminders) selectModules([572, 1099, 1385, 5019, 5041, 6226, 10340]);
-    if (features.appLock) selectModules([572, 1099, 1385, 5019, 10340, 10954, 11177]);
-    if (features.mediaEditor) selectModules([8311, 8333, 10366]);
-    if (features.latexRender) selectModules([572, 6226, 8481, 10340]);
+    if (features.appLock) selectModules([1385]);
+    if (features.mediaEditor) selectModules([8311, 8333, 9901, 10366, 10680]);
+    if (features.latexRender) selectModules([572, 6226, 8481, 10340, 11763]);
     const revision = "1.23.0";
     // The Discord build these patches are pinned to (DiscordPatches.kt compatibleWith); shown on the About page.
     const DISCORD_VERSION = "354.12";
@@ -111,10 +110,12 @@
         messageHighlight:false, messageHighlightThickness:2, messageHighlightBrightness:50, messageHighlightPingColor:"default", serverInfo:false, serverInfoFriends:true, serverEdit:false,
         fixEmbeds:false, fixEmbedsSites:"", fixEmbedsOptions:"", tenorGifs:false, tenorGifsSource:"both", hideBlocked:false, hideBlockedBlocked:true, hideBlockedIgnored:true, hideBlockedReplies:false, hideBlockedCloseDms:false, bulkDelete:false, bulkDeleteConfirm:true, bulkDeleteIncludeCached:true, experiments:false, noHandsfree:false, voiceOptions:false, voiceOptionsVolume:false, voiceOptionsVolumeLevel:50, voiceOptionsOutput:"default", voiceOptionsJoinSound:true, voiceOptionsLeaveSound:true, voiceOptionsSoundVolume:100, voiceOptionsExit:false, voiceOptionsExitSound:"", cleanChannels:false, cleanChannelsEmoji:true, cleanChannelsSymbols:true, cleanChannelsFonts:true, cleanChannelsSpaces:false, anonFiles:false, staffTag:false, staffTagOwner:true, staffTagAdmin:true, staffTagManager:true, staffTagMod:true, staffTagCrown:true, removedAlerts:false, removedAlertsFriends:true, removedAlertsServers:true, removedAlertsClosed:true, removedAlertsPush:false, fullImages:false, fullImagesChat:true, fullImagesViewer:true, fullImagesGifs:false, fullImagesAvatars:true, alwaysTrust:false, alwaysTrustLinks:true, alwaysTrustFiles:true, noConfirmPin:false, clickableMentions:false, expandBar:false, expandBarSending:true, expandBarChats:true, silentLeave:false, silentEdit:false, silentEditNotice:true, silentDelete:false, localEdit:false, localEditMark:true, guildLurk:false, guildLurkIds:"", quietReplies:false, viewRaw:false, viewRawMessages:true, viewRawChannels:true, viewRawServers:true, viewRawPeople:true, viewRawRoles:true, viewRawHideContact:true, viewRawWrap:true, timeoutDuration:false, dndBanners:false, voiceDownload:false, cloneExpressions:false, listenAlong:false, listenAlongOffset:0, backgroundMedia:false, backgroundMediaAudio:true, backgroundMediaVideo:true, backgroundMediaSkip:10, landscapeFull:false, quietRepliesGuilds:true, quietRepliesGroups:true, quietRepliesMentioned:false, compressUploads:false, compressUploadsPhotos:true, compressUploadsVideos:true, compressUploadsAudio:true, hideAnything:false, hideAnythingSpots:"", fakeDeafen:false, fakeDeafenMuteMic:true, language:"auto", hiddenFeatures:"",
         hypeSquad:false, customIdle:false, customIdleMinutes:10, pauseInvites:false, fastDeleteChannels:false, fastDeleteChannelsConfirm:true, fastDeleteChannelsMenu:true, mutualGroupDMs:false, platformSpoof:false, platformSpoofDevice:"desktop",
-        keywordNotify:false, keywordNotifyWords:"", keywordNotifyExcluded:"", keywordNotifyCase:false, keywordNotifyPush:true, keywordNotifyLog:true,
-        bookmarks:false, privacyBlur:false, privacyBlurAvatars:false, batchMediaSave:false, stripExif:false,
-        urlUnshortener:false, urlUnshortenerAll:false, zipPreview:false, reminders:false,
-        appLock:false, appLockTimeout:0, secretDms:true, secretDmIds:"",
+        keywordNotify:false, keywordNotifyWords:"", keywordNotifyExcluded:"", keywordNotifyCase:false, keywordNotifyIgnoreOpen:true, keywordNotifyPush:true, keywordNotifyLog:true,
+        bookmarks:false, bookmarksHighlight:true, bookmarksProfileShortcut:true,
+        privacyBlur:false, privacyBlurImages:true, privacyBlurEmbeds:true, privacyBlurAvatars:false,
+        batchMediaSave:false, stripExif:false, stripExifToast:true,
+        zipPreview:false, reminders:false,
+        appLock:false, appLockTimeout:0, appLockPin:"",
         mediaEditor:false, mediaEditorMode:"ask", mediaEditorDefaultMute:false,
         latexRender:false, latexRenderInline:true };
     // The settings every feature starts from, for Reset to defaults on the Backup page.
@@ -135,10 +136,12 @@
             messageHighlight: false, messageHighlightThickness: 2, messageHighlightBrightness: 50, messageHighlightPingColor: "default", serverInfo: false, serverInfoFriends: true, serverEdit: false,
             fixEmbeds: false, fixEmbedsSites: "", fixEmbedsOptions: "", tenorGifs: false, tenorGifsSource: "both", hideBlocked: false, hideBlockedBlocked: true, hideBlockedIgnored: true, hideBlockedReplies: false, hideBlockedCloseDms: false, bulkDelete: false, bulkDeleteConfirm: true, bulkDeleteIncludeCached: true, experiments: false, noHandsfree: false, voiceOptions: false, voiceOptionsVolume: false, voiceOptionsVolumeLevel: 50, voiceOptionsOutput: "default", voiceOptionsJoinSound: true, voiceOptionsLeaveSound: true, voiceOptionsSoundVolume: 100, voiceOptionsExit: false, voiceOptionsExitSound: "", cleanChannels: false, cleanChannelsEmoji: true, cleanChannelsSymbols: true, cleanChannelsFonts: true, cleanChannelsSpaces: false, anonFiles: false, staffTag: false, staffTagOwner: true, staffTagAdmin: true, staffTagManager: true, staffTagMod: true, staffTagCrown: true, removedAlerts: false, removedAlertsFriends: true, removedAlertsServers: true, removedAlertsClosed: true, removedAlertsPush: false, fullImages: false, fullImagesChat: true, fullImagesViewer: true, fullImagesGifs: false, fullImagesAvatars: true, alwaysTrust: false, alwaysTrustLinks: true, alwaysTrustFiles: true, noConfirmPin: false, clickableMentions: false, expandBar: false, expandBarSending: true, expandBarChats: true, silentLeave: false, silentEdit: false, silentEditNotice: true, silentDelete: false, localEdit: false, localEditMark: true, guildLurk: false, guildLurkIds: "", quietReplies: false, viewRaw: false, viewRawMessages: true, viewRawChannels: true, viewRawServers: true, viewRawPeople: true, viewRawRoles: true, viewRawHideContact: true, viewRawWrap: true, timeoutDuration: false, dndBanners: false, voiceDownload: false, cloneExpressions: false, listenAlong: false, listenAlongOffset: 0, backgroundMedia: false, backgroundMediaAudio: true, backgroundMediaVideo: true, backgroundMediaSkip: 10, landscapeFull: false, quietRepliesGuilds: true, quietRepliesGroups: true, quietRepliesMentioned: false, compressUploads: false, compressUploadsPhotos: true, compressUploadsVideos: true, compressUploadsAudio: true, hideAnything: false, hideAnythingSpots: "", fakeDeafen: false, fakeDeafenMuteMic: true, language: "auto", hiddenFeatures: "",
             hypeSquad: false, customIdle: false, customIdleMinutes: 10, pauseInvites: false, fastDeleteChannels: false, fastDeleteChannelsConfirm: true, fastDeleteChannelsMenu: true, mutualGroupDMs: false, platformSpoof: false, platformSpoofDevice: "desktop",
-            keywordNotify: false, keywordNotifyWords: "", keywordNotifyExcluded: "", keywordNotifyCase: false, keywordNotifyPush: true, keywordNotifyLog: true,
-            bookmarks: false, privacyBlur: false, privacyBlurAvatars: false, batchMediaSave: false, stripExif: false,
-            urlUnshortener: false, urlUnshortenerAll: false, zipPreview: false, reminders: false,
-            appLock: false, appLockTimeout: 0, secretDms: true, secretDmIds: "",
+            keywordNotify: false, keywordNotifyWords: "", keywordNotifyExcluded: "", keywordNotifyCase: false, keywordNotifyIgnoreOpen: true, keywordNotifyPush: true, keywordNotifyLog: true,
+            bookmarks: false, bookmarksHighlight: true, bookmarksProfileShortcut: true,
+            privacyBlur: false, privacyBlurImages: true, privacyBlurEmbeds: true, privacyBlurAvatars: false,
+            batchMediaSave: false, stripExif: false, stripExifToast: true,
+            zipPreview: false, reminders: false,
+            appLock: false, appLockTimeout: 0, appLockPin: "",
             mediaEditor: false, mediaEditorMode: "ask", mediaEditorDefaultMute: false,
             latexRender: false, latexRenderInline: true
         }));
@@ -494,9 +497,10 @@
         if (key === "materialYouColor") return myIsColor(value) ? value.toLowerCase() : undefined;
         if (key === "materialYouTint") return MY_TINTS.includes(value) ? value : undefined;
         if (key === "keywordNotifyWords") return typeof value === "string" && value.length <= 4000 ? value : undefined;
-        if (key === "keywordNotifyExcluded" || key === "secretDmIds") return typeof value === "string" && value.length <= 4000 ? value : undefined;
-        if (key === "appLockTimeout") return [0, 60, 300, 900].includes(value) ? value : undefined;
-        if (key === "mediaEditorMode") return ["ask", "mute"].includes(value) ? value : undefined;
+        if (key === "keywordNotifyExcluded") return typeof value === "string" && value.length <= 4000 ? value : undefined;
+        if (key === "appLockPin") return typeof value === "string" && value.length <= 8 ? value.replace(/\D/g, "") : undefined;
+        if (key === "appLockTimeout") return [0, 30, 60, 300, 900].includes(value) ? value : undefined;
+        if (key === "mediaEditorMode") return ["ask", "mute", "manual"].includes(value) ? value : undefined;
         return typeof value === "number" && !Number.isFinite(value) ? undefined : value;
     }
     function setSetting(key, value) {
@@ -679,21 +683,25 @@
             if (settings[key] === clean && status.storage !== "loading" && status.storage !== "waiting") return true;
             settings[key] = clean; dirty.add(key); save(); notify(key); later(messageHighlightRedraw, 0); return true;
         }
-        if (key === "keywordNotifyWords" || key === "keywordNotifyExcluded" || key === "secretDmIds") {
+        if (key === "keywordNotifyWords" || key === "keywordNotifyExcluded") {
             if (typeof value !== "string" || value.length > 4000) return false;
             if (settings[key] === value && status.storage !== "loading" && status.storage !== "waiting") return true;
             settings[key] = value; dirty.add(key); save(); notify(key);
-            if (key === "secretDmIds") secretDmsSync();
-            else keywordNotifyCompile();
+            keywordNotifyCompile();
             return true;
         }
+        if (key === "appLockPin") {
+            const cleanPin = typeof value === "string" ? value.replace(/\D/g, "").slice(0, 8) : "";
+            if (settings.appLockPin === cleanPin && status.storage !== "loading" && status.storage !== "waiting") return true;
+            settings.appLockPin = cleanPin; dirty.add(key); save(); notify(key); appLockSync(false); return true;
+        }
         if (key === "appLockTimeout") {
-            if (![0, 60, 300, 900].includes(value)) return false;
+            if (![0, 30, 60, 300, 900].includes(value)) return false;
             if (settings.appLockTimeout === value && status.storage !== "loading" && status.storage !== "waiting") return true;
             settings.appLockTimeout = value; dirty.add(key); save(); notify(key); appLockSync(false); return true;
         }
         if (key === "mediaEditorMode") {
-            if (!["ask", "mute"].includes(value)) return false;
+            if (!["ask", "mute", "manual"].includes(value)) return false;
             if (settings.mediaEditorMode === value && status.storage !== "loading" && status.storage !== "waiting") return true;
             settings.mediaEditorMode = value; dirty.add(key); save(); notify(key); return true;
         }
@@ -751,7 +759,8 @@
         if (features.bulkDelete && (key === "bulkDeleteIncludeCached" || key === "noDelete") && bulkDelete.active) { bulkDeletePruneKept(); bulkDeleteRedrawAll(); }
         if (features.experiments && key === "experiments") { if (value) experimentsEnable(); else if (experiments.unlocked && !backup.restoring) later(experimentsAskReopen, 0); }
         if (features.keywordNotify && featureFor(key) === "keywordNotify") keywordNotifySync();
-        if (features.appLock && featureFor(key) === "appLock") { appLockSync(false); secretDmsSync(); }
+        if (features.bookmarks && (key === "bookmarks" || key === "bookmarksHighlight")) later(messageHighlightRedraw, 0);
+        if (features.appLock && featureFor(key) === "appLock") appLockSync(false);
         if (features.reminders && key === "reminders") remindersSync();
         if (features.quests || features.badges || features.userNotif || features.removedAlerts || features.keywordNotify) backgroundSync();
         return true;
@@ -862,7 +871,7 @@
             if (features.hideBlocked && enabled("hideBlocked")) hideBlockedChanged();
             if (features.experiments && enabled("experiments")) experimentsEnable();
             if (features.keywordNotify) { keywordNotifyCompile(); keywordNotifySync(); }
-            if (features.appLock) { appLockSync(false); secretDmsSync(); }
+            if (features.appLock) appLockSync(false);
             if (features.reminders) remindersSync();
             if (features.quests || features.badges || features.userNotif || features.removedAlerts || features.keywordNotify) backgroundSync();
             // Saved translations are read as soon as Discord starts, so the first chat you open already has them.
@@ -1237,7 +1246,7 @@
     const featureFor = key => {
         const cached = featureTable[key];
         if (cached !== undefined) return cached;
-        return featureTable[key] = key === "reviewWarning" ? "reviewDB" : key === "emojis" || key === "stickers" || key === "hyperlinks" ? "freeNitro" : /^noDelete[A-Z]/.test(key) ? "noDelete" : /^pi[A-Z]/.test(key) ? "platformIndicators" : key === "pastelAll" || key === "pastelContent" ? "pastelize" : key === "readAllMode" ? "readAll" : /^compressUploads[A-Z]/.test(key) ? "compressUploads" : /^quests[A-Z]/.test(key) ? "quests" : /^badges[A-Z]/.test(key) ? "badges" : /^gesture[A-Z]/.test(key) ? "gestures" : /^translate[A-Z]/.test(key) ? "translate" : /^removedAlerts[A-Z]/.test(key) ? "removedAlerts" : /^userNotif[A-Z]/.test(key) ? "userNotif" : /^accountSwitcher[A-Z]/.test(key) ? "accountSwitcher" : /^hiddenChannels[A-Z]/.test(key) ? "hiddenChannels" : /^customThemes[A-Z]/.test(key) ? "customThemes" : /^materialYou[A-Z]/.test(key) ? "materialYou" : /^iconPacks[A-Z]/.test(key) ? "iconPacks" : /^messageHighlight[A-Z]/.test(key) ? "messageHighlight" : /^serverInfo[A-Z]/.test(key) ? "serverInfo" : /^fixEmbeds[A-Z]/.test(key) ? "fixEmbeds" : /^tenorGifs[A-Z]/.test(key) ? "tenorGifs" : /^hideBlocked[A-Z]/.test(key) ? "hideBlocked" : /^bulkDelete[A-Z]/.test(key) ? "bulkDelete" : /^expandBar[A-Z]/.test(key) ? "expandBar" : key === "systemFontSource" ? "systemFont" : key === "systemEmojiSource" ? "systemEmoji" : /^cleanChannels[A-Z]/.test(key) ? "cleanChannels" : /^voiceOptions[A-Z]/.test(key) ? "voiceOptions" : /^anonFiles[A-Z]/.test(key) ? "anonFiles" : /^staffTag[A-Z]/.test(key) ? "staffTag" : /^fullImages[A-Z]/.test(key) ? "fullImages" : /^alwaysTrust[A-Z]/.test(key) ? "alwaysTrust" : /^quietReplies[A-Z]/.test(key) ? "quietReplies" : /^viewRaw[A-Z]/.test(key) ? "viewRaw" : /^hideAnything[A-Z]/.test(key) ? "hideAnything" : /^guildLurk[A-Z]/.test(key) ? "guildLurk" : /^customIdle[A-Z]/.test(key) ? "customIdle" : /^fastDeleteChannels[A-Z]/.test(key) ? "fastDeleteChannels" : /^platformSpoof[A-Z]/.test(key) ? "platformSpoof" : /^silentEdit[A-Z]/.test(key) ? "silentEdit" : /^localEdit[A-Z]/.test(key) ? "localEdit" : /^listenAlong[A-Z]/.test(key) ? "listenAlong" : /^backgroundMedia[A-Z]/.test(key) ? "backgroundMedia" : /^fakeDeafen[A-Z]/.test(key) ? "fakeDeafen" : /^keywordNotify[A-Z]/.test(key) ? "keywordNotify" : /^privacyBlur[A-Z]/.test(key) ? "privacyBlur" : /^urlUnshortener[A-Z]/.test(key) ? "urlUnshortener" : /^appLock[A-Z]/.test(key) || /^secretDm/.test(key) ? "appLock" : /^mediaEditor[A-Z]/.test(key) ? "mediaEditor" : /^latexRender[A-Z]/.test(key) ? "latexRender" : key;
+        return featureTable[key] = key === "reviewWarning" ? "reviewDB" : key === "emojis" || key === "stickers" || key === "hyperlinks" ? "freeNitro" : /^noDelete[A-Z]/.test(key) ? "noDelete" : /^pi[A-Z]/.test(key) ? "platformIndicators" : key === "pastelAll" || key === "pastelContent" ? "pastelize" : key === "readAllMode" ? "readAll" : /^compressUploads[A-Z]/.test(key) ? "compressUploads" : /^quests[A-Z]/.test(key) ? "quests" : /^badges[A-Z]/.test(key) ? "badges" : /^gesture[A-Z]/.test(key) ? "gestures" : /^translate[A-Z]/.test(key) ? "translate" : /^removedAlerts[A-Z]/.test(key) ? "removedAlerts" : /^userNotif[A-Z]/.test(key) ? "userNotif" : /^accountSwitcher[A-Z]/.test(key) ? "accountSwitcher" : /^hiddenChannels[A-Z]/.test(key) ? "hiddenChannels" : /^customThemes[A-Z]/.test(key) ? "customThemes" : /^materialYou[A-Z]/.test(key) ? "materialYou" : /^iconPacks[A-Z]/.test(key) ? "iconPacks" : /^messageHighlight[A-Z]/.test(key) ? "messageHighlight" : /^serverInfo[A-Z]/.test(key) ? "serverInfo" : /^fixEmbeds[A-Z]/.test(key) ? "fixEmbeds" : /^tenorGifs[A-Z]/.test(key) ? "tenorGifs" : /^hideBlocked[A-Z]/.test(key) ? "hideBlocked" : /^bulkDelete[A-Z]/.test(key) ? "bulkDelete" : /^expandBar[A-Z]/.test(key) ? "expandBar" : key === "systemFontSource" ? "systemFont" : key === "systemEmojiSource" ? "systemEmoji" : /^cleanChannels[A-Z]/.test(key) ? "cleanChannels" : /^voiceOptions[A-Z]/.test(key) ? "voiceOptions" : /^anonFiles[A-Z]/.test(key) ? "anonFiles" : /^staffTag[A-Z]/.test(key) ? "staffTag" : /^fullImages[A-Z]/.test(key) ? "fullImages" : /^alwaysTrust[A-Z]/.test(key) ? "alwaysTrust" : /^quietReplies[A-Z]/.test(key) ? "quietReplies" : /^viewRaw[A-Z]/.test(key) ? "viewRaw" : /^hideAnything[A-Z]/.test(key) ? "hideAnything" : /^guildLurk[A-Z]/.test(key) ? "guildLurk" : /^customIdle[A-Z]/.test(key) ? "customIdle" : /^fastDeleteChannels[A-Z]/.test(key) ? "fastDeleteChannels" : /^platformSpoof[A-Z]/.test(key) ? "platformSpoof" : /^silentEdit[A-Z]/.test(key) ? "silentEdit" : /^localEdit[A-Z]/.test(key) ? "localEdit" : /^listenAlong[A-Z]/.test(key) ? "listenAlong" : /^backgroundMedia[A-Z]/.test(key) ? "backgroundMedia" : /^fakeDeafen[A-Z]/.test(key) ? "fakeDeafen" : /^keywordNotify[A-Z]/.test(key) ? "keywordNotify" : /^bookmarks[A-Z]/.test(key) ? "bookmarks" : /^privacyBlur[A-Z]/.test(key) ? "privacyBlur" : /^stripExif[A-Z]/.test(key) ? "stripExif" : /^appLock[A-Z]/.test(key) ? "appLock" : /^mediaEditor[A-Z]/.test(key) ? "mediaEditor" : /^latexRender[A-Z]/.test(key) ? "latexRender" : key;
     };
     // Section titles are read whenever Discord draws the list, so they follow the language too. "Venus" is a name.
     function section(label, keys) {
@@ -1274,7 +1283,7 @@
         badges:[9492, "TrophyIcon"], userNotif:[9321, "BellIcon"], accountSwitcher:[8765, "GroupIcon"], appIcons:[8782, "AppsIcon"],
         compressUploads:[12429, "FileUpIcon"], customThemes:[17699, "EyeDropperIcon"], iconPacks:[12127, "ImageSparkleIcon"], messageHighlight:[18940, "PaintbrushThinIcon"], serverInfo:[5891, "CircleInformationIcon"], serverEdit:[10383, "PencilIcon"], fixEmbeds:[14887, "EmbedIcon"], tenorGifs:[10411, "GifIcon"], nitroThemes:[12467, "SparklesIcon"], materialYou:[17608, "PaintPaletteIcon"], hideBlocked:[13242, "ChatShieldIcon"], bulkDelete:[7434, "CircleCheckIcon"], experiments:[12440, "BeakerIcon"], cleanChannels:[11137, "MagicWandIcon"], noHandsfree:[14375, "HeadphonesIcon"], voiceOptions:[8777, "VoiceNormalIcon"], staffTag:[10921, "CrownIcon"], removedAlerts:[5881, "UserMinusIcon"], hideAnything:[10919, "XLargeIcon"], fullImages:[13049, "ImagesIcon"], alwaysTrust:[11453, "ShieldIcon"], noConfirmPin:[11141, "PinIcon"], clickableMentions:[8766, "AtIcon"], expandBar:[17307, "FullscreenEnterIcon"], quietReplies:[11154, "BellSlashIcon"], viewRaw:[11226, "FileIcon"], timeoutDuration:[5896, "ClockIcon"], dndBanners:[11336, "BellZIcon"], voiceDownload:[5889, "DownloadIcon"], cloneExpressions:[12314, "ImagePlusIcon"], listenAlong:[14375, "HeadphonesIcon"], backgroundMedia:[8955, "PlayIcon"], landscapeFull:[17307, "FullscreenEnterIcon"], silentLeave:[12078, "DoorExitIcon"], guildLurk:[7197, "EyeIcon"], silentEdit:[14792, "PencilSparkleIcon"], silentDelete:[5894, "TrashIcon"], localEdit:[10383, "PencilIcon"],
         hypeSquad:[20165, "HomeIcon"], customIdle:[15317, "UserClockIcon"], pauseInvites:[8957, "PauseIcon"], fastDeleteChannels:[20099, "ChannelListIcon"], mutualGroupDMs:[8765, "GroupIcon"], platformSpoof:[5879, "UserPlatformIcon"],
-        keywordNotify:[9321, "BellIcon"], bookmarks:[10216, "StarIcon"], privacyBlur:[7195, "EyeSlashIcon"], batchMediaSave:[5889, "DownloadIcon"], stripExif:[11453, "ShieldIcon"], urlUnshortener:[14887, "EmbedIcon"], zipPreview:[11226, "FileIcon"], reminders:[5896, "ClockIcon"], appLock:[8771, "LockIcon"], mediaEditor:[10383, "PencilIcon"], latexRender:[18022, "LettersIcon"]};
+        keywordNotify:[9321, "BellIcon"], bookmarks:[10216, "StarIcon"], privacyBlur:[7195, "EyeSlashIcon"], batchMediaSave:[5889, "DownloadIcon"], stripExif:[11453, "ShieldIcon"], zipPreview:[11226, "FileIcon"], reminders:[5896, "ClockIcon"], appLock:[8771, "LockIcon"], mediaEditor:[10383, "PencilIcon"], latexRender:[18022, "LettersIcon"]};
     const venusIcons = new Map();
     function venusIcon(id, name, fallback) {
         const slot = id + ":" + name;
@@ -1352,15 +1361,14 @@
         fakeDeafen:["Deafen", "Fake deafen", "Headphones", "Calls", "Voice channels", "Microphone"],
         bulkDelete:["Select Messages", "Select all", "Delete", "Clear kept deleted messages", "Include kept deleted messages", "Ask before deleting"],
         badges:["Game time", "Unique games", "Switch games every", "Games at once", "Add hours now", "Advanced", "Hours Played", "Unique Games Played", "Years Active", "Personalization"],
-        keywordNotify:["Keyword", "Keywords", "Regex", "Alert", "Mention", "Watch words", "Highlight", "Filter"],
-        bookmarks:["Bookmark", "Bookmarks", "Saved messages", "Star", "Favourite", "Jump to message"],
+        keywordNotify:["Keyword", "Keywords", "Match", "Rule", "Alert", "Mention", "Watch words", "Highlight", "Filter"],
+        bookmarks:["Bookmark", "Bookmarks", "Saved messages", "Star", "Favourite", "Jump to message", "Profile shortcut"],
         privacyBlur:["Blur", "Privacy", "Spoiler", "NSFW", "Hide media", "Hide images", "Public", "Reveal"],
         batchMediaSave:["Save all", "Download all", "Batch download", "Gallery", "Images", "Videos"],
         stripExif:["EXIF", "Metadata", "GPS", "Location", "Camera", "Privacy", "Photo metadata"],
-        urlUnshortener:["Short link", "Unshorten", "Redirect", "bit.ly", "tinyurl", "t.co", "Destination", "Link preview"],
-        zipPreview:["ZIP", "Archive", "Unzip", "Inspect files", "Source code", "Preview"],
-        reminders:["Reminder", "Remind me", "Snooze", "Alarm", "Later", "Schedule"],
-        appLock:["App lock", "Biometric", "Fingerprint", "PIN", "Passcode", "Secret DM", "Hidden DM", "Lock screen"],
+        zipPreview:["ZIP", "Archive", "Unzip", "Inspect files", "Source code", "Preview", "Dropdown"],
+        reminders:["Reminder", "Remind me", "Snooze", "Alarm", "Later", "Schedule", "Time", "Timezone"],
+        appLock:["App lock", "PIN", "Passcode", "Lock screen", "Security"],
         mediaEditor:["Trim", "Cut", "Mute", "Remove audio", "Video editor", "Audio editor", "Clip"],
         latexRender:["LaTeX", "Math", "Formula", "Equation", "KaTeX", "MathML", "Calculus", "Symbols"]};
     function searchFold(text) {
@@ -1814,13 +1822,12 @@
         withOptions("messages", "alwaysTrust", "VENUS_ALWAYSTRUST", "Always trust links and files", "Opens links and files without Discord's \"Are you sure?\" warnings.", "Always trust", AlwaysTrustSettings);
         toggle("messages", "jumpToTop", "Jump to first message", "A button to jump to the start of any chat.");
         toggle("messages", "favouriteAnything", "Favourite any image or video", "Star any image or video to keep it in your GIF favourites.");
-        withOptions("messages", "keywordNotify", "VENUS_KEYWORDNOTIFY", "Keyword notifications", "Get notified and log a match when a message contains your chosen words or regular expressions.", "Keyword notifications", KeywordNotifySettings);
-        withOptions("messages", "bookmarks", "VENUS_BOOKMARKS", "Message bookmarks", "Save messages to an offline bookmark list from the hold menu, search them and jump back to the chat.", "Bookmarks", BookmarksSettings);
+        withOptions("messages", "keywordNotify", "VENUS_KEYWORDNOTIFY", "Keyword notifications", "Get notified and log a match when a message matches your keyword rules.", "Keyword notifications", KeywordNotifySettings);
+        withOptions("messages", "bookmarks", "VENUS_BOOKMARKS", "Message bookmarks", "Save messages to an offline bookmark list, highlight them in chat, and add a profile shortcut.", "Bookmarks", BookmarksSettings);
         withOptions("messages", "privacyBlur", "VENUS_PRIVACYBLUR", "Privacy blur", "Blurs photos, videos, GIFs and link previews in chat until you tap to reveal them.", "Privacy blur", PrivacyBlurSettings);
-        toggle("messages", "batchMediaSave", "Save all media", "Download every image, video or audio attachment from a message in one tap from the hold menu.");
-        withOptions("messages", "urlUnshortener", "VENUS_URLUNSHORTENER", "Preview link destination", "Follows shortened links and shows the final address before you open or copy them.", "Link destination", UrlUnshortenerSettings);
-        toggle("messages", "zipPreview", "Preview ZIP archives", "Inspect the files and read text inside .zip attachments from the hold menu.");
-        withOptions("messages", "reminders", "VENUS_REMINDERS", "Message reminders", "Set a reminder on any message from the hold menu to get notified later and jump back to it.", "Reminders", RemindersSettings);
+        withOptions("messages", "batchMediaSave", "VENUS_BATCHMEDIASAVE", "Save all media", "Download every image, video or audio attachment from a message in one tap from the hold menu.", "Save all media", BatchMediaSaveSettings);
+        withOptions("messages", "zipPreview", "VENUS_ZIPPREVIEW", "Preview ZIP archives", "Expand and inspect files or read text inside .zip attachments right in chat.", "Preview ZIP archives", ZipPreviewSettings);
+        withOptions("messages", "reminders", "VENUS_REMINDERS", "Message reminders", "Set a reminder on any message from the hold menu to get notified at a set delay or clock time.", "Reminders", RemindersSettings);
         withOptions("messages", "latexRender", "VENUS_LATEXRENDER", "Render LaTeX math", "Formats inline and block LaTeX math in chat and opens a clean formula view from the hold menu.", "LaTeX math", LatexRenderSettings);
         // Sending
         withOptions("sending", "freeNitro", "VENUS_FREENITRO", "Send Nitro stickers and emojis as links", "Sends Nitro emojis and stickers as links that show as the image.", "Nitro stickers and emojis",
@@ -1834,7 +1841,7 @@
         toggle("sending", "noTyping", "Hide typing indicator", "Others won't see when you're typing.");
         toggle("sending", "picker", "Show file sizes when attaching", "Photos and videos in the picker show their size.");
         toggle("sending", "anonFiles", "Anonymous file names", "Files you send get a random name instead of the one on your phone.");
-        toggle("sending", "stripExif", "Strip image metadata", "Removes location, camera and date metadata from photos before you upload them.");
+        withOptions("sending", "stripExif", "VENUS_STRIPEXIF", "Strip image metadata", "Removes location, camera and date metadata from photos before you upload them.", "Strip image metadata", StripExifSettings);
         withOptions("sending", "mediaEditor", "VENUS_MEDIAEDITOR", "Trim and mute media", "Cut the start and end of videos or audio and remove sound before uploading.", "Trim and mute", MediaEditorSettings);
         withOptions("sending", "compressUploads", "VENUS_COMPRESSUPLOADS", "Compress big files", "Photos, videos and audio over Discord's file size limit are made smaller to fit as you send them, instead of being refused.", "Compress big files", CompressUploadsSettings);
         withOptions("sending", "quietReplies", "VENUS_QUIETREPLIES", "Reply without pinging", "Replies start with the ping off, so nobody gets pinged unless you turn it on.", "Reply without pinging", QuietRepliesSettings);
@@ -1898,7 +1905,7 @@
         withOptions("advanced", "voiceOptions", "VENUS_VOICEOPTIONS", "Voice channel options", "Choose the volume, audio output and sounds for voice channels.", "Voice channel options", VoiceOptionsSettings);
         toggle("advanced", "noHandsfree", "Keep Bluetooth audio clear in calls", "Headphones stay in music quality in calls. Your phone's mic picks up your voice.");
         withOptions("advanced", "fakeDeafen", "VENUS_FAKEDEAFEN", "Fake deafen", "Look deafened in a call while you can still hear. Choose whether your mic stays muted.", "Fake deafen", FakeDeafenSettings);
-        withOptions("advanced", "appLock", "VENUS_APPLOCK", "App lock and secret DMs", "Lock Discord with your fingerprint or screen lock and hide chosen DMs behind authentication.", "App lock & secret DMs", AppLockSettings);
+        withOptions("advanced", "appLock", "VENUS_APPLOCK", "App lock", "Lock Discord behind a PIN passcode when opening or returning to the app.", "App lock", AppLockSettings);
         withOptions("quests", "badges", "VENUS_BADGES", "Complete badges automatically", "Plays real PC games in the background for game time and unique games.", "Badges", BadgeSettings);
         const listed = [["Messages", groups.messages], ["Sending", groups.sending], ["People", groups.people],
             ["Servers", groups.servers], ["Appearance", groups.appearance], ["Quests", groups.quests], ["Advanced", groups.advanced]];
@@ -5128,14 +5135,20 @@
                 try { return dbl.apply(this, arguments); } finally { gesture.tapping--; }
             };
             const cta = handlers && handlers.handleTapCtaButton;
-            if (typeof cta === "function" && features.voiceDownload) handlers.handleTapCtaButton = function (event) {
-                try { if (voiceDownloadTap(event)) return undefined; } catch (_) {}
+            if (typeof cta === "function" && (features.voiceDownload || features.zipPreview || features.latexRender)) handlers.handleTapCtaButton = function (event) {
+                try { if (features.voiceDownload && voiceDownloadTap(event)) return undefined; } catch (_) {}
+                try { if (features.zipPreview && zipPreviewTapCta(event)) return undefined; } catch (_) {}
+                try { if (features.latexRender && latexRenderTapCta(event)) return undefined; } catch (_) {}
                 return cta.apply(this, arguments);
             };
+            const attLink = handlers && handlers.handleTapAttachmentLink;
+            if (typeof attLink === "function" && features.zipPreview) handlers.handleTapAttachmentLink = function (event) {
+                try { if (zipPreviewTapAttachment(event)) return undefined; } catch (_) {}
+                return attLink.apply(this, arguments);
+            };
             const link = handlers && handlers.handleTapLink;
-            if (typeof link === "function" && (features.noDelete || features.urlUnshortener)) handlers.handleTapLink = function (event) {
-                try { if (features.noDelete && noDeleteTapLink(event)) return undefined; } catch (_) {}
-                try { if (features.urlUnshortener && urlUnshortenerTapLink(event)) return undefined; } catch (_) {}
+            if (typeof link === "function" && features.noDelete) handlers.handleTapLink = function (event) {
+                try { if (noDeleteTapLink(event)) return undefined; } catch (_) {}
                 return link.apply(this, arguments);
             };
             const hold = handlers && handlers.handleLongPressMessage;
@@ -8679,22 +8692,41 @@
             }
         });
     }
+    function messageRowInvoke(orig, self, row) {
+        const prepared = (features.privacyBlur || features.latexRender || features.zipPreview) ? extraPrepareRow(row) : row;
+        const blurTrack = !!(features.privacyBlur && enabled("privacyBlur") && prepared && prepared.rowType === 1 && prepared.message);
+        const prevRow = privacyBlur.activeRow;
+        const origOpts = blurTrack && self && self.options && self.options.shouldObscureSpoiler === false ? self.options : null;
+        if (blurTrack) {
+            privacyBlur.activeRow = prepared.message;
+            if (origOpts) self.options = Object.assign({}, origOpts, {shouldObscureSpoiler:true});
+        }
+        let generated;
+        try { generated = orig.call(self, prepared); }
+        finally {
+            if (blurTrack) {
+                privacyBlur.activeRow = prevRow;
+                if (origOpts) self.options = origOpts;
+            }
+        }
+        return messageRowResult(generated, prepared);
+    }
     function messageRow(orig, self, args) {
         let row = features.localEdit ? localEditRow(args[0]) : args[0];
-        if (features.privacyBlur || features.latexRender) row = extraPrepareRow(row);
-        return messageRowResult(orig.call(self, row), row);
+        return messageRowInvoke(orig, self, row);
     }
     // generate(row) is called once per chat row as you scroll: skip the arguments object (2.3x).
     messageRow.call1 = (orig, self, row) => {
         if (features.localEdit) row = localEditRow(row);
-        if (features.privacyBlur || features.latexRender) row = extraPrepareRow(row);
-        return messageRowResult(orig.call(self, row), row);
+        return messageRowInvoke(orig, self, row);
     };
     function messageRowResult(result, row) {
         if (!result || !row || row.rowType !== 1 || !result.message) return result;
         const pastelOn = enabled("pastelize"), translateOn = enabled("translate"), noDeleteOn = enabled("noDelete"), highlightOn = enabled("messageHighlight"), bulkOn = features.bulkDelete && bulkDelete.active;
+        const bmOn = !!(features.bookmarks && enabled("bookmarks") && settings.bookmarksHighlight);
         let message = result.message;
         if (features.privacyBlur && enabled("privacyBlur")) message = privacyBlurPostMessage(message, row.message);
+        if (bmOn) message = bookmarksTagMessage(message, row.message);
         if (pastelOn) message = pastelMessage(message,row.message);
         if (features.pastelize && message.referencedMessage && message.referencedMessage.message) {
             const reply = pastelReply(message.referencedMessage.message);
@@ -8702,9 +8734,11 @@
         }
         if (features.timeoutDuration && enabled("timeoutDuration")) message = timeoutTagMessage(message, row.message);
         if (features.voiceDownload && enabled("voiceDownload")) message = voiceDownloadMessage(message, row.message);
+        if (features.zipPreview && enabled("zipPreview")) message = zipPreviewCtaMessage(message, row.message);
+        if (features.latexRender && enabled("latexRender")) message = latexCtaMessage(message, row.message);
         if (features.staffTag && enabled("staffTag")) message = staffTagMessage(message, row.message);
         let next = message === result.message ? result : Object.assign({},result,{message});
-        if (!translateOn && !features.translate && !(noDeleteOn && (edits.size || deleted.size)) && !highlightOn && !features.messageHighlight && !bulkOn) return next;
+        if (!translateOn && !features.translate && !(noDeleteOn && (edits.size || deleted.size)) && !highlightOn && !features.messageHighlight && !bulkOn && !bmOn) return next;
         const source = row.message || message;
         const channelId = source.channel_id || source.channelId || message.channelId;
         const id = source.id || message.id;
@@ -8743,6 +8777,10 @@
             } else if (existing && typeof existing.gutterColor === "number" && mult > 1) {
                 next = Object.assign({},next,{backgroundHighlight:Object.assign({},existing,{gutterColor:highlightEncodeGutter(existing.gutterColor, mult)})});
             }
+        }
+        if (bmOn && !next.backgroundHighlight && !isDeletedRow && !isMentionRow) {
+            const bmRow = bookmarksHighlightRow(next, source);
+            if (bmRow !== next) next = bmRow;
         }
         if (bulkOn && RN && typeof RN.processColor === "function" &&
             bulkDeleteCanSelect(source, channelId, isDeletedRow, bulkDeleteManageCached(channelId))) {
@@ -19741,7 +19779,10 @@
             return Number.isFinite(bytes) && bytes >= 0 ? bytes : NaN;
         }, () => NaN);
     }
-    function compressUri(upload) { return upload && (upload.item && upload.item.uri || upload.uri); }
+    function compressUri(upload) {
+        const raw = upload && (upload.item && upload.item.uri || upload.uri);
+        return typeof raw === "string" && raw.charAt(0) === "/" ? "file://" + raw : raw;
+    }
     function compressCancelled(upload, job) { return job.cancelled || typeof upload.isCancelled === "function" && upload.isCancelled(); }
     function compressName(name, extension) { return String(name || "file").replace(/\.[^./\\]+$/, "") + "." + extension; }
     function compressToast(text) { showToast(reviewUI(), "venus-toast:" + (++reviewToastSeq), text, venusIcon(12429, "FileUpIcon")); }
@@ -19752,6 +19793,24 @@
     function compressNative(upload, job, limit, wantCompress, wantStrip) {
         const uri = compressUri(upload);
         if (typeof uri !== "string" || !/^(content|file):\/\//.test(uri)) return Promise.resolve();
+        const applyMeta = result => {
+            if (!result || result.changed === false) return undefined;
+            if (typeof result.uri !== "string" || !result.uri.startsWith("file://") || typeof result.mimeType !== "string" ||
+                typeof result.extension !== "string" || !/^[a-z0-9]{1,5}$/.test(result.extension) ||
+                !Number.isSafeInteger(result.size) || !(result.size > 0))
+                throw new Error("Native compression returned invalid metadata");
+            const item = upload.item || {}, filename = compressName(upload.filename || item.filename, result.extension);
+            const changes = {uri:result.uri, mimeType:result.mimeType, filename, size:result.size};
+            if (result.width > 0 && result.height > 0) { changes.width = result.width; changes.height = result.height; }
+            upload.item = Object.assign({}, item, changes);
+            upload.uri = result.uri;
+            upload.mimeType = result.mimeType;
+            upload.filename = filename;
+            upload.currentSize = result.size;
+            upload.postCompressionSize = result.size;
+            if (upload.uploadAnalytics && typeof upload.uploadAnalytics === "object") upload.uploadAnalytics.convertedMimeType = result.mimeType;
+            return result;
+        };
         return compressSizeOf(uri).then(size => {
             const over = wantCompress && size > limit;
             if (!over && !wantStrip || compressCancelled(upload, job)) return undefined;
@@ -19761,25 +19820,20 @@
             const targetBudget = over ? Math.floor(limit * COMPRESS_FILL[job.kind]) : targetLimit;
             return nativeCompress("prepare", job.id, uri, job.kind, targetLimit, targetBudget, wantStrip).then(text => {
                 const result = JSON.parse(text);
-                if (!result || result.changed === false) return undefined;
-                if (typeof result.uri !== "string" || !result.uri.startsWith("file://") || typeof result.mimeType !== "string" ||
-                    typeof result.extension !== "string" || !/^[a-z0-9]{1,5}$/.test(result.extension) ||
-                    !Number.isSafeInteger(result.size) || !(result.size > 0) || (over && result.size > limit))
-                    throw new Error("Native compression returned invalid metadata");
-                if (compressCancelled(upload, job)) { releaseCompress(upload, false); return undefined; }
-                const item = upload.item || {}, filename = compressName(upload.filename || item.filename, result.extension);
-                const changes = {uri:result.uri, mimeType:result.mimeType, filename, size:result.size};
-                if (result.width > 0 && result.height > 0) { changes.width = result.width; changes.height = result.height; }
-                upload.item = Object.assign({}, item, changes);
-                upload.uri = result.uri;
-                upload.mimeType = result.mimeType;
-                upload.filename = filename;
-                upload.currentSize = result.size;
-                upload.postCompressionSize = result.size;
-                if (upload.uploadAnalytics && typeof upload.uploadAnalytics === "object") upload.uploadAnalytics.convertedMimeType = result.mimeType;
-                if (over) compressDoneToast(size, result.size);
-                else if (wantStrip) compressToast(tr("Photo metadata removed"));
+                if (result && result.changed !== false && over && result.size > limit) throw new Error("Native compression exceeds limit");
+                const applied = applyMeta(result);
+                if (!applied || compressCancelled(upload, job)) { if (compressCancelled(upload, job)) releaseCompress(upload, false); return undefined; }
+                if (over) compressDoneToast(size, applied.size);
+                else if (wantStrip && settings.stripExifToast !== false) compressToast(tr("Photo metadata removed"));
                 return undefined;
+            }, err => {
+                if (wantStrip && !over && !compressCancelled(upload, job)) {
+                    return diagCall("exifStrip", JSON.stringify({uri})).then(raw => {
+                        const res = JSON.parse(raw);
+                        if (applyMeta(res) && settings.stripExifToast !== false) compressToast(tr("Photo metadata removed"));
+                    }, () => {});
+                }
+                throw err;
             });
         });
     }
@@ -19824,7 +19878,7 @@
         const kind = compressKind(upload);
         const wantCompress = !!(enabled("compressUploads") && kind && enabled(COMPRESS_KEYS[kind]));
         const wantStrip = !!(enabled("stripExif") && kind === "image");
-        const wantEdit = !!(enabled("mediaEditor") && (kind === "video" || kind === "audio"));
+        const wantEdit = !!(enabled("mediaEditor") && !upload.venusTrimmed && (kind === "video" || kind === "audio"));
         if (!wantCompress && !wantStrip && !wantEdit) return orig.apply(upload, args);
         const job = {id:"c" + Date.now().toString(36) + "-" + (++compressCounter), kind, cancelled:false, released:false, native:false};
         const limit = compressLimit(upload.item, upload.channelId);
@@ -22845,28 +22899,104 @@
     }
 
     // =========================================================================
-    // v1.23.0 — 11 New Features (Phases 1-4)
+    // v1.23.0 — 10 New Features (Native UI + Visual Previews)
     // =========================================================================
 
+    function jumpToChatMessage(guildId, channelId, messageId) {
+        if (!channelId) return;
+        const go = inspectedExport(1099, "transitionTo");
+        if (typeof go === "function") {
+            later(() => {
+                try { go("/channels/" + (guildId || "@me") + "/" + channelId + (messageId ? "/" + messageId : "")); } catch (_) {}
+            }, 150);
+        }
+    }
+
     // ------------------------------------------------- 1. Keyword notifications
-    const keywordNotify = {dispatcher:null, subscribed:false, rules:[], excluded:new Set(), matches:[], cooldowns:new Map()};
+    const KEYWORD_MODES = [
+        ["contains", "Contains phrase", "Matches whenever this word or phrase appears anywhere in a message."],
+        ["exact", "Exact word", "Matches only as a standalone whole word (e.g. 'cat' won't match 'catch')."],
+        ["all", "Contains all words", "Matches only when every space-separated word appears in the message."],
+        ["starts", "Starts with", "Matches when the message starts with this phrase."],
+        ["ends", "Ends with", "Matches when the message ends with this phrase."],
+        ["regex", "Advanced: Regex", "For custom regular expression patterns."]
+    ];
+    const KEYWORD_MODE_LABEL = {
+        contains:"Contains phrase", exact:"Exact word", all:"Contains all words",
+        starts:"Starts with", ends:"Ends with", regex:"Advanced: Regex"
+    };
+    const keywordNotify = {dispatcher:null, subscribed:false, rules:[], excluded:new Set(), matches:[], cooldowns:new Map(), guilds:null};
+    function parseKeywordEntries(rawText) {
+        const out = [];
+        const lines = String(rawText || "").split(/[\r\n]+/);
+        for (let i = 0; i < lines.length && out.length < 100; i++) {
+            const line = lines[i].trim();
+            if (!line) continue;
+            const sep = line.indexOf("::");
+            if (sep > 0) {
+                const mode = line.slice(0, sep), value = line.slice(sep + 2).trim();
+                if (value && KEYWORD_MODE_LABEL[mode]) { out.push({mode, value}); continue; }
+            }
+            if (line.length >= 3 && line[0] === "/" && line.lastIndexOf("/") > 0) {
+                out.push({mode:"regex", value:line});
+            } else {
+                const parts = line.split(",");
+                for (let j = 0; j < parts.length && out.length < 100; j++) {
+                    const piece = parts[j].trim();
+                    if (piece) out.push({mode:"contains", value:piece});
+                }
+            }
+        }
+        return out;
+    }
+    function serializeKeywordEntries(entries) {
+        return entries.map(e => e.mode + "::" + e.value).join("\n");
+    }
+    function buildKeywordRule(entry) {
+        const flags = settings.keywordNotifyCase ? "" : "i";
+        const raw = entry.value, mode = entry.mode;
+        const esc = s => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+        try {
+            if (mode === "regex") {
+                if (raw.length >= 3 && raw[0] === "/" && raw.lastIndexOf("/") > 0) {
+                    const last = raw.lastIndexOf("/");
+                    const body = raw.slice(1, last), cf = raw.slice(last + 1).replace(/[^gimsuy]/g, "");
+                    return {mode, value:raw, re:new RegExp(body, cf || flags)};
+                }
+                return {mode, value:raw, re:new RegExp(raw, flags)};
+            }
+            if (mode === "exact") {
+                return {mode, value:raw, re:new RegExp("(^|[^\\p{L}\\p{N}_])" + esc(raw) + "($|[^\\p{L}\\p{N}_])", flags + "u")};
+            }
+            if (mode === "starts") return {mode, value:raw, starts:settings.keywordNotifyCase ? raw : raw.toLowerCase()};
+            if (mode === "ends") return {mode, value:raw, ends:settings.keywordNotifyCase ? raw : raw.toLowerCase()};
+            if (mode === "all") {
+                const words = raw.split(/\s+/).filter(Boolean).map(w => settings.keywordNotifyCase ? w : w.toLowerCase());
+                if (!words.length) return null;
+                return {mode, value:raw, words};
+            }
+            return {mode:"contains", value:raw, contains:settings.keywordNotifyCase ? raw : raw.toLowerCase()};
+        } catch (_) {
+            if (mode === "exact") return {mode, value:raw, re:new RegExp("\\b" + esc(raw) + "\\b", flags)};
+            return {mode:"contains", value:raw, contains:settings.keywordNotifyCase ? raw : raw.toLowerCase()};
+        }
+    }
+    function keywordRuleMatches(rule, content) {
+        const hay = settings.keywordNotifyCase ? content : content.toLowerCase();
+        if (rule.contains !== undefined) return hay.indexOf(rule.contains) >= 0;
+        if (rule.starts !== undefined) return hay.trimStart().startsWith(rule.starts);
+        if (rule.ends !== undefined) return hay.trimEnd().endsWith(rule.ends);
+        if (rule.words) return rule.words.every(w => hay.indexOf(w) >= 0);
+        if (rule.re) { rule.re.lastIndex = 0; return rule.re.test(content); }
+        return false;
+    }
     function keywordNotifyCompile() {
         keywordNotify.rules = [];
         keywordNotify.excluded.clear();
-        const rawWords = String(settings.keywordNotifyWords || "");
-        const parts = rawWords.split(/[\r\n,]+/);
-        const flags = settings.keywordNotifyCase ? "" : "i";
-        for (let i = 0; i < parts.length && keywordNotify.rules.length < 100; i++) {
-            const token = parts[i].trim();
-            if (!token) continue;
-            if (token.length >= 3 && token[0] === "/" && token.lastIndexOf("/") > 0) {
-                const last = token.lastIndexOf("/");
-                const body = token.slice(1, last), customFlags = token.slice(last + 1).replace(/[^gimsuy]/g, "");
-                try { keywordNotify.rules.push({label:token, re:new RegExp(body, customFlags || flags)}); } catch (_) {}
-            } else {
-                const escaped = token.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-                try { keywordNotify.rules.push({label:token, re:new RegExp(escaped, flags)}); } catch (_) {}
-            }
+        const entries = parseKeywordEntries(settings.keywordNotifyWords);
+        for (let i = 0; i < entries.length; i++) {
+            const compiled = buildKeywordRule(entries[i]);
+            if (compiled) keywordNotify.rules.push(compiled);
         }
         const exParts = String(settings.keywordNotifyExcluded || "").split(/[\r\n,\s]+/);
         for (let i = 0; i < exParts.length; i++) {
@@ -22884,11 +23014,11 @@
         const channelId = String(message.channel_id || message.channelId || event.channelId || "");
         const guildId = String(message.guild_id || message.guildId || event.guildId || "");
         if ((channelId && keywordNotify.excluded.has(channelId)) || (guildId && keywordNotify.excluded.has(guildId))) return;
+        if (settings.keywordNotifyIgnoreOpen && channelId && selectedChannelId() === channelId) return;
         let matched = null;
         for (let i = 0; i < keywordNotify.rules.length; i++) {
             const rule = keywordNotify.rules[i];
-            rule.re.lastIndex = 0;
-            if (rule.re.test(message.content)) { matched = rule.label; break; }
+            if (keywordRuleMatches(rule, message.content)) { matched = rule.value; break; }
         }
         if (!matched) return;
         const now = Date.now(), cdKey = channelId + ":" + matched;
@@ -22924,39 +23054,102 @@
         keywordNotify.dispatcher = d;
         keywordNotifySync();
     }
-    function jumpToChatMessage(guildId, channelId, messageId) {
-        if (!channelId) return;
-        const go = inspectedExport(1099, "transitionTo");
-        if (typeof go === "function") {
-            later(() => {
-                try { go("/channels/" + (guildId || "@me") + "/" + channelId + (messageId ? "/" + messageId : "")); } catch (_) {}
-            }, 150);
-        }
+    function KeywordNotifyPreview(props) {
+        const s = useChatPreviewStyles(), k = usePreviewChrome(), Bell = venusIcon(9321, "BellIcon");
+        const firstRule = props.firstRule;
+        const sampleWord = firstRule ? firstRule.value : "release";
+        const header = previewHeader(k, {title:tr("general")});
+        return previewScreen(s, "kwPreview", "Keyword notifications preview", [
+            props.on ? el(RN.View, {key:"banner", style:[k.card, {marginHorizontal:10, marginTop:4, marginBottom:6, paddingHorizontal:12, paddingVertical:8, borderRadius:12, borderWidth:1, flexDirection:"row", alignItems:"center", gap:8}]},
+                el(Bell, {size:"xs", color:k.brandFg.color}),
+                el(RN.Text, {style:[s.text, {flex:1, fontSize:13, fontWeight:"600"}], numberOfLines:1}, tr("Keyword \"{kw}\" from {name}", {kw:sampleWord, name:"Minho"}))) : null,
+            previewMessage(s, "m1", "Minho", "#5865f2", "2:14 PM",
+                el(RN.Text, {style:s.text}, tr("The new "),
+                    el(RN.Text, {style:props.on ? [s.text, {backgroundColor:"#f0b23233", color:"#f0b232", fontWeight:"700"}] : s.text}, sampleWord),
+                    tr(" build is ready!")))
+        ], {header});
     }
     function KeywordNotifySettings() {
         useSettings("keywordNotify");
         useLanguage();
         const ui = reviewUI(), on = enabled("keywordNotify");
         if (!RN) return null;
-        const Group = ui.TableRowGroup || RN.View, Switch = ui.TableSwitchRow, Row = ui.TableRow;
-        const [wordsDraft, setWordsDraft] = React.useState(settings.keywordNotifyWords || "");
-        const [exclDraft, setExclDraft] = React.useState(settings.keywordNotifyExcluded || "");
-        const s = useLogStyles();
-        const saveWords = () => { haptic("SELECTION"); setSetting("keywordNotifyWords", wordsDraft.trim()); reviewToast(ui, "Keywords saved", venusIcon(7434, "CircleCheckIcon")); };
-        const saveExcl = () => { haptic("SELECTION"); setSetting("keywordNotifyExcluded", exclDraft.trim()); reviewToast(ui, "Excluded IDs saved", venusIcon(7434, "CircleCheckIcon")); };
+        const Group = ui.TableRowGroup || RN.View, Switch = ui.TableSwitchRow, Radio = ui.TableRadioRow, Row = ui.TableRow;
+        const [mode, setMode] = React.useState("contains");
+        const [draft, setDraft] = React.useState("");
+        const [showServers, setShowServers] = React.useState(false);
+        const [manualExcl, setManualExcl] = React.useState(settings.keywordNotifyExcluded || "");
+        const [showManual, setShowManual] = React.useState(false);
+        const rules = parseKeywordEntries(settings.keywordNotifyWords);
+        const addRule = () => {
+            const val = String(draft || "").trim();
+            if (!val) return;
+            haptic("SELECTION");
+            animateLayout();
+            if (mode === "regex") {
+                try { new RegExp(val); } catch (err) {
+                    showProblem("Invalid regex pattern", String(err && err.message || err));
+                    return;
+                }
+            }
+            const next = rules.concat([{mode, value:val}]);
+            setSetting("keywordNotifyWords", serializeKeywordEntries(next));
+            setDraft("");
+            reviewToast(ui, tr("Rule added"), venusIcon(9321, "BellIcon"));
+        };
+        const removeRule = index => {
+            haptic("SELECTION");
+            animateLayout();
+            const next = rules.filter((_, i) => i !== index);
+            setSetting("keywordNotifyWords", serializeKeywordEntries(next));
+        };
+        const guildStore = keywordNotify.guilds || (keywordNotify.guilds = inspectedExport(5041, "default"));
+        let guilds = [];
+        try {
+            const raw = guildStore && typeof guildStore.getGuilds === "function" ? guildStore.getGuilds() : {};
+            guilds = Object.keys(raw || {}).map(id => raw[id]).filter(g => g && g.id && g.name)
+                .sort((a, b) => String(a.name).localeCompare(String(b.name)));
+        } catch (_) { guilds = []; }
+        const excludedSet = new Set(String(settings.keywordNotifyExcluded || "").split(/[\r\n,\s]+/).map(x => x.trim()).filter(Boolean));
+        const toggleExcludeId = id => {
+            haptic("SELECTION");
+            const next = new Set(excludedSet);
+            if (next.has(id)) next.delete(id); else next.add(id);
+            const joined = Array.from(next).join(",");
+            setManualExcl(joined);
+            setSetting("keywordNotifyExcluded", joined);
+        };
+        const placeholders = {contains:"e.g. giveaway", exact:"e.g. ping", all:"e.g. urgent deploy", starts:"e.g. [Notice]", ends:"e.g. ?", regex:"e.g. v\\d+\\.\\d+"};
         const groups = [
             on ? null : offCard("status", venusIcon(9321, "BellIcon"), "keywordNotify"),
-            el(Group, {key:"words", title:tr("Keywords & Regex (comma or line separated)")},
-                el(RN.View, {style:[s.card, {padding:12, gap:10}]},
-                    el(RN.TextInput, {value:wordsDraft, onChangeText:setWordsDraft, multiline:true, placeholder:"venus, /\\bupdate\\b/i",
-                        placeholderTextColor:"#949ba4", style:[s.body, {minHeight:64, padding:8, borderRadius:8, backgroundColor:"#1e1f22"}]}),
-                    actionRow(ui, "saveKw", "Save keywords", pl(keywordNotify.rules.length, "{n} active rule", "{n} active rules"), saveWords, !on, false))),
-            el(Group, {key:"excl", title:tr("Excluded Server or Channel IDs")},
-                el(RN.View, {style:[s.card, {padding:12, gap:10}]},
-                    el(RN.TextInput, {value:exclDraft, onChangeText:setExclDraft, placeholder:"123456789012345678, ...",
-                        placeholderTextColor:"#949ba4", style:[s.body, {padding:8, borderRadius:8, backgroundColor:"#1e1f22"}]}),
-                    actionRow(ui, "saveExcl", "Save excluded IDs", tr("Messages in these servers or channels won't trigger keyword alerts."), saveExcl, !on, false))),
-            el(Group, {key:"opts", title:tr("Options")},
+            el(KeywordNotifyPreview, {key:"preview", on, firstRule:rules[0]}),
+            el(Group, {key:"addRule", title:tr("Add notification rule")},
+                el(RN.View, {style:{paddingHorizontal:4, paddingVertical:4}},
+                    inputWithButton(ui, "kwInput", {value:draft, label:tr("Keyword or phrase"), placeholder:tr(placeholders[mode] || "Type word"),
+                        editable:on, isDisabled:!on, returnKeyType:"done", onSubmitEditing:addRule},
+                        text => setDraft(String(text || "")), "Add", addRule, !on || !String(draft || "").trim()))),
+            el(Group, {key:"matchMode", title:tr("Match mode")},
+                KEYWORD_MODES.map(([m, label, sub]) => Radio ? el(Radio, {key:m, label:tr(label), subLabel:tr(sub), selected:mode === m,
+                    disabled:!on, onPress:() => { haptic("SELECTION"); setMode(m); }}) : null)),
+            rules.length && Row ? el(Group, {key:"activeRules", title:pl(rules.length, "{n} active rule", "{n} active rules")},
+                rules.map((r, i) => el(Row, {key:i + ":" + r.mode + ":" + r.value, label:r.value, subLabel:tr(KEYWORD_MODE_LABEL[r.mode] || "Contains phrase"),
+                    icon:rowIcon(9321, "BellIcon"), trailing:venusIcon(5894, "TrashIcon") ? el(venusIcon(5894, "TrashIcon"), {size:"sm", color:"#f23f43"}) : undefined,
+                    onPress:() => removeRule(i)}))) : footnote("noRules", "Add your first rule above — no coding or regex knowledge needed."),
+            el(Group, {key:"servers", title:tr("Server & channel filters")},
+                switchRow(Switch, "keywordNotifyIgnoreOpen", "Ignore currently open channel", "Won't notify for messages in the chat you're currently reading.", rowIcon(7197, "EyeIcon")),
+                Row ? el(Row, {key:"pickServers", label:tr("Excluded servers"), subLabel:pl(excludedSet.size, "{n} excluded server or channel", "{n} excluded servers or channels"),
+                    icon:rowIcon(9881, "ServerIcon"), arrow:true, onPress:() => { haptic("SELECTION"); animateLayout(); setShowServers(!showServers); }}) : null),
+            showServers && guilds.length && Switch ? el(Group, {key:"serverList", title:tr("Tap a server to exclude it")},
+                guilds.slice(0, 60).map(g => el(Switch, {key:g.id, label:g.name, value:excludedSet.has(String(g.id)), disabled:!on,
+                    onValueChange:() => toggleExcludeId(String(g.id))}))) : null,
+            Row && showServers ? el(Group, {key:"manualIds", title:tr("Exclude by channel ID (optional)")},
+                el(Row, {key:"toggleManual", label:tr("Enter channel IDs manually"), subLabel:settings.keywordNotifyExcluded || tr("None"), arrow:true,
+                    onPress:() => { animateLayout(); setShowManual(!showManual); }}),
+                showManual ? el(RN.View, {style:{paddingHorizontal:4, paddingVertical:4}},
+                    inputWithButton(ui, "exclIds", {value:manualExcl, placeholder:"123456789012345678, ...", editable:on, isDisabled:!on},
+                        text => setManualExcl(String(text || "")), "Save",
+                        () => { setSetting("keywordNotifyExcluded", manualExcl.trim()); reviewToast(ui, tr("Saved"), venusIcon(7434, "CircleCheckIcon")); }, !on)) : null) : null,
+            el(Group, {key:"opts", title:tr("Delivery & matching")},
                 switchRow(Switch, "keywordNotifyCase", "Case-sensitive matching", "Match exact uppercase and lowercase letters.", rowIcon(18022, "LettersIcon")),
                 switchRow(Switch, "keywordNotifyPush", "System notifications", "Also post an Android notification when a keyword matches.", rowIcon(9321, "BellIcon")),
                 switchRow(Switch, "keywordNotifyLog", "Keep recent matches here", "Lists the latest 50 keyword matches below.", rowIcon(5896, "ClockIcon"))),
@@ -22964,7 +23157,7 @@
                 keywordNotify.matches.slice(0, 20).map(m => el(Row, {key:m.id + ":" + m.t, label:"[" + m.kw + "] " + m.u, subLabel:m.x, arrow:true,
                     onPress:() => { haptic("SELECTION"); jumpToChatMessage(m.g, m.c, m.id); }}))) : null
         ];
-        return settingsBody(ui, groups);
+        return settingsBody(ui, groups, {keyboardShouldPersistTaps:"handled"});
     }
 
     // ------------------------------------------------- 2. Message bookmarks
@@ -22992,7 +23185,7 @@
         if (bookmarks.ids.has(id)) {
             bookmarks.ids.delete(id);
             bookmarks.list = bookmarks.list.filter(b => b.id !== id);
-            save(); notify("bookmarks");
+            save(); notify("bookmarks"); later(messageHighlightRedraw, 0);
             showToast(ui, "venus-bm", tr("Bookmark removed"), icon);
             return;
         }
@@ -23010,20 +23203,75 @@
             const dropped = bookmarks.list.pop();
             if (dropped) bookmarks.ids.delete(dropped.id);
         }
-        save(); notify("bookmarks");
+        save(); notify("bookmarks"); later(messageHighlightRedraw, 0);
         showToast(ui, "venus-bm", tr("Message bookmarked"), icon);
+    }
+    function bookmarksTagMessage(message, source) {
+        const id = String((source && source.id) || (message && message.id) || "");
+        if (!message || !id || !bookmarks.ids.has(id) || message.tagText) return message;
+        const fg = highlightProcess("#ffffff"), bg = highlightProcess("#d99b26");
+        if (fg == null || bg == null) return message;
+        return Object.assign({}, message, {tagText:"\u2605 " + tr("Bookmarked"), tagTextColor:fg, tagBackgroundColor:bg});
+    }
+    function bookmarksHighlightRow(rowResult, source) {
+        const id = String((source && source.id) || (rowResult.message && rowResult.message.id) || "");
+        if (!id || !bookmarks.ids.has(id)) return rowResult;
+        const bg = highlightProcess("#f0b23224"), gutter = highlightProcess("#f0b232");
+        if (bg == null || gutter == null) return rowResult;
+        return Object.assign({}, rowResult, {backgroundHighlight:{backgroundColor:bg, gutterColor:gutter}});
+    }
+    function bookmarksYouBanner(orig, self, args) {
+        try { if (React) useSettings("bookmarks"); } catch (_) {}
+        const tree = orig.apply(self, args);
+        if (!enabled("bookmarks") || !settings.bookmarksProfileShortcut || !React || !tree) return tree;
+        const NavIcon = inspectedExport(14978, "default");
+        if (!NavIcon) return tree;
+        let injected = false;
+        return cloneTree(tree, function (node, nodeProps) {
+            if (injected || !Array.isArray(nodeProps.children)) return nodeProps;
+            const hasNav = nodeProps.children.some(c => c && (c.key === "quests" || c.key === "shop" || c.key === "settings"));
+            if (!hasNav || nodeProps.children.some(c => c && c.key === "venus-bookmarks")) return nodeProps;
+            injected = true;
+            const bmButton = el(NavIcon, {
+                key:"venus-bookmarks",
+                IconComponent:venusIcon(10216, "StarIcon"),
+                label:tr("Bookmarks"),
+                accessibilityLabel:tr("Bookmarks"),
+                onPress:() => openSettings("VENUS_BOOKMARKS")
+            });
+            const settingsIdx = nodeProps.children.findIndex(c => c && c.key === "settings");
+            const nextChildren = nodeProps.children.slice();
+            if (settingsIdx >= 0) nextChildren.splice(settingsIdx, 0, bmButton);
+            else nextChildren.push(bmButton);
+            return Object.assign({}, nodeProps, {children:nextChildren});
+        }, 0, () => injected);
+    }
+    function BookmarksPreview(props) {
+        const s = useChatPreviewStyles(), k = usePreviewChrome(), hl = props.on && props.highlight;
+        const header = previewHeader(k, {title:tr("general")});
+        const badge = hl ? el(RN.View, {style:{backgroundColor:"#d99b26", paddingHorizontal:6, paddingVertical:1, borderRadius:4}},
+            el(RN.Text, {style:{color:"#ffffff", fontSize:10, fontWeight:"700"}}, "\u2605 " + tr("Bookmarked"))) : null;
+        return previewScreen(s, "bmPreview", "Bookmarks preview", [
+            previewMessage(s, "m1", "Yuna", "#5865f2", "4:20 PM",
+                el(RN.Text, {style:s.text}, tr("Don't forget to back up your server template before Friday!")),
+                {badges:badge, style:hl ? {paddingHorizontal:12, paddingVertical:6, flexDirection:"row", gap:12, backgroundColor:"#f0b23224", borderLeftWidth:3, borderLeftColor:"#f0b232"} : undefined})
+        ], {header});
     }
     function BookmarksSettings() {
         useSettings("bookmarks");
         useLanguage();
         const ui = reviewUI(), on = enabled("bookmarks");
         if (!RN) return null;
-        const Group = ui.TableRowGroup || RN.View, Row = ui.TableRow, SearchField = inspectedExport(7315, "SearchBar");
+        const Group = ui.TableRowGroup || RN.View, Switch = ui.TableSwitchRow, Row = ui.TableRow, SearchField = inspectedExport(7315, "SearchBar");
         const [query, setQuery] = React.useState("");
         const q = String(query || "").trim().toLowerCase();
         const filtered = bookmarks.list.filter(b => !q || b.x.toLowerCase().indexOf(q) >= 0 || b.u.toLowerCase().indexOf(q) >= 0);
         const groups = [
             on ? null : offCard("status", venusIcon(10216, "StarIcon"), "bookmarks"),
+            el(BookmarksPreview, {key:"preview", on, highlight:!!settings.bookmarksHighlight}),
+            el(Group, {key:"opts", title:tr("Display & shortcuts")},
+                switchRow(Switch, "bookmarksHighlight", "Highlight bookmarked messages", "Shows a gold tint and ★ Bookmarked tag on saved messages in chat.", rowIcon(10216, "StarIcon")),
+                switchRow(Switch, "bookmarksProfileShortcut", "Profile menu shortcut", "Adds a Bookmarks icon next to Quests, Shop and Settings on the You tab.", rowIcon(10216, "StarIcon"))),
             SearchField ? el(RN.View, {key:"search", style:{paddingHorizontal:4}},
                 el(SearchField, {placeholder:tr("Search bookmarks\u2026"), query, onChangeText:setQuery, onClear:() => setQuery("")})) : null,
             filtered.length && Row ? el(Group, {key:"list", title:pl(filtered.length, "{n} bookmark", "{n} bookmarks")},
@@ -23033,7 +23281,7 @@
                         haptic("SELECTION");
                         if (RN.Alert && typeof RN.Alert.alert === "function") {
                             RN.Alert.alert(b.u, b.x || tr("(No text content)"), [
-                                {text:tr("Delete"), style:"destructive", onPress:() => { bookmarks.ids.delete(b.id); bookmarks.list = bookmarks.list.filter(x => x.id !== b.id); save(); notify("bookmarks"); }},
+                                {text:tr("Delete"), style:"destructive", onPress:() => { bookmarks.ids.delete(b.id); bookmarks.list = bookmarks.list.filter(x => x.id !== b.id); save(); notify("bookmarks"); later(messageHighlightRedraw, 0); }},
                                 {text:tr("Cancel"), style:"cancel"},
                                 {text:tr("Jump to Message"), onPress:() => jumpToChatMessage(b.g, b.c, b.id)}
                             ]);
@@ -23046,7 +23294,16 @@
     }
 
     // ------------------------------------------------- 3. Privacy blur
-    const privacyBlur = {revealed:new Set(), copies:new WeakMap()};
+    const PRIVACY_BLANK_AVATAR = "https://cdn.discordapp.com/embed/avatars/0.png";
+    const PRIVACY_MEDIA_RE = /\.(jpe?g|png|gif|webp|avif|bmp|mp4|m4v|mov|webm|mkv)($|\?)/i;
+    const privacyBlur = {revealed:new Set(), activeRow:null};
+    function privacyBlurIsMediaAttachment(att) {
+        if (!att) return false;
+        const ct = String(att.content_type || att.contentType || "").toLowerCase();
+        if (ct.startsWith("image/") || ct.startsWith("video/")) return true;
+        if (att.width > 0 || att.height > 0) return true;
+        return PRIVACY_MEDIA_RE.test(String(att.filename || att.url || ""));
+    }
     function privacyBlurToggleMessage(message) {
         if (!message || !message.id) return;
         const id = String(message.id), channelId = String(message.channel_id || message.channelId || "");
@@ -23054,26 +23311,42 @@
         else privacyBlur.revealed.add(id);
         if (channelId) localEditRedraw(channelId, id);
     }
+    function privacyBlurTransformEmbeds(orig, self, args) {
+        const params = args[0];
+        if (enabled("privacyBlur") && settings.privacyBlurEmbeds && params && typeof params === "object" && !params.hasSpoilerEmbeds) {
+            const active = privacyBlur.activeRow, id = active && String(active.id || "");
+            if (!id || !privacyBlur.revealed.has(id)) {
+                return orig.apply(self, [Object.assign({}, params, {hasSpoilerEmbeds:true})].concat(Array.prototype.slice.call(args, 1)));
+            }
+        }
+        return orig.apply(self, args);
+    }
     function privacyBlurPostMessage(message, source) {
-        if (!message) return message;
+        if (!message || !settings.privacyBlurAvatars || !message.avatarURL) return message;
         const id = String((source && source.id) || message.id || "");
         if (id && privacyBlur.revealed.has(id)) return message;
-        let changed = false;
-        let next = message;
-        if (settings.privacyBlurAvatars && next.avatarURL) {
-            next = Object.assign({}, next, {avatarURL:undefined});
-            changed = true;
-        }
-        if (Array.isArray(next.attachments) && next.attachments.length) {
-            const atts = next.attachments.map(a => a && !a.spoiler ? Object.assign({}, a, {spoiler:true}) : a);
-            next = Object.assign({}, changed ? next : Object.assign({}, next), {attachments:atts});
-            changed = true;
-        }
-        if (Array.isArray(next.embeds) && next.embeds.length) {
-            const embs = next.embeds.map(e => e && !e.spoiler ? Object.assign({}, e, {spoiler:true, isSpoiler:true}) : e);
-            next = Object.assign({}, changed ? next : Object.assign({}, next), {embeds:embs});
-        }
+        const next = Object.assign({}, message, {avatarURL:PRIVACY_BLANK_AVATAR});
+        if ("avatarDecorationURL" in next) delete next.avatarDecorationURL;
         return next;
+    }
+    function PrivacyBlurPreview(props) {
+        const s = useChatPreviewStyles(), k = usePreviewChrome(), Eye = venusIcon(7195, "EyeSlashIcon");
+        const [peek, setPeek] = React.useState(false);
+        const Press = RN.Pressable || RN.View;
+        const header = previewHeader(k, {title:tr("general")});
+        const blurred = props.on && !peek;
+        return previewScreen(s, "blurPreview", "Privacy blur preview", [
+            previewMessage(s, "m1", "Alex", props.on && props.avatars ? "#5865f2" : "#3ba55c", "5:10 PM",
+                el(RN.View, {style:{gap:6, marginTop:2}},
+                    el(RN.Text, {style:s.text}, tr("Look at this photo I took:")),
+                    el(Press, {onPress:() => { if (props.on) { haptic("SELECTION"); setPeek(!peek); } },
+                        style:{height:82, borderRadius:10, backgroundColor:blurred ? "#111214" : "#2b3a4a", alignItems:"center", justifyContent:"center", borderWidth:1, borderColor:k.card.borderColor}},
+                        blurred
+                            ? el(RN.View, {style:{flexDirection:"row", alignItems:"center", gap:6, backgroundColor:"#00000088", paddingHorizontal:12, paddingVertical:6, borderRadius:16}},
+                                el(Eye, {size:"xs", color:"#ffffff"}),
+                                el(RN.Text, {style:{color:"#ffffff", fontSize:12, fontWeight:"700"}}, tr("SPOILER · Tap to preview reveal")))
+                            : el(RN.Text, {style:{color:"#dbdee1", fontSize:13, fontWeight:"600"}}, tr("Image visible")))))
+        ], {header});
     }
     function PrivacyBlurSettings() {
         useSettings("privacyBlur");
@@ -23083,13 +23356,16 @@
         const Group = ui.TableRowGroup || RN.View, Switch = ui.TableSwitchRow;
         const groups = [
             on ? null : offCard("status", venusIcon(7195, "EyeSlashIcon"), "privacyBlur"),
+            el(PrivacyBlurPreview, {key:"preview", on, avatars:!!settings.privacyBlurAvatars}),
             el(Group, {key:"opts", title:tr("What to blur")},
-                switchRow(Switch, "privacyBlurAvatars", "Also hide avatars", "Hides profile pictures in chat rows while Privacy blur is on.", rowIcon(12318, "UserIcon"))),
+                switchRow(Switch, "privacyBlurImages", "Blur photos, videos & GIFs", "Masks media attachments with Discord's native spoiler overlay.", rowIcon(8763, "ImageIcon")),
+                switchRow(Switch, "privacyBlurEmbeds", "Blur link & embed previews", "Covers rich link preview images and video embeds until tapped.", rowIcon(14887, "EmbedIcon")),
+                switchRow(Switch, "privacyBlurAvatars", "Also hide avatars", "Replaces user avatars in chat rows with Discord's blank avatar.", rowIcon(12318, "UserIcon"))),
             privacyBlur.revealed.size ? el(Group, {key:"reset", title:tr("Revealed messages")},
                 actionRow(ui, "reblur", "Blur revealed messages again",
                     pl(privacyBlur.revealed.size, "{n} message currently revealed", "{n} messages currently revealed"),
                     () => { haptic("SELECTION"); privacyBlur.revealed.clear(); notify("privacyBlur"); reviewToast(ui, "All media blurred again", venusIcon(7195, "EyeSlashIcon")); }, !on, false)) : null,
-            footnote("hint", "Media attachments and embeds are blurred with Discord's spoiler overlay. Tap an image once or use the message hold menu to reveal it.")
+            footnote("hint", "Media uses Discord's native spoiler overlay for maximum stability. Tap once in chat or use the hold menu to reveal.")
         ];
         return settingsBody(ui, groups);
     }
@@ -23135,71 +23411,65 @@
             showToast(ui, "venus-batch-save-done", tr("Saved {done} of {total} files to device", {done:savedCount, total:items.length}), icon);
         });
     }
-
-    // ------------------------------------------------- 6. URL unshortener
-    const SHORT_DOMAINS = new Set(["bit.ly", "t.co", "tinyurl.com", "is.gd", "v.gd", "cutt.ly", "rb.gy", "shorturl.at", "ow.ly", "buff.ly", "rebrand.ly", "tiny.cc", "bl.ink", "s.id", "t.ly"]);
-    function urlUnshortenerShouldCheck(url) {
-        if (typeof url !== "string" || !/^https?:\/\//i.test(url)) return false;
-        const m = /^https?:\/\/([^/?#:]+)/i.exec(url);
-        if (!m) return false;
-        const host = m[1].toLowerCase().replace(/^www\./, "");
-        if (host === "discord.com" || host === "discordapp.com" || host === "discord.gg" || host.endsWith(".discord.com") || host.endsWith(".discordapp.net")) return false;
-        return settings.urlUnshortenerAll || SHORT_DOMAINS.has(host);
+    function BatchMediaSavePreview(props) {
+        const s = useChatPreviewStyles(), k = usePreviewChrome(), Dl = venusIcon(5889, "DownloadIcon");
+        const header = previewHeader(k, {title:tr("general")});
+        return previewScreen(s, "batchPreview", "Save all media preview", [
+            previewMessage(s, "m1", "Hana", "#5865f2", "6:02 PM",
+                el(RN.View, {style:{gap:6, marginTop:2}},
+                    el(RN.View, {style:{flexDirection:"row", gap:6}},
+                        [1, 2, 3].map(n => el(RN.View, {key:String(n), style:[k.secondary, {flex:1, height:46, borderRadius:8, alignItems:"center", justifyContent:"center"}]},
+                            el(RN.Text, {style:s.muted}, "IMG " + n)))),
+                    props.on ? el(RN.View, {style:[k.card, {flexDirection:"row", alignItems:"center", gap:8, paddingHorizontal:10, paddingVertical:7, borderRadius:8, borderWidth:1}]},
+                        el(Dl, {size:"xs", color:k.brandFg.color}),
+                        el(RN.Text, {style:[s.name, {fontSize:13}]}, tr("Save all media ({n})", {n:3}))) : null))
+        ], {header});
     }
-    function urlUnshortenerInspect(url) {
-        const ui = reviewUI(), icon = venusIcon(14887, "EmbedIcon");
-        showToast(ui, "venus-unshorten", tr("Checking link destination\u2026"), icon);
-        diagCall("unshorten", JSON.stringify({url})).then(raw => {
-            const res = JSON.parse(raw);
-            const finalUrl = res.finalUrl || url;
-            const hops = Array.isArray(res.hops) ? res.hops : [url];
-            const body = hops.length > 1
-                ? tr("Initial: {from}\n\nFinal ({n} hops):\n{to}", {from:url, n:hops.length - 1, to:finalUrl})
-                : tr("Direct link (no redirect):\n{to}", {to:finalUrl});
-            if (RN && RN.Alert && typeof RN.Alert.alert === "function") {
-                RN.Alert.alert(tr("Link Destination"), body, [
-                    {text:tr("Copy Final URL"), onPress:() => { copyText(finalUrl); showToast(ui, "venus-copy-url", tr("Copied destination URL"), icon); }},
-                    {text:tr("Cancel"), style:"cancel"},
-                    {text:tr("Open Link"), onPress:() => openLink(finalUrl)}
-                ]);
-            } else {
-                showToast(ui, "venus-unshorten-res", finalUrl, icon);
-            }
-        }, () => {
-            if (RN && RN.Alert && typeof RN.Alert.alert === "function") {
-                RN.Alert.alert(tr("Link Destination"), tr("Couldn't resolve redirects for:\n{url}", {url}), [
-                    {text:tr("Cancel"), style:"cancel"},
-                    {text:tr("Open Anyway"), onPress:() => openLink(url)}
-                ]);
-            }
-        });
-    }
-    function urlUnshortenerTapLink(event) {
-        if (!enabled("urlUnshortener")) return false;
-        const data = event && event.nativeEvent && event.nativeEvent.data;
-        if (!data) return false;
-        const node = data.node, url = data.url || (node && typeof node.target === "string" && node.target);
-        if (!urlUnshortenerShouldCheck(url)) return false;
-        urlUnshortenerInspect(url);
-        return true;
-    }
-    function UrlUnshortenerSettings() {
-        useSettings("urlUnshortener");
+    function BatchMediaSaveSettings() {
+        useSettings("batchMediaSave");
         useLanguage();
-        const ui = reviewUI(), on = enabled("urlUnshortener");
+        const ui = reviewUI(), on = enabled("batchMediaSave");
         if (!RN) return null;
-        const Group = ui.TableRowGroup || RN.View, Switch = ui.TableSwitchRow;
         const groups = [
-            on ? null : offCard("status", venusIcon(14887, "EmbedIcon"), "urlUnshortener"),
-            el(Group, {key:"mode", title:tr("When to check links")},
-                switchRow(Switch, "urlUnshortenerAll", "Check all external links", "Preview the destination for every external link, not only shorteners like bit.ly or t.co.", rowIcon(14887, "EmbedIcon"))),
-            footnote("info", "Follows up to 5 HTTP redirect hops natively before opening the browser, and shows you the final domain and full address.")
+            on ? null : offCard("status", venusIcon(5889, "DownloadIcon"), "batchMediaSave"),
+            el(BatchMediaSavePreview, {key:"preview", on}),
+            footnote("hint", "Hold any message with 2 or more images, videos, or embed media and tap Save all media to download them all at once.")
         ];
         return settingsBody(ui, groups);
     }
 
-    // ------------------------------------------------- 7. ZIP archive preview
+    // ------------------------------------------------- 5. Strip image metadata (EXIF)
+    function StripExifPreview(props) {
+        const s = useChatPreviewStyles(), k = usePreviewChrome(), Shield = venusIcon(11453, "ShieldIcon");
+        return previewScreen(s, "exifPreview", "Strip image metadata preview", [
+            el(RN.View, {style:[k.card, {margin:10, padding:12, borderRadius:10, borderWidth:1, gap:8}]},
+                el(RN.View, {style:{flexDirection:"row", alignItems:"center", gap:8}},
+                    el(Shield, {size:"sm", color:props.on ? "#23a55a" : "#f23f43"}),
+                    el(RN.Text, {style:[s.name, {fontSize:14, flex:1}]}, "IMG_4821.jpg")),
+                el(RN.Text, {style:s.muted}, "GPS · Camera Model · Date Taken"),
+                el(RN.Text, {style:{color:props.on ? "#23a55a" : "#f23f43", fontSize:13, fontWeight:"700"}},
+                    props.on ? tr("Stripped automatically before upload") : tr("Original EXIF metadata preserved")))
+        ]);
+    }
+    function StripExifSettings() {
+        useSettings("stripExif");
+        useLanguage();
+        const ui = reviewUI(), on = enabled("stripExif");
+        if (!RN) return null;
+        const Group = ui.TableRowGroup || RN.View, Switch = ui.TableSwitchRow;
+        const groups = [
+            on ? null : offCard("status", venusIcon(11453, "ShieldIcon"), "stripExif"),
+            el(StripExifPreview, {key:"preview", on}),
+            el(Group, {key:"opts", title:tr("Privacy behavior")},
+                switchRow(Switch, "stripExifToast", "Show confirmation toast", "Shows a brief notice whenever photo metadata is stripped before sending.", rowIcon(11453, "ShieldIcon"))),
+            footnote("hint", "Removes GPS location, camera model and timestamps while keeping photo orientation intact. Animated GIF/WebP files are preserved without frame loss. You can also tap an attached photo before sending to inspect and strip its EXIF data immediately.")
+        ];
+        return settingsBody(ui, groups);
+    }
+
+    // ------------------------------------------------- 6. ZIP archive preview
     const ZIP_PREVIEW_SHEET = "VenusZipPreview";
+    const zipDropdown = new Map();
     function zipPreviewAttachment(message) {
         if (!message || !Array.isArray(message.attachments)) return null;
         for (let i = 0; i < message.attachments.length; i++) {
@@ -23207,6 +23477,75 @@
             if (a && typeof a.url === "string" && /\.zip($|\?)/i.test(a.filename || a.url)) return a;
         }
         return null;
+    }
+    function zipFormatTreeLines(entries, total) {
+        if (!entries || !entries.length) return tr("(Empty ZIP archive)");
+        const shown = entries.slice(0, 15).map(e =>
+            (e.isDir ? "\uD83D\uDCC1 " : "\uD83D\uDCC4 ") + e.name + (e.isDir ? "" : " (" + formatSize(e.size >= 0 ? e.size : 0) + ")")
+        );
+        if (total > 15) shown.push(tr("\u2026and {n} more (tap attachment to view all)", {n:total - 15}));
+        return "```\n" + shown.join("\n") + "\n```";
+    }
+    function zipPreviewCtaMessage(message, source) {
+        const zip = zipPreviewAttachment(source);
+        if (!message || !zip || message.ctaButton) return message;
+        const id = String(message.id || source.id || "");
+        const st = id ? zipDropdown.get(id) : null;
+        const label = st && st.loading ? tr("Reading ZIP archive\u2026")
+            : st && st.expanded ? ("\u25b4 " + tr("Hide ZIP files ({n})", {n:st.total || (st.entries && st.entries.length) || 0}))
+            : ("\u25be " + tr("Show ZIP files ({name})", {name:zip.filename || "archive.zip"}));
+        const slot = nativeThemeSlot(), light = slot === "light";
+        const textColor = highlightProcess(light ? "#313338" : "#dbdee1"), backgroundColor = highlightProcess(light ? "#0000000f" : "#ffffff14");
+        if (textColor == null || backgroundColor == null) return message;
+        return Object.assign({}, message, {ctaButton:{text:label, textColor, backgroundColor, callback:"venus-zip-dropdown"}});
+    }
+    function zipPreviewTapCta(event) {
+        if (!enabled("zipPreview")) return false;
+        let data = event && event.nativeEvent;
+        if (!data || data.callback == null) {
+            const read = inspectedExport(10338, "getNativeSyntheticEventData");
+            try { data = typeof read === "function" ? read(event) : data; } catch (_) {}
+        }
+        if (!data || data.callback !== "venus-zip-dropdown") return false;
+        const channelId = String(data.channelId || ""), messageId = String(data.messageId || "");
+        const store = msgStore || (msgStore = inspectedExport(6226, "default"));
+        let message = null;
+        try { message = store && typeof store.getMessage === "function" ? store.getMessage(channelId, messageId) : null; } catch (_) {}
+        const zip = zipPreviewAttachment(message);
+        if (!zip || !zip.url) return true;
+        const cur = zipDropdown.get(messageId);
+        if (cur && cur.entries) {
+            cur.expanded = !cur.expanded;
+            localEditRedraw(channelId, messageId);
+            return true;
+        }
+        zipDropdown.set(messageId, {loading:true, expanded:false, entries:null, total:0});
+        localEditRedraw(channelId, messageId);
+        diagCall("zipList", JSON.stringify({url:zip.url, name:zip.filename || "archive.zip"})).then(raw => {
+            const parsed = JSON.parse(raw);
+            zipDropdown.set(messageId, {loading:false, expanded:true, entries:parsed.entries || [], total:parsed.total || 0});
+            localEditRedraw(channelId, messageId);
+        }, err => {
+            zipDropdown.delete(messageId);
+            localEditRedraw(channelId, messageId);
+            showToast(reviewUI(), "venus-zip-err", tr("Couldn't read ZIP archive: {err}", {err:String(err)}), venusIcon(11226, "FileIcon"));
+        });
+        return true;
+    }
+    function zipPreviewTapAttachment(event) {
+        if (!enabled("zipPreview")) return false;
+        let data = event && event.nativeEvent;
+        if (!data || (!data.attachmentUrl && !data.url)) {
+            const read = inspectedExport(10338, "getNativeSyntheticEventData");
+            try { data = typeof read === "function" ? read(event) : data; } catch (_) {}
+        }
+        const url = data && (data.attachmentUrl || data.url || data.urlString);
+        const name = data && (data.attachmentName || data.fileName || data.filename);
+        if ((typeof url === "string" && /\.zip($|\?)/i.test(url)) || (typeof name === "string" && /\.zip$/i.test(name))) {
+            zipPreviewOpen({url, filename:name || "archive.zip"});
+            return true;
+        }
+        return false;
     }
     function zipPreviewOpen(att) {
         const ui = reviewUI(), icon = venusIcon(11226, "FileIcon");
@@ -23224,6 +23563,7 @@
     function ZipPreviewSheet(props) {
         const ui = reviewUI(), Group = ui.TableRowGroup || RN.View, Row = ui.TableRow;
         const [reading, setReading] = React.useState(null);
+        const [collapsed, setCollapsed] = React.useState({});
         const s = useLogStyles();
         const close = () => hideReviewSheet(ui, ZIP_PREVIEW_SHEET);
         const header = ui.Header ? el(ui.Header, {title:props.name, trailing:ui.Close ? el(ui.Close, {onPress:close}) : undefined}) : null;
@@ -23240,20 +23580,70 @@
                 showToast(ui, "venus-zip-read-err", String(err), venusIcon(11226, "FileIcon"));
             });
         };
+        const folderNames = [];
+        const byFolder = {};
+        for (let i = 0; i < entries.length; i++) {
+            const e = entries[i];
+            if (e.isDir) continue;
+            const slash = e.name.lastIndexOf("/");
+            const folder = slash > 0 ? e.name.slice(0, slash + 1) : "/";
+            if (!byFolder[folder]) { byFolder[folder] = []; folderNames.push(folder); }
+            byFolder[folder].push(e);
+        }
         const content = reading
             ? el(RN.View, {style:{paddingHorizontal:12, paddingBottom:24, gap:12}},
                 actionRow(ui, "backToList", "\u2190 Back to file list", reading.entry + " (" + formatSize(reading.size || 0) + ")", () => setReading(null), false, false),
                 el(RN.View, {style:[s.card, {padding:12}]},
                     el(RN.Text, {selectable:true, style:[s.body, {fontFamily:"monospace", fontSize:12}]}, reading.content || "")))
             : el(RN.View, {style:{paddingHorizontal:12, paddingBottom:24, gap:12}},
-                el(Group, {key:"files", title:pl(props.data && props.data.total || entries.length, "{n} entry in archive", "{n} entries in archive")},
-                    Row ? entries.map(e => el(Row, {key:e.name, label:e.name,
-                        subLabel:e.isDir ? tr("Folder") : (formatSize(e.size >= 0 ? e.size : 0) + (e.isText ? " \u2022 Tap to read" : "")),
-                        arrow:!!e.isText, onPress:() => openEntry(e)})) : null));
+                folderNames.map(folder => {
+                    const isClosed = !!collapsed[folder], items = byFolder[folder];
+                    return el(Group, {key:folder, title:(isClosed ? "\u25b8 " : "\u25be ") + folder + " (" + items.length + ")"},
+                        Row ? el(Row, {key:"toggle:" + folder, label:isClosed ? tr("Expand folder") : tr("Collapse folder"), subLabel:folder,
+                            onPress:() => { haptic("SELECTION"); animateLayout(); setCollapsed(Object.assign({}, collapsed, {[folder]:!isClosed})); }}) : null,
+                        !isClosed && Row ? items.map(e => el(Row, {key:e.name, label:e.name.slice(folder === "/" ? 0 : folder.length),
+                            subLabel:formatSize(e.size >= 0 ? e.size : 0) + (e.isText ? " \u2022 " + tr("Tap to read") : ""),
+                            arrow:!!e.isText, onPress:() => openEntry(e)})) : null);
+                }));
         return serverEditScroll(ui, header, content);
     }
+    function ZipPreviewPreview(props) {
+        const s = useChatPreviewStyles(), k = usePreviewChrome(), FileIcon = venusIcon(11226, "FileIcon");
+        const [open, setOpen] = React.useState(true);
+        const Press = RN.Pressable || RN.View;
+        const header = previewHeader(k, {title:tr("general")});
+        return previewScreen(s, "zipPreview", "ZIP archive preview", [
+            previewMessage(s, "m1", "Tora", "#5865f2", "7:05 PM",
+                el(RN.View, {style:{gap:6, marginTop:2}},
+                    el(RN.View, {style:[k.card, {flexDirection:"row", alignItems:"center", gap:8, padding:10, borderRadius:8, borderWidth:1}]},
+                        el(FileIcon, {size:"sm", color:k.icon.color}),
+                        el(RN.View, {style:{flex:1}},
+                            el(RN.Text, {style:[s.name, {fontSize:13}]}, "release-patch.zip"),
+                            el(RN.Text, {style:s.muted}, "1.4 MB"))),
+                    props.on ? el(Press, {onPress:() => { haptic("SELECTION"); animateLayout(); setOpen(!open); },
+                        style:[k.secondary, {paddingHorizontal:10, paddingVertical:6, borderRadius:8, alignSelf:"flex-start"}]},
+                        el(RN.Text, {style:[k.secondaryText, {fontSize:12, fontWeight:"700"}]},
+                            open ? ("\u25b4 " + tr("Hide ZIP files ({n})", {n:3})) : ("\u25be " + tr("Show ZIP files ({name})", {name:"release-patch.zip"})))) : null,
+                    props.on && open ? el(RN.View, {style:[k.card, {padding:8, borderRadius:8, borderWidth:1}]},
+                        el(RN.Text, {style:[s.muted, {fontFamily:"monospace", fontSize:11}]},
+                            "\uD83D\uDCC4 README.md (4.2 KB)\n\uD83D\uDCC1 src/\n\uD83D\uDCC4 src/index.ts (1.8 KB)")) : null))
+        ], {header});
+    }
+    function ZipPreviewSettings() {
+        useSettings("zipPreview");
+        useLanguage();
+        const ui = reviewUI(), on = enabled("zipPreview");
+        if (!RN) return null;
+        const groups = [
+            on ? null : offCard("status", venusIcon(11226, "FileIcon"), "zipPreview"),
+            el(ZipPreviewPreview, {key:"preview", on}),
+            footnote("hint", "Every .zip attachment in chat gets a Show ZIP files dropdown button underneath to expand its file list inline. Tap the archive itself or open Preview ZIP archive from the hold menu to inspect folders and read text files.")
+        ];
+        return settingsBody(ui, groups);
+    }
 
-    // ------------------------------------------------- 8. Message reminders
+    // ------------------------------------------------- 7. Message reminders
+    const REMINDER_SHEET = "VenusReminderSheet";
     const reminders = {list:[], timer:undefined, dispatcher:null};
     function remindersLoad(arr) {
         reminders.list = [];
@@ -23295,7 +23685,23 @@
         reminders.dispatcher = d;
         remindersSync();
     }
-    function reminderSchedule(message, minutes) {
+    function reminderFormatDue(due) {
+        const d = new Date(due);
+        const now = new Date();
+        const sameDay = d.toDateString() === now.toDateString();
+        const timeStr = d.toLocaleTimeString([], {hour:"2-digit", minute:"2-digit"});
+        return (sameDay ? tr("Today") : d.toLocaleDateString([], {month:"short", day:"numeric"})) + " " + timeStr;
+    }
+    function reminderTimezoneName() {
+        try {
+            const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+            if (tz) return tz;
+        } catch (_) {}
+        const off = -new Date().getTimezoneOffset();
+        const sign = off >= 0 ? "+" : "-", abs = Math.abs(off);
+        return "GMT" + sign + String(Math.floor(abs / 60)).padStart(2, "0") + ":" + String(abs % 60).padStart(2, "0");
+    }
+    function reminderScheduleAt(message, dueMs, note) {
         if (!message || !message.id) return;
         const id = "r" + Date.now().toString(36), m = String(message.id);
         const c = String(message.channel_id || message.channelId || "");
@@ -23303,24 +23709,105 @@
         const g = String(message.guild_id || message.guildId || (ch && (ch.guild_id || ch.guildId)) || "");
         const author = message.author || {};
         const u = String(author.globalName || author.global_name || author.username || "Message").slice(0, 80);
-        const x = String(message.content || tr("(Attachment / Embed)")).slice(0, 300);
-        const due = Date.now() + Math.max(1, minutes) * 60000;
-        reminders.list.unshift({id, m, c, g, u, x, due, done:false});
+        const body = (note && String(note).trim()) ? String(note).trim() : String(message.content || tr("(Attachment / Embed)"));
+        const due = Math.max(Date.now() + 60000, dueMs);
+        reminders.list.unshift({id, m, c, g, u, x:body.slice(0, 300), due, done:false});
         if (reminders.list.length > 100) reminders.list.length = 100;
         save(); remindersSync(); notify("reminders");
-        showToast(reviewUI(), "venus-rem-set", tr("Reminder set for {min} min", {min:minutes}), venusIcon(5896, "ClockIcon"));
+        showToast(reviewUI(), "venus-rem-set", tr("Reminder set for {when}", {when:reminderFormatDue(due)}), venusIcon(5896, "ClockIcon"));
+    }
+    function ReminderPickerSheet(props) {
+        const ui = reviewUI(), Group = ui.TableRowGroup || RN.View, Row = ui.TableRow;
+        const Button = inspectedExport(5790, "Button"), k = usePreviewChrome(), s = useChatPreviewStyles();
+        const [tab, setTab] = React.useState("delay");
+        const [customMin, setCustomMin] = React.useState("45");
+        const [dayOffset, setDayOffset] = React.useState(0);
+        const [clockText, setClockText] = React.useState(() => {
+            const next = new Date(Date.now() + 3600000);
+            return String(next.getHours()).padStart(2, "0") + ":" + String(next.getMinutes()).padStart(2, "0");
+        });
+        const [note, setNote] = React.useState("");
+        const close = () => hideReviewSheet(ui, REMINDER_SHEET);
+        const header = ui.Header ? el(ui.Header, {title:tr("Set Reminder"), trailing:ui.Close ? el(ui.Close, {onPress:close}) : undefined}) : null;
+        const msg = props.message || {};
+        const author = (msg.author && (msg.author.globalName || msg.author.global_name || msg.author.username)) || "Message";
+        const snippet = String(msg.content || tr("(Attachment / Embed)")).slice(0, 140);
+        const scheduleAndClose = dueMs => { haptic("SELECTION"); close(); reminderScheduleAt(msg, dueMs, note); };
+        const clockMatch = /^\s*([01]?\d|2[0-3]):([0-5]\d)\s*$/.exec(clockText);
+        let computedClockMs = null, bumpedTomorrow = false;
+        if (clockMatch) {
+            const target = new Date();
+            target.setDate(target.getDate() + dayOffset);
+            target.setHours(Number(clockMatch[1]), Number(clockMatch[2]), 0, 0);
+            if (target.getTime() <= Date.now() && dayOffset === 0) {
+                target.setDate(target.getDate() + 1);
+                bumpedTomorrow = true;
+            }
+            computedClockMs = target.getTime();
+        }
+        const quickClock = (h, m) => {
+            const target = new Date();
+            target.setHours(h, m, 0, 0);
+            if (target.getTime() <= Date.now()) target.setDate(target.getDate() + 1);
+            scheduleAndClose(target.getTime());
+        };
+        const minNum = Number(customMin);
+        const minValid = Number.isFinite(minNum) && minNum >= 1 && minNum <= 43200;
+        const content = el(RN.View, {style:{paddingHorizontal:12, paddingBottom:24, gap:12}},
+            el(RN.View, {style:[k.card, {padding:12, borderRadius:10, borderWidth:1, gap:4}]},
+                el(RN.Text, {style:[s.name, {fontSize:14}]}, author),
+                el(RN.Text, {style:s.muted, numberOfLines:2}, snippet)),
+            venusSegmented({key:"remMode", value:tab, items:[
+                {value:"delay", label:tr("After delay")},
+                {value:"clock", label:tr("Specific time")}
+            ], onChange:v => setTab(v)}),
+            el(Group, {key:"memo", title:tr("Note (optional)")},
+                ui.TextInput ? el(ui.TextInput, {value:note, onChange:t => setNote(String(t || "")), placeholder:tr("Reminder memo (optional)")})
+                    : el(RN.TextInput, {value:note, onChangeText:setNote, placeholder:tr("Reminder memo (optional)"), style:{padding:12}})),
+            tab === "delay"
+                ? el(RN.View, {style:{gap:12}},
+                    Row ? el(Group, {key:"presets", title:tr("Quick delays")},
+                        [[15, "In 15 minutes"], [30, "In 30 minutes"], [60, "In 1 hour"], [180, "In 3 hours"], [360, "In 6 hours"], [1440, "Tomorrow (24 hours)"]].map(([mins, label]) =>
+                            el(Row, {key:String(mins), label:tr(label), arrow:true, onPress:() => scheduleAndClose(Date.now() + mins * 60000)}))) : null,
+                    el(Group, {key:"customDelay", title:tr("Custom minutes")},
+                        inputWithButton(ui, "minIn", {value:customMin, keyboardType:"number-pad", placeholder:"45", label:tr("Minutes from now")},
+                            t => setCustomMin(String(t || "").replace(/[^0-9]/g, "")), "Set",
+                            () => { if (minValid) scheduleAndClose(Date.now() + minNum * 60000); }, !minValid)))
+                : el(RN.View, {style:{gap:12}},
+                    footnote("tz", tr("Current timezone: {tz}", {tz:reminderTimezoneName()})),
+                    venusSegmented({key:"dayPick", value:String(dayOffset), items:[
+                        {value:"0", label:tr("Today")},
+                        {value:"1", label:tr("Tomorrow")}
+                    ], onChange:v => setDayOffset(Number(v) || 0)}),
+                    Row ? el(Group, {key:"clockPresets", title:tr("Quick clock times")},
+                        [[9, 0, "09:00 AM"], [12, 0, "12:00 PM"], [14, 0, "02:00 PM"], [18, 0, "06:00 PM"], [21, 0, "09:00 PM"]].map(([h, m, label]) =>
+                            el(Row, {key:label, label:tr(label), arrow:true, onPress:() => quickClock(h, m)}))) : null,
+                    el(Group, {key:"customClock", title:tr("Enter time (24h HH:MM)")},
+                        ui.TextInput ? el(ui.TextInput, {value:clockText, onChange:t => setClockText(String(t || "")), placeholder:"18:30",
+                            subLabel:computedClockMs ? tr("Will notify: {when}", {when:reminderFormatDue(computedClockMs)}) + (bumpedTomorrow ? " (" + tr("next occurrence") + ")" : "") : tr("Use HH:MM format, e.g. 18:30")})
+                            : el(RN.TextInput, {value:clockText, onChangeText:setClockText, placeholder:"18:30", style:{padding:12}})),
+                    Button ? el(Button, {text:tr("Schedule Reminder"), size:"lg", variant:"primary", disabled:!computedClockMs,
+                        onPress:() => { if (computedClockMs) scheduleAndClose(computedClockMs); }}) : null)
+        );
+        return serverEditScroll(ui, header, content);
     }
     function reminderAsk(message) {
-        if (!RN || !RN.Alert || typeof RN.Alert.alert !== "function") {
-            reminderSchedule(message, 60);
+        const ui = reviewUI();
+        if (typeof ui.showSheet === "function" && ui.ActionSheet) {
+            ui.showSheet({key:REMINDER_SHEET, content:el(ReminderPickerSheet, {message}), stackingBehavior:"stack"});
             return;
         }
-        RN.Alert.alert(tr("Remind Me Later"), tr("When should Venus remind you about this message?"), [
-            {text:tr("15 minutes"), onPress:() => reminderSchedule(message, 15)},
-            {text:tr("1 hour"), onPress:() => reminderSchedule(message, 60)},
-            {text:tr("3 hours"), onPress:() => reminderSchedule(message, 180)},
-            {text:tr("24 hours"), onPress:() => reminderSchedule(message, 1440)},
-            {text:tr("Cancel"), style:"cancel"}
+        reminderScheduleAt(message, Date.now() + 3600000, "");
+    }
+    function RemindersPreview(props) {
+        const s = useChatPreviewStyles(), k = usePreviewChrome(), Clock = venusIcon(5896, "ClockIcon");
+        return previewScreen(s, "remPreview", "Reminders preview", [
+            el(RN.View, {style:[k.card, {margin:10, padding:12, borderRadius:12, borderWidth:1, flexDirection:"row", alignItems:"center", gap:10}]},
+                el(RN.View, {style:[k.secondary, {width:36, height:36, borderRadius:18, alignItems:"center", justifyContent:"center"}]},
+                    el(Clock, {size:"sm", color:props.on ? k.brandFg.color : k.iconMuted.color})),
+                el(RN.View, {style:{flex:1, gap:2}},
+                    el(RN.Text, {style:[s.name, {fontSize:14}]}, tr("Reminder: {user}", {user:"Minji"})),
+                    el(RN.Text, {style:s.muted}, tr("Today") + " 18:30 \u2022 " + reminderTimezoneName())))
         ]);
     }
     function RemindersSettings() {
@@ -23331,7 +23818,7 @@
         const Group = ui.TableRowGroup || RN.View, Row = ui.TableRow;
         const pending = reminders.list.filter(r => !r.done);
         const past = reminders.list.filter(r => r.done);
-        const renderRow = r => el(Row, {key:r.id, label:r.u + " \u2022 " + new Date(r.due).toLocaleTimeString([], {hour:"2-digit", minute:"2-digit"}),
+        const renderRow = r => el(Row, {key:r.id, label:r.u + " \u2022 " + reminderFormatDue(r.due),
             subLabel:r.x, arrow:true,
             onPress:() => {
                 haptic("SELECTION");
@@ -23347,151 +23834,272 @@
             }});
         const groups = [
             on ? null : offCard("status", venusIcon(5896, "ClockIcon"), "reminders"),
+            el(RemindersPreview, {key:"preview", on}),
             pending.length && Row ? el(Group, {key:"pending", title:pl(pending.length, "{n} upcoming reminder", "{n} upcoming reminders")}, pending.map(renderRow)) : null,
             past.length && Row ? el(Group, {key:"past", title:tr("Completed reminders")}, past.slice(0, 30).map(renderRow)) : null,
-            !pending.length && !past.length ? footnote("empty", "Hold any message in chat and tap Remind me later to schedule a notification.") : null
+            !pending.length && !past.length ? footnote("empty", "Hold any message in chat and tap Remind me later to pick a delay or specific clock time.") : null
         ];
         return settingsBody(ui, groups);
     }
 
-    // ------------------------------------------------- 9. App lock & secret DMs
-    const appLockState = {secretIds:new Set(), secretUnlocked:false};
+    // ------------------------------------------------- 8. App lock
     function appLockSync(lockNow) {
         diagCall("lockConfig", JSON.stringify({
             enabled:enabled("appLock"),
             timeoutSec:Number(settings.appLockTimeout) || 0,
-            lockNow:!!lockNow
+            pin:String(settings.appLockPin || ""),
+            lockNow:!!lockNow,
+            title:tr("Discord is Locked"),
+            subtitle:tr("Enter your PIN passcode to unlock"),
+            hint:tr("Enter PIN"),
+            wrongPin:tr("Incorrect PIN. Try again."),
+            unlock:tr("Unlock"),
+            noPin:tr("No PIN set yet. Tap Unlock to close, and set a PIN in Venus \u2192 App lock.")
         })).catch(() => {});
     }
-    function secretDmsSync() {
-        appLockState.secretIds.clear();
-        const parts = String(settings.secretDmIds || "").split(/[\r\n,\s]+/);
-        for (let i = 0; i < parts.length; i++) {
-            const id = parts[i].trim();
-            if (/^\d{15,22}$/.test(id)) appLockState.secretIds.add(id);
-        }
-        if (channelStore && typeof channelStore.emitChange === "function") {
-            try { channelStore.emitChange(); } catch (_) {}
-        }
-    }
-    function secretDmIsHidden(channelId) {
-        return enabled("appLock") && settings.secretDms && !appLockState.secretUnlocked && appLockState.secretIds.has(String(channelId || ""));
-    }
-    function secretDmToggle(channelId) {
-        if (!channelId) return;
-        const id = String(channelId);
-        const ui = reviewUI(), icon = venusIcon(8771, "LockIcon");
-        if (appLockState.secretIds.has(id)) {
-            appLockState.secretIds.delete(id);
-            showToast(ui, "venus-secret-dm", tr("Removed from Secret DMs"), icon);
-        } else {
-            appLockState.secretIds.add(id);
-            showToast(ui, "venus-secret-dm", tr("Hidden as Secret DM"), icon);
-        }
-        setSetting("secretDmIds", Array.from(appLockState.secretIds).join(","));
-    }
-    function hookSecretDmsStore(store) {
-        let patched = store;
-        if (typeof patched.getSortedPrivateChannels === "function") {
-            patched = hookExport(patched, "getSortedPrivateChannels", (orig, self, args) => {
-                const list = orig.apply(self, args);
-                if (!enabled("appLock") || !settings.secretDms || appLockState.secretUnlocked || !appLockState.secretIds.size || !Array.isArray(list)) return list;
-                return list.filter(ch => !ch || !appLockState.secretIds.has(String(ch.id)));
-            });
-        }
-        if (typeof patched.getMutablePrivateChannels === "function") {
-            patched = hookExport(patched, "getMutablePrivateChannels", (orig, self, args) => {
-                const map = orig.apply(self, args);
-                if (!enabled("appLock") || !settings.secretDms || appLockState.secretUnlocked || !appLockState.secretIds.size || !map || typeof map !== "object") return map;
-                const copy = Object.assign({}, map);
-                appLockState.secretIds.forEach(id => { delete copy[id]; });
-                return copy;
-            });
-        }
-        return patched;
-    }
-    function secretDmShouldNotify(orig, self, args) {
-        const msg = args[0], chId = msg && (msg.channel_id || msg.channelId) || args[1];
-        if (chId && secretDmIsHidden(chId)) return false;
-        return orig.apply(self, args);
-    }
-    function secretDmChannelSheet(orig, self, args) {
-        const tree = orig.apply(self, args), props = args[0], channel = props && props.channel;
-        if (!enabled("appLock") || !settings.secretDms || !React || !tree || !channel || (channel.type !== 1 && channel.type !== 3)) return tree;
-        const id = String(channel.id);
-        const isSecret = appLockState.secretIds.has(id);
-        const label = isSecret ? tr("Unhide Secret DM") : tr("Hide as Secret DM");
-        const Icon = venusIcon(8771, "LockIcon");
-        let added = false;
-        return cloneTree(tree, function (node, nodeProps) {
-            if (added || !Array.isArray(nodeProps.children)) return nodeProps;
-            const rows = nodeProps.children.filter(child => child && child.props && typeof child.props.label === "string" && typeof child.props.onPress === "function");
-            if (!rows.length || nodeProps.children.some(child => child && child.key === "venus-secret-dm")) return nodeProps;
-            added = true;
-            const template = rows[rows.length - 1], icon = template.props.icon;
-            const row = React.cloneElement(template, {key:"venus-secret-dm", label, arrow:false, variant:undefined, disabled:false,
-                icon:icon && icon.props && "IconComponent" in icon.props ? React.cloneElement(icon, {IconComponent:Icon}) : icon,
-                onPress:function () {
-                    try { const sheets = reviewUI().sheets; if (sheets && typeof sheets.hideAllActionSheets === "function") sheets.hideAllActionSheets(); } catch (_) {}
-                    secretDmToggle(id);
-                }});
-            return Object.assign({}, nodeProps, {children:nodeProps.children.concat([row])});
-        }, 0, () => added);
+    function AppLockPreview(props) {
+        const s = useChatPreviewStyles(), k = usePreviewChrome(), Lock = venusIcon(8771, "LockIcon");
+        const hasPin = !!String(settings.appLockPin || "");
+        return previewScreen(s, "lockPreview", "App lock preview", [
+            el(RN.View, {style:[k.card, {margin:12, padding:16, borderRadius:14, borderWidth:1, alignItems:"center", gap:8}]},
+                el(RN.View, {style:[k.secondary, {width:42, height:42, borderRadius:21, alignItems:"center", justifyContent:"center"}]},
+                    el(Lock, {size:"md", color:props.on ? k.brandFg.color : k.iconMuted.color})),
+                el(RN.Text, {style:[s.name, {fontSize:15}]}, tr("Discord is Locked")),
+                el(RN.Text, {style:s.muted}, hasPin ? "\u2022 \u2022 \u2022 \u2022" : tr("Set a 4-8 digit PIN below")))
+        ]);
     }
     function AppLockSettings() {
         useSettings("appLock");
         useLanguage();
         const ui = reviewUI(), on = enabled("appLock");
         if (!RN) return null;
-        const Group = ui.TableRowGroup || RN.View, Switch = ui.TableSwitchRow, Radio = ui.TableRadioRow, Row = ui.TableRow;
-        const timeouts = [[0, "Immediately"], [60, "After 1 minute"], [300, "After 5 minutes"], [900, "After 15 minutes"]];
-        const toggleUnlockSecrets = () => {
+        const Group = ui.TableRowGroup || RN.View, Radio = ui.TableRadioRow;
+        const [pinDraft, setPinDraft] = React.useState("");
+        const cleanPin = String(pinDraft || "").replace(/\D/g, "");
+        const hasPin = String(settings.appLockPin || "").length >= 4;
+        const timeouts = [[0, "Immediately"], [30, "After 30 seconds"], [60, "After 1 minute"], [300, "After 5 minutes"], [900, "After 15 minutes"]];
+        const savePin = () => {
+            if (cleanPin.length < 4) return;
             haptic("SELECTION");
-            if (appLockState.secretUnlocked) {
-                appLockState.secretUnlocked = false;
-                secretDmsSync();
-                notify("appLock");
-                return;
-            }
-            diagCall("biometricAuth", JSON.stringify({title:tr("Unlock Secret DMs")})).then(res => {
-                if (res === "ok") {
-                    appLockState.secretUnlocked = true;
-                    secretDmsSync();
-                    notify("appLock");
-                    reviewToast(ui, "Secret DMs unlocked for this session", venusIcon(8771, "LockIcon"));
-                }
-            }, () => {});
+            setSetting("appLockPin", cleanPin);
+            setPinDraft("");
+            reviewToast(ui, tr("App lock PIN saved"), venusIcon(8771, "LockIcon"));
         };
-        const secretIds = Array.from(appLockState.secretIds);
         const groups = [
             on ? null : offCard("status", venusIcon(8771, "LockIcon"), "appLock"),
+            on && !hasPin ? statusCard("noPinWarn", "Set a 4 to 8 digit PIN below so Discord cannot be unlocked without it.", {title:tr("PIN not set yet"), IconComponent:venusIcon(8771, "LockIcon")}) : null,
+            el(AppLockPreview, {key:"preview", on}),
+            el(Group, {key:"pinSetup", title:hasPin ? tr("PIN passcode (Active)") : tr("PIN passcode")},
+                el(RN.View, {style:{paddingHorizontal:4, paddingVertical:4}},
+                    inputWithButton(ui, "pinIn", {value:pinDraft, secureTextEntry:true, keyboardType:"number-pad", maxLength:8,
+                        label:tr(hasPin ? "Change PIN (4-8 digits)" : "New PIN (4-8 digits)"), placeholder:"\u2022\u2022\u2022\u2022",
+                        editable:on, isDisabled:!on, returnKeyType:"done", onSubmitEditing:savePin},
+                        t => setPinDraft(String(t || "").replace(/\D/g, "").slice(0, 8)), "Save PIN", savePin, !on || cleanPin.length < 4)),
+                hasPin ? actionRow(ui, "clearPin", "Remove PIN", "Clears your custom PIN passcode.",
+                    () => { haptic("SELECTION"); setSetting("appLockPin", ""); }, !on, true) : null),
             el(Group, {key:"timeout", title:tr("Relock timeout")},
                 timeouts.map(([sec, label]) => Radio ? el(Radio, {key:String(sec), label:tr(label), selected:settings.appLockTimeout === sec,
                     disabled:!on, onPress:() => { haptic("SELECTION"); setSetting("appLockTimeout", sec); }}) : null)),
-            el(Group, {key:"secrets", title:tr("Secret DMs")},
-                switchRow(Switch, "secretDms", "Hide Secret DMs from DM list", "Hides chosen DM channels and their in-app banners until you unlock them below.", rowIcon(8771, "LockIcon")),
-                actionRow(ui, "unlockSecrets", appLockState.secretUnlocked ? "Lock Secret DMs again" : "Authenticate to reveal Secret DMs",
-                    pl(secretIds.length, "{n} hidden DM channel", "{n} hidden DM channels"), toggleUnlockSecrets, !on, false)),
-            appLockState.secretUnlocked && secretIds.length && Row ? el(Group, {key:"secretList", title:tr("Hidden Channels (Tap to open)")},
-                secretIds.map(id => el(Row, {key:id, label:"DM Channel " + id, subLabel:tr("Tap to open or remove"), arrow:true,
-                    onPress:() => {
-                        haptic("SELECTION");
-                        if (RN.Alert && typeof RN.Alert.alert === "function") {
-                            RN.Alert.alert("Secret DM", "Channel ID: " + id, [
-                                {text:tr("Unhide"), style:"destructive", onPress:() => secretDmToggle(id)},
-                                {text:tr("Cancel"), style:"cancel"},
-                                {text:tr("Open DM"), onPress:() => jumpToChatMessage("@me", id, "")}
-                            ]);
-                        } else {
-                            jumpToChatMessage("@me", id, "");
-                        }
-                    }}))) : null,
-            footnote("hint", "Hold any DM channel or message inside a DM and tap Hide as Secret DM to add it to your protected list.")
+            el(Group, {key:"test", title:tr("Test")},
+                actionRow(ui, "testLock", "Test lock screen now", "Opens the native lock overlay right now to verify your PIN.",
+                    () => { haptic("SELECTION"); appLockSync(false); diagCall("lockTest", "").catch(() => {}); }, !on, false, rowIcon(8771, "LockIcon"))),
+            footnote("hint", "Locks Discord automatically on startup and whenever you return to the app after the selected timeout.")
         ];
-        return settingsBody(ui, groups);
+        return settingsBody(ui, groups, {keyboardShouldPersistTaps:"handled"});
     }
 
-    // ------------------------------------------------- 10. Media editor (trim & mute)
+    // ------------------------------------------------- 9. Media editor (trim & mute) + Attachment sheet hook
+    const MEDIA_EDITOR_SHEET = "VenusMediaEditor";
+    const MEDIA_EDITABLE_RE = /\.(mp4|m4v|mov|mkv|webm|3gp|3gpp|mp3|m4a|aac|wav|ogg|opus|flac)$/i;
+    function uploadIsEditableMedia(upload) {
+        if (!upload) return false;
+        const item = upload.item || {};
+        if (upload.isVideo) return true;
+        const mime = String(upload.mimeType || item.mimeType || "").toLowerCase();
+        if (mime.startsWith("video/") || mime.startsWith("audio/")) return true;
+        return MEDIA_EDITABLE_RE.test(String(upload.filename || item.filename || item.uri || ""));
+    }
+    function applyEditedUpload(channelId, upload, result) {
+        const item = upload.item || {}, filename = compressName(upload.filename || item.filename, result.extension);
+        const changes = {uri:result.uri, mimeType:result.mimeType, filename, size:result.size};
+        if (result.width > 0 && result.height > 0) { changes.width = result.width; changes.height = result.height; }
+        upload.item = Object.assign({}, item, changes);
+        upload.uri = result.uri;
+        upload.mimeType = result.mimeType;
+        upload.filename = filename;
+        upload.currentSize = result.size;
+        upload.postCompressionSize = result.size;
+        upload.reactNativeFilePrepped = false;
+        const creators = inspectedExport(9901, "default");
+        if (creators && typeof creators.update === "function" && channelId != null && upload.id != null) {
+            try { creators.update(channelId, upload.id, 0, {filename, spoiler:upload.spoiler, description:upload.description}); } catch (_) {}
+        }
+    }
+    function MediaEditorSheet(props) {
+        const ui = reviewUI(), Group = ui.TableRowGroup || RN.View, Switch = ui.TableSwitchRow;
+        const Button = inspectedExport(5790, "Button"), k = usePreviewChrome(), s = useChatPreviewStyles();
+        const upload = props.upload, uri = compressUri(upload);
+        const [durationSec, setDurationSec] = React.useState(0);
+        const [hasVideo, setHasVideo] = React.useState(!!(upload && upload.isVideo));
+        const [hasAudio, setHasAudio] = React.useState(true);
+        const [startSec, setStartSec] = React.useState("0");
+        const [endSec, setEndSec] = React.useState("");
+        const [mute, setMute] = React.useState(!!settings.mediaEditorDefaultMute);
+        const [busy, setBusy] = React.useState(false);
+        const close = () => hideReviewSheet(ui, MEDIA_EDITOR_SHEET);
+        const header = ui.Header ? el(ui.Header, {title:tr("Trim & Mute Media"), trailing:ui.Close ? el(ui.Close, {onPress:close}) : undefined}) : null;
+        React.useEffect(() => {
+            if (!uri) return;
+            diagCall("mediaProbe", JSON.stringify({uri})).then(raw => {
+                const res = JSON.parse(raw);
+                if (typeof res.durationMs === "number" && res.durationMs > 0) {
+                    const sec = Math.round(res.durationMs / 100) / 10;
+                    setDurationSec(sec);
+                    setEndSec(String(sec));
+                }
+                if (typeof res.hasVideo === "boolean") setHasVideo(res.hasVideo);
+                if (typeof res.hasAudio === "boolean") setHasAudio(res.hasAudio);
+            }, () => {});
+        }, [uri]);
+        const applyEdit = () => {
+            if (busy || !uri) return;
+            const sVal = Math.max(0, Number(startSec) || 0);
+            const eVal = Number(endSec);
+            const startMs = Math.round(sVal * 1000);
+            const endMs = Number.isFinite(eVal) && eVal > sVal && (durationSec <= 0 || eVal < durationSec) ? Math.round(eVal * 1000) : -1;
+            const doMute = hasVideo && hasAudio && mute;
+            if (startMs <= 0 && endMs <= 0 && !doMute) { close(); return; }
+            setBusy(true);
+            haptic("SELECTION");
+            nativeCompressTrim("edit-" + Date.now().toString(36), uri, startMs, endMs, doMute).then(raw => {
+                const res = JSON.parse(raw);
+                if (res && res.changed !== false && res.uri) {
+                    applyEditedUpload(props.channelId, upload, res);
+                    upload.venusTrimmed = true;
+                    compressToast(tr("Media edited ({size})", {size:formatSize(res.size)}));
+                } else {
+                    compressToast(tr("No changes needed"));
+                }
+                setBusy(false);
+                close();
+            }, err => {
+                setBusy(false);
+                showProblem("Couldn't edit media", String(err && err.message || err));
+            });
+        };
+        const filename = (upload && (upload.filename || (upload.item && upload.item.filename))) || "media";
+        const content = el(RN.View, {style:{paddingHorizontal:12, paddingBottom:24, gap:12}},
+            el(RN.View, {style:[k.card, {padding:12, borderRadius:10, borderWidth:1, gap:4}]},
+                el(RN.Text, {style:[s.name, {fontSize:14}], numberOfLines:1}, filename),
+                el(RN.Text, {style:s.muted}, (durationSec > 0 ? tr("Duration: {sec}s", {sec:durationSec}) + " \u2022 " : "") +
+                    (hasVideo && hasAudio ? tr("Video + Audio") : hasVideo ? tr("Video only") : tr("Audio")))),
+            durationSec > 1 ? el(RN.View, {style:{gap:6}},
+                groupTitle("quick", tr("Quick clip length")),
+                venusSegmented({key:"clipPreset", value:"custom", items:[
+                    {value:"10", label:"10s"}, {value:"30", label:"30s"}, {value:"60", label:"60s"}, {value:"full", label:tr("Full")}
+                ], onChange:v => {
+                    haptic("SELECTION");
+                    if (v === "full") { setStartSec("0"); setEndSec(String(durationSec)); }
+                    else { setStartSec("0"); setEndSec(String(Math.min(durationSec, Number(v)))); }
+                }})) : null,
+            el(Group, {key:"range", title:tr("Start & end time (seconds)")},
+                ui.TextInput ? el(ui.TextInput, {value:startSec, onChange:t => setStartSec(String(t || "")), keyboardType:"decimal-pad", label:tr("Start (s)"), placeholder:"0"})
+                    : el(RN.TextInput, {value:startSec, onChangeText:setStartSec, keyboardType:"decimal-pad", style:{padding:12}}),
+                ui.TextInput ? el(ui.TextInput, {value:endSec, onChange:t => setEndSec(String(t || "")), keyboardType:"decimal-pad", label:tr("End (s)"), placeholder:durationSec > 0 ? String(durationSec) : ""})
+                    : el(RN.TextInput, {value:endSec, onChangeText:setEndSec, keyboardType:"decimal-pad", style:{padding:12}})),
+            hasVideo && hasAudio ? el(Group, {key:"audioOpt", title:tr("Audio")},
+                Switch ? el(Switch, {key:"muteSw", label:tr("Remove audio track (Mute)"), subLabel:tr("Drops the microphone/sound track from the video without re-encoding."),
+                    value:mute, onValueChange:v => setMute(!!v), icon:rowIcon(9351, "HeadphonesSlashIcon")}) : null) : null,
+            Button ? el(Button, {text:busy ? tr("Processing\u2026") : tr("Apply Trim & Mute"), size:"lg", variant:"primary", disabled:busy, onPress:applyEdit}) : null
+        );
+        return serverEditScroll(ui, header, content);
+    }
+    function uploadPreviewSheetHook(orig, self, args) {
+        const tree = orig.apply(self, args), props = args[0], upload = props && props.upload;
+        if (!React || !tree || !upload) return tree;
+        const ui = reviewUI(), Row = ui.TableRow, Group = ui.TableRowGroup;
+        if (!Row || !Group) return tree;
+        const wantEdit = enabled("mediaEditor") && uploadIsEditableMedia(upload);
+        const wantExif = enabled("stripExif") && !!upload.isImage && compressKind(upload) === "image";
+        if (!wantEdit && !wantExif) return tree;
+        const closeUploadSheet = () => {
+            try { if (ui.sheets && typeof ui.sheets.hideActionSheet === "function") ui.sheets.hideActionSheet(); } catch (_) {}
+            if (typeof props.onClose === "function") try { props.onClose(); } catch (_) {}
+        };
+        const injectedRows = [];
+        if (wantEdit) {
+            injectedRows.push(el(Row, {
+                key:"venus-trim-mute",
+                label:tr("Trim & Mute Media"),
+                subLabel:upload.venusTrimmed ? tr("Edited \u2022 Tap to adjust") : tr("Cut start/end or mute audio before sending"),
+                icon:el(venusIcon(14792, "PencilSparkleIcon"), {}),
+                onPress:() => {
+                    haptic("SELECTION");
+                    closeUploadSheet();
+                    later(() => {
+                        if (typeof ui.showSheet === "function" && ui.ActionSheet) {
+                            ui.showSheet({key:MEDIA_EDITOR_SHEET, content:el(MediaEditorSheet, {upload, channelId:props.channelId}), stackingBehavior:"stack"});
+                        } else {
+                            diagCall("mediaEditDialog", JSON.stringify({uri:compressUri(upload), name:upload.filename || "media", kind:compressKind(upload) || "video", defaultMute:!!settings.mediaEditorDefaultMute}))
+                                .then(raw => {
+                                    const c = JSON.parse(raw);
+                                    if (c && c.action === "trim") mediaEditorApplyTrim(upload, {id:"e" + Date.now().toString(36)}, compressUri(upload), c.startMs || 0, c.endMs || -1, !!c.mute)
+                                        .then(() => { upload.venusTrimmed = true; applyEditedUpload(props.channelId, upload, {uri:upload.uri, mimeType:upload.mimeType, extension:"mp4", size:upload.currentSize}); }, () => {});
+                                }, () => {});
+                        }
+                    }, 120);
+                }
+            }));
+        }
+        if (wantExif) {
+            injectedRows.push(el(Row, {
+                key:"venus-exif-check",
+                label:tr("Strip EXIF metadata now"),
+                subLabel:upload.venusExifStripped ? tr("Cleaned \u2022 Ready to upload") : tr("Inspect & remove GPS/camera info"),
+                icon:el(venusIcon(11453, "ShieldIcon"), {}),
+                onPress:() => {
+                    haptic("SELECTION");
+                    const uri = compressUri(upload);
+                    closeUploadSheet();
+                    diagCall("exifStrip", JSON.stringify({uri})).then(raw => {
+                        const res = JSON.parse(raw);
+                        if (res && res.changed && res.uri) {
+                            applyEditedUpload(props.channelId, upload, res);
+                            upload.venusExifStripped = true;
+                            showToast(ui, "venus-exif-ok", tr(res.hadExif ? "EXIF metadata found & removed" : "Photo checked \u2014 metadata cleaned"), venusIcon(11453, "ShieldIcon"));
+                        } else {
+                            showToast(ui, "venus-exif-clean", tr("Animated image preserved untouched"), venusIcon(11453, "ShieldIcon"));
+                        }
+                    }, err => {
+                        showToast(ui, "venus-exif-err", String(err), venusIcon(11453, "ShieldIcon"));
+                    });
+                }
+            }));
+        }
+        let placed = false;
+        const patched = cloneTree(tree, function (node, nodeProps) {
+            if (placed) return nodeProps;
+            if (node.type === Group && Array.isArray(nodeProps.children)) {
+                if (nodeProps.children.some(c => c && (c.key === "venus-trim-mute" || c.key === "venus-exif-check"))) { placed = true; return nodeProps; }
+                placed = true;
+                return Object.assign({}, nodeProps, {children:nodeProps.children.concat(injectedRows)});
+            }
+            return nodeProps;
+        }, 0, () => placed);
+        if (placed) return patched;
+        let slotted = false;
+        return cloneTree(patched, function (node, nodeProps) {
+            if (slotted || !Array.isArray(nodeProps.children) || nodeProps.children.length < 3) return nodeProps;
+            const first = nodeProps.children[0], last = nodeProps.children[nodeProps.children.length - 1];
+            if (first && last && nodeProps.children[2] == null) {
+                slotted = true;
+                const copy = nodeProps.children.slice();
+                copy[2] = el(Group, {key:"venus-media-tools"}, injectedRows);
+                return Object.assign({}, nodeProps, {children:copy});
+            }
+            return nodeProps;
+        }, 0, () => slotted);
+    }
     function mediaEditorApplyTrim(upload, job, uri, startMs, endMs, mute) {
         job.native = true;
         compressToast(tr("Editing media before upload\u2026"));
@@ -23513,6 +24121,7 @@
     function mediaEditorPrepare(upload, job) {
         const uri = compressUri(upload);
         if (typeof uri !== "string" || !/^(content|file):\/\//.test(uri)) return Promise.resolve();
+        if (settings.mediaEditorMode === "manual") return Promise.resolve();
         if (settings.mediaEditorMode === "mute") {
             if (job.kind !== "video") return Promise.resolve();
             return mediaEditorApplyTrim(upload, job, uri, 0, -1, true).catch(() => undefined);
@@ -23533,27 +24142,43 @@
             return undefined;
         });
     }
+    function MediaEditorPreview(props) {
+        const s = useChatPreviewStyles(), k = usePreviewChrome(), Pencil = venusIcon(14792, "PencilSparkleIcon");
+        return previewScreen(s, "mePreview", "Media editor preview", [
+            el(RN.View, {style:[k.card, {margin:10, padding:12, borderRadius:10, borderWidth:1, gap:8}]},
+                el(RN.Text, {style:[s.name, {fontSize:14}]}, "clip_2026.mp4 (24.0s)"),
+                el(RN.View, {style:[k.secondary, {flexDirection:"row", alignItems:"center", gap:8, padding:10, borderRadius:8}]},
+                    el(Pencil, {size:"sm", color:props.on ? k.brandFg.color : k.iconMuted.color}),
+                    el(RN.View, {style:{flex:1}},
+                        el(RN.Text, {style:[s.name, {fontSize:13}]}, tr("Trim & Mute Media")),
+                        el(RN.Text, {style:s.muted}, "0:02 \u2013 0:12 \u2022 " + tr("Muted")))))
+        ]);
+    }
     function MediaEditorSettings() {
         useSettings("mediaEditor");
         useLanguage();
         const ui = reviewUI(), on = enabled("mediaEditor");
         if (!RN) return null;
         const Group = ui.TableRowGroup || RN.View, Switch = ui.TableSwitchRow, Radio = ui.TableRadioRow;
-        const modes = [["ask", "Ask before uploading", "Opens the native Trim & Mute dialog whenever you send a video or audio file."],
-            ["mute", "Always mute videos automatically", "Strips the audio track from uploaded videos right away without showing a dialog."]];
+        const modes = [
+            ["ask", "Ask before uploading", "Also opens the Trim & Mute dialog on Send if you didn't edit in attachment preview."],
+            ["manual", "Attachment preview button only", "Tap an attached video or audio item to open Trim & Mute; never prompts automatically on Send."],
+            ["mute", "Always mute videos automatically", "Strips the audio track from uploaded videos right away without showing a dialog."]
+        ];
         const groups = [
             on ? null : offCard("status", venusIcon(10383, "PencilIcon"), "mediaEditor"),
-            el(Group, {key:"mode", title:tr("When sending video or audio")},
+            el(MediaEditorPreview, {key:"preview", on}),
+            el(Group, {key:"mode", title:tr("When attaching or sending media")},
                 modes.map(([m, label, sub]) => Radio ? el(Radio, {key:m, label:tr(label), subLabel:tr(sub), selected:settings.mediaEditorMode === m,
                     disabled:!on, onPress:() => { haptic("SELECTION"); setSetting("mediaEditorMode", m); }}) : null)),
             el(Group, {key:"defaults", title:tr("Dialog defaults")},
                 switchRow(Switch, "mediaEditorDefaultMute", "Pre-select Remove audio in dialog", "Starts the Trim & Mute dialog with the mute checkbox checked.", rowIcon(9351, "HeadphonesSlashIcon"))),
-            footnote("info", "Uses Android's native MediaExtractor and MediaMuxer for fast, lossless keyframe trimming and audio track removal.")
+            footnote("info", "Tap any attached video or audio thumbnail in the composer bar to open Trim & Mute Media, right next to Spoiler and Description.")
         ];
         return settingsBody(ui, groups);
     }
 
-    // ------------------------------------------------- 11. LaTeX math renderer
+    // ------------------------------------------------- 10. LaTeX math renderer
     const LATEX_SYMBOLS = {
         alpha:"\u03b1", beta:"\u03b2", gamma:"\u03b3", delta:"\u03b4", epsilon:"\u03b5", varepsilon:"\u03b5", zeta:"\u03b6", eta:"\u03b7",
         theta:"\u03b8", iota:"\u03b9", kappa:"\u03ba", lambda:"\u03bb", mu:"\u03bc", nu:"\u03bd", xi:"\u03be", pi:"\u03c0", rho:"\u03c1",
@@ -23563,19 +24188,29 @@
         neq:"\u2260", ne:"\u2260", approx:"\u2248", equiv:"\u2261", sim:"\u223c", propto:"\u221d", partial:"\u2202", nabla:"\u2207",
         forall:"\u2200", exists:"\u2203", in:"\u2208", notin:"\u2209", subset:"\u2282", subseteq:"\u2286", cup:"\u222a", cap:"\u2229",
         emptyset:"\u2205", to:"\u2192", rightarrow:"\u2192", leftarrow:"\u2190", Rightarrow:"\u21d2", Leftarrow:"\u21d0", iff:"\u21d4",
-        sum:"\u2211", prod:"\u220f", int:"\u222b", oint:"\u222e", sqrt:"\u221a", درجه:"\u00b0", circ:"\u2218", angle:"\u2220", perp:"\u22a5", parallel:"\u2225"
+        sum:"\u2211", prod:"\u220f", int:"\u222b", oint:"\u222e", sqrt:"\u221a", deg:"\u00b0", degree:"\u00b0", circ:"\u2218", angle:"\u2220", perp:"\u22a5", parallel:"\u2225"
     };
     const SUP_MAP = {"0":"\u2070","1":"\u00b9","2":"\u00b2","3":"\u00b3","4":"\u2074","5":"\u2075","6":"\u2076","7":"\u2077","8":"\u2078","9":"\u2079","+":"\u207a","-":"\u207b","=":"\u207c","(":"\u207d",")":"\u207e","n":"\u207f","i":"\u2071","x":"\u02e3","y":"\u02b8"};
     const SUB_MAP = {"0":"\u2080","1":"\u2081","2":"\u2082","3":"\u2083","4":"\u2084","5":"\u2085","6":"\u2086","7":"\u2087","8":"\u2088","9":"\u2089","+":"\u208a","-":"\u208b","=":"\u208c","(":"\u208d",")":"\u208e","a":"\u2090","e":"\u2091","o":"\u2092","x":"\u2093","i":"\u1d62","j":"\u2c7c","k":"\u2096","n":"\u2099","m":"\u2098"};
+    function latexIsLikelyInline(expr) {
+        if (!expr || expr.length > 200) return false;
+        if (/^\s|\s$/.test(expr)) return false;
+        if (/^\d[\d,.\s]*(?:\$|usd|eur|krw|won)?$/i.test(expr)) return false;
+        return /\\[A-Za-z]+|[^{}\\]\^[_A-Za-z0-9{]|[_a-zA-Z]_[0-9a-zA-Z{]|[A-Za-z0-9)\s][=+\-*/<>][A-Za-z0-9(]/.test(expr);
+    }
     function latexExtractFormulas(text) {
-        if (typeof text !== "string" || text.indexOf("$") < 0) return [];
+        if (typeof text !== "string" || (text.indexOf("$") < 0 && text.indexOf("\\(") < 0 && text.indexOf("\\[") < 0)) return [];
         const out = [];
         const stripped = text.replace(/```[\s\S]*?```|`[^`\n]+`/g, "");
-        const re = /\$\$([\s\S]+?)\$\$|\$([^$\n]+?)\$/g;
+        const re = /\$\$([\s\S]+?)\$\$|\\\[([\s\S]+?)\\\]|\\\((.+?)\\\)|\$([^$\n]+?)\$/g;
         let m;
         while ((m = re.exec(stripped)) !== null) {
-            const expr = (m[1] || m[2] || "").trim();
-            if (expr && !/^\d+(\.\d+)?$/.test(expr)) out.push({expr, block:!!m[1]});
+            const isBlock = !!(m[1] || m[2]);
+            const raw = m[1] || m[2] || m[3] || m[4] || "";
+            const expr = raw.trim();
+            if (!expr) continue;
+            if (m[4] !== undefined && !latexIsLikelyInline(m[4])) continue;
+            out.push({expr, block:isBlock});
         }
         return out;
     }
@@ -23584,7 +24219,7 @@
         for (let pass = 0; pass < 3; pass++) {
             s = s.replace(/\\frac\s*\{([^{}]+)\}\s*\{([^{}]+)\}/g, "($1)\u2044($2)");
             s = s.replace(/\\sqrt\s*\{([^{}]+)\}/g, "\u221a($1)");
-            s = s.replace(/\\(?:text|mathrm|mathbf|mathit)\s*\{([^{}]+)\}/g, "$1");
+            s = s.replace(/\\(?:text|mathrm|mathbf|mathit|operatorname)\s*\{([^{}]+)\}/g, "$1");
         }
         s = s.replace(/\\([A-Za-z]+)/g, (full, cmd) => LATEX_SYMBOLS[cmd] || cmd);
         s = s.replace(/\^\{([^{}]+)\}|\^([0-9+\-=()nixy])/g, (full, g1, g2) => {
@@ -23607,23 +24242,24 @@
             }
             return mapped;
         });
-        return s.replace(/[{}]/g, "").trim();
+        return s.replace(/[{}]/g, "").replace(/\s{2,}/g, " ").trim();
     }
     function latexFormatText(text) {
-        if (!settings.latexRenderInline || typeof text !== "string" || text.indexOf("$") < 0) return text;
+        if (!settings.latexRenderInline || typeof text !== "string" || (text.indexOf("$") < 0 && text.indexOf("\\(") < 0 && text.indexOf("\\[") < 0)) return text;
         const codeSlots = [];
         const masked = text.replace(/```[\s\S]*?```|`[^`\n]+`/g, m => {
             codeSlots.push(m);
             return "\u0000CODE" + (codeSlots.length - 1) + "\u0000";
         });
         const replaced = masked
-            .replace(/\$\$([\s\S]+?)\$\$/g, (full, expr) => {
-                const u = latexToUnicodeExpr(expr);
+            .replace(/\$\$([\s\S]+?)\$\$|\\\[([\s\S]+?)\\\]/g, (full, e1, e2) => {
+                const u = latexToUnicodeExpr(e1 || e2 || "");
                 return "\n```math\n" + u + "\n```\n";
             })
+            .replace(/\\\((.+?)\\\)/g, (full, expr) => latexToUnicodeExpr(expr))
             .replace(/\$([^$\n]+?)\$/g, (full, expr) => {
-                if (/^\d+(\.\d+)?(\s|$)/.test(expr)) return full;
-                return "`" + latexToUnicodeExpr(expr) + "`";
+                if (!latexIsLikelyInline(expr)) return full;
+                return latexToUnicodeExpr(expr);
             });
         return replaced.replace(/\u0000CODE(\d+)\u0000/g, (full, idx) => codeSlots[Number(idx)] || full);
     }
@@ -23654,6 +24290,39 @@
         const rawJoined = formulas.map(f => f.expr).join("\n\n");
         diagCall("latexModal", JSON.stringify({html:cards, raw:rawJoined})).catch(() => {});
     }
+    function latexCtaMessage(message, source) {
+        if (!message || message.ctaButton || !source || typeof source.content !== "string") return message;
+        if (!latexExtractFormulas(source.content).length) return message;
+        const slot = nativeThemeSlot(), light = slot === "light";
+        const textColor = highlightProcess(light ? "#313338" : "#dbdee1"), backgroundColor = highlightProcess(light ? "#0000000f" : "#ffffff14");
+        if (textColor == null || backgroundColor == null) return message;
+        return Object.assign({}, message, {ctaButton:{text:"\u2211 " + tr("View math formula"), textColor, backgroundColor, callback:"venus-latex-view"}});
+    }
+    function latexRenderTapCta(event) {
+        if (!enabled("latexRender")) return false;
+        let data = event && event.nativeEvent;
+        if (!data || data.callback == null) {
+            const read = inspectedExport(10338, "getNativeSyntheticEventData");
+            try { data = typeof read === "function" ? read(event) : data; } catch (_) {}
+        }
+        if (!data || data.callback !== "venus-latex-view") return false;
+        const store = msgStore || (msgStore = inspectedExport(6226, "default"));
+        let message = null;
+        try { message = store && typeof store.getMessage === "function" ? store.getMessage(String(data.channelId), String(data.messageId)) : null; } catch (_) {}
+        if (message) latexOpenModal(message);
+        return true;
+    }
+    function LatexRenderPreview(props) {
+        const s = useChatPreviewStyles(), k = usePreviewChrome();
+        const header = previewHeader(k, {title:tr("general")});
+        return previewScreen(s, "latexPreview", "LaTeX math preview", [
+            previewMessage(s, "m1", "Euler", "#5865f2", "8:15 PM",
+                el(RN.View, {style:{gap:6}},
+                    el(RN.Text, {style:s.text}, props.on ? "E = mc\u00b2  \u2022  \u2211\u207f\u2081 x\u1d62" : "$E = mc^2$"),
+                    props.on ? el(RN.View, {style:[k.card, {padding:8, borderRadius:8, borderWidth:1}]},
+                        el(RN.Text, {style:[s.text, {fontWeight:"600", textAlign:"center"}]}, "\u222b\u2080^\u221e e\u207b\u02e3\u00b2 dx = (\u221a(\u03c0))\u2044(2)")) : null))
+        ], {header});
+    }
     function LatexRenderSettings() {
         useSettings("latexRender");
         useLanguage();
@@ -23663,33 +24332,46 @@
         const sample = "$\\int_{0}^{\\infty} e^{-x^2} dx = \\frac{\\sqrt{\\pi}}{2}$";
         const groups = [
             on ? null : offCard("status", venusIcon(18022, "LettersIcon"), "latexRender"),
+            el(LatexRenderPreview, {key:"preview", on}),
             el(Group, {key:"opts", title:tr("Display")},
-                switchRow(Switch, "latexRenderInline", "Format inline math in chat", "Converts $...$ and $$...$$ in chat rows into clean Unicode math symbols without slowing down scrolling.", rowIcon(18022, "LettersIcon")),
-                actionRow(ui, "previewMath", "Preview typeset formula modal", sample + " \u2192 " + latexToUnicodeExpr("\\int_{0}^{\\infty} e^{-x^2} dx = \\frac{\\sqrt{\\pi}}{2}"),
+                switchRow(Switch, "latexRenderInline", "Format inline math in chat", "Converts $...$ and $$...$$ in chat rows into clean Unicode math symbols while ignoring prices like $10.", rowIcon(18022, "LettersIcon")),
+                actionRow(ui, "previewMath", "Open MathML formula modal", sample + " \u2192 " + latexToUnicodeExpr("\\int_{0}^{\\infty} e^{-x^2} dx = \\frac{\\sqrt{\\pi}}{2}"),
                     () => { haptic("SELECTION"); latexOpenModal({content:sample}); }, !on, false)),
-            footnote("hint", "Hold any message containing $...$ or $$...$$ in chat and tap View math formula to open the typeset MathML viewer.")
+            footnote("hint", "Messages containing formulas get a View math formula button right under them (or in the hold menu) to open the full typeset viewer.")
         ];
         return settingsBody(ui, groups);
     }
 
     // ------------------------------------------------- Shared row & hold-menu hooks
-    const extraRowCache = new WeakMap();
+    const EXIF_SPOILER_FLAG = 8;
     function extraPrepareRow(row) {
         if (!row || row.rowType !== 1 || !row.message) return row;
-        const blurOn = features.privacyBlur && enabled("privacyBlur");
+        const blurOn = features.privacyBlur && enabled("privacyBlur") && settings.privacyBlurImages;
+        const zipOn = features.zipPreview && enabled("zipPreview");
         const latexOn = features.latexRender && enabled("latexRender") && settings.latexRenderInline;
-        if (!blurOn && !latexOn) return row;
+        if (!blurOn && !zipOn && !latexOn) return row;
         const message = row.message, id = String(message.id || "");
         let nextMsg = message;
         if (blurOn && (!id || !privacyBlur.revealed.has(id))) {
-            if (Array.isArray(nextMsg.attachments) && nextMsg.attachments.some(a => a && !a.spoiler)) {
-                const atts = nextMsg.attachments.map(a => a && !a.spoiler ? copyWith(a, "spoiler", true) : a);
+            const flagObj = inspectedExport(1072, "MessageAttachmentFlags");
+            const spoilerBit = (flagObj && typeof flagObj.IS_SPOILER === "number") ? flagObj.IS_SPOILER : EXIF_SPOILER_FLAG;
+            if (Array.isArray(nextMsg.attachments) && nextMsg.attachments.some(a => a && privacyBlurIsMediaAttachment(a) && !((Number(a.flags) || 0) & spoilerBit))) {
+                const atts = nextMsg.attachments.map(a => a && privacyBlurIsMediaAttachment(a) && !((Number(a.flags) || 0) & spoilerBit)
+                    ? copyWith(a, "flags", (Number(a.flags) || 0) | spoilerBit) : a);
                 nextMsg = copyWith(nextMsg, "attachments", atts);
             }
         }
-        if (latexOn && typeof nextMsg.content === "string" && nextMsg.content.indexOf("$") >= 0) {
+        if (latexOn && typeof nextMsg.content === "string" && (nextMsg.content.indexOf("$") >= 0 || nextMsg.content.indexOf("\\(") >= 0 || nextMsg.content.indexOf("\\[") >= 0)) {
             const formatted = latexFormatText(nextMsg.content);
             if (formatted !== nextMsg.content) nextMsg = copyWith(nextMsg, "content", formatted);
+        }
+        if (zipOn && id) {
+            const zst = zipDropdown.get(id);
+            if (zst && zst.expanded && zst.entries) {
+                const treeBlock = zipFormatTreeLines(zst.entries, zst.total);
+                const curText = typeof nextMsg.content === "string" ? nextMsg.content : "";
+                nextMsg = copyWith(nextMsg, "content", (curText ? curText + "\n" : "") + treeBlock);
+            }
         }
         return nextMsg === message ? row : copyWith(row, "message", nextMsg);
     }
@@ -23697,7 +24379,6 @@
         const tree = orig.apply(self, args), props = args[0], message = props && props.message;
         if (!React || !tree || !message || !message.id) return tree;
         const id = String(message.id);
-        const channelId = String(message.channel_id || message.channelId || (props.channel && props.channel.id) || "");
         const specs = [];
         if (features.bookmarks && enabled("bookmarks")) {
             const hasBm = bookmarks.ids.has(id);
@@ -23734,21 +24415,6 @@
             if (typeof message.content === "string" && latexExtractFormulas(message.content).length > 0) {
                 specs.push({key:"venus-latex-modal", label:tr("View math formula"), icon:venusIcon(18022, "LettersIcon"),
                     run:() => latexOpenModal(message)});
-            }
-        }
-        if (features.urlUnshortener && enabled("urlUnshortener") && typeof message.content === "string") {
-            const urlMatch = /https?:\/\/[^\s<>()]+/i.exec(message.content);
-            if (urlMatch && urlUnshortenerShouldCheck(urlMatch[0])) {
-                specs.push({key:"venus-unshorten", label:tr("Preview link destination"), icon:venusIcon(14887, "EmbedIcon"),
-                    run:() => urlUnshortenerInspect(urlMatch[0])});
-            }
-        }
-        if (features.appLock && enabled("appLock") && settings.secretDms && channelId) {
-            const ch = channelStore && typeof channelStore.getChannel === "function" ? channelStore.getChannel(channelId) : null;
-            if (ch && (ch.type === 1 || ch.type === 3)) {
-                const isSec = appLockState.secretIds.has(channelId);
-                specs.push({key:"venus-secret-dm-msg", label:isSec ? tr("Unhide Secret DM") : tr("Hide as Secret DM"), icon:venusIcon(8771, "LockIcon"),
-                    run:() => secretDmToggle(channelId)});
             }
         }
         if (!specs.length) return tree;
@@ -23834,6 +24500,7 @@
             case 5041:
                 if (features.serverEdit && exports && exports.default) exports = serverEditHookStore(exports);
                 if (features.userNotif && exports && exports.default) { userNotif.guilds = exports.default; userNotifSubscribeGuilds(); }
+                if (features.keywordNotify && exports && exports.default) keywordNotify.guilds = exports.default;
                 return exports;
             case 1411: return features.serverEdit ? serverEditHookAvatars(exports) : exports;
             case 10362: if ((features.quests || features.badges || features.userNotif || features.removedAlerts || features.keywordNotify) && exports && exports.default) { bgKeepAlive.fg = exports.default; backgroundSync(); } return exports;
@@ -23845,8 +24512,7 @@
             case 10204: return features.cloneExpressions ? hookComponent(exports, cloneEmojiSheet) : exports;
             case 10438: return features.cloneExpressions ? hookComponent(exports, cloneStickerSheet) : exports;
             case 11177:
-                if (features.dndBanners) exports = hookExport(exports, "shouldNotify", dndShouldNotify);
-                return features.appLock ? hookExport(exports, "shouldNotify", secretDmShouldNotify) : exports;
+                return features.dndBanners ? hookExport(exports, "shouldNotify", dndShouldNotify) : exports;
             case 11190: return features.dndBanners ? hookExport(exports, "playInAppMessageSound", dndBannerSound) : exports;
             case 5349: return features.landscapeFull ? hookExport(hookExport(exports, "default", landscapeChatLayoutHook), "getChatLayout", landscapeChatLayout) : exports;
             case 8867: if (features.badges && exports && exports.default) badgesAttachStore(exports.default); return exports;
@@ -23855,18 +24521,22 @@
                 if (features.noDelete) exports = hookComponent(exports, noDeleteSheet);
                 if (features.localEdit) exports = hookComponent(exports, localEditSheet);
                 if (features.viewRaw) exports = hookComponent(exports, viewRawMessageSheet);
-                if (features.bookmarks || features.privacyBlur || features.batchMediaSave || features.zipPreview || features.reminders || features.latexRender || features.appLock || features.urlUnshortener)
+                if (features.bookmarks || features.privacyBlur || features.batchMediaSave || features.zipPreview || features.reminders || features.latexRender)
                     exports = hookComponent(exports, extraFeaturesMessageSheet);
                 return features.bulkDelete ? hookComponent(exports, bulkDeleteSheet) : exports;
+            case 9745: return features.bookmarks ? hookComponent(exports, bookmarksYouBanner) : exports;
+            case 10680: return (features.mediaEditor || features.stripExif) ? hookComponent(exports, uploadPreviewSheetHook) : exports;
             case 9898: return features.splitMessages ? maxLengthModule(exports) : exports;
             case 18855: return (features.youBarSettings || features.accountSwitcher) ? hookComponent(exports, youBarButtons) : exports;
             // MurmurHashV3 is CommonJS (module.exports=function), not an ES default export.
             case 1251: if (features.pastelize) pastelHash = typeof exports === "function" ? exports : exports.default; return exports;
             case 5082: if (features.pastelize) guildMembers = exports.default; if (features.timeoutDuration && exports && exports.default) timeoutTag.members = exports.default; return exports;
             case 8481:
-                if ((features.pastelize || features.noDelete || features.translate || features.messageHighlight || features.bulkDelete || features.staffTag || features.timeoutDuration || features.voiceDownload || features.localEdit || features.privacyBlur || features.latexRender) && exports.default && exports.default.prototype)
+                if ((features.pastelize || features.noDelete || features.translate || features.messageHighlight || features.bulkDelete || features.staffTag || features.timeoutDuration || features.voiceDownload || features.localEdit || features.bookmarks || features.privacyBlur || features.zipPreview || features.latexRender) && exports.default && exports.default.prototype)
                     hookExport(exports.default.prototype, "generate", messageRow);
                 return exports;
+            case 8792:
+                return features.privacyBlur ? hookExport(exports, "default", privacyBlurTransformEmbeds) : exports;
             case 5922: if (features.platformIndicators || features.userNotif) { presenceStore = exports.default; if (features.userNotif) userNotifSeedStatuses(); } return exports;
             case 5927: if (features.platformIndicators) sessionsStore = exports.default; return exports;
             case 11586:
@@ -23950,15 +24620,10 @@
             case 15309: return features.mutualGroupDMs ? hookComponent(exports, mutualGroupsRow) : exports;
             case 5019:
                 channelStore = exports.default;
-                if (features.appLock && channelStore) {
-                    exports = replaceValue(exports, "default", hookSecretDmsStore(channelStore));
-                    channelStore = exports.default;
-                }
                 return exports;
             case 14019: return features.noTyping ? replaceValue(exports, "default", hookExport(hookExport(exports.default, "startTyping", typing), "stopTyping", typing)) : exports;
             case 10954:
                 if (features.fastDeleteChannels) exports = hookComponent(exports, fastDeleteSheet);
-                if (features.appLock) exports = hookComponent(exports, secretDmChannelSheet);
                 return features.viewRaw ? hookComponent(exports, viewRawChannelMenu) : exports;
             case 18545: return features.viewRaw ? hookComponent(exports, viewRawThreadMenu) : exports;
             case 11298: return features.viewRaw ? hookComponent(exports, viewRawPostMenu) : exports;
@@ -24019,7 +24684,7 @@
                 if (features.expandBar && exports && exports.default) expandBarInit(exports.default);
                 if (features.experiments && exports && exports.default) experimentsInit(exports.default);
                 if (features.voiceOptions && exports && exports.default) voiceOptionsInit(exports.default);
-                if ((features.messageHighlight || features.bulkDelete || features.localEdit || features.privacyBlur || features.latexRender) && exports && exports.default && !dispatcher)
+                if ((features.messageHighlight || features.bulkDelete || features.localEdit || features.bookmarks || features.privacyBlur || features.zipPreview || features.latexRender) && exports && exports.default && !dispatcher)
                     dispatcher = exports.default.dispatch.bind(exports.default);
                 if ((features.noDelete || features.reviewDB || features.hiddenChannels) && id === 572) {
                     dispatcher = exports.default.dispatch.bind(exports.default);
@@ -24083,7 +24748,7 @@
             case 14808: return features.gestures ? hookExport(exports, "DoubleTapEmojiEditNudge", hideWhenGestures) : exports;
             case 10105: return features.gestures ? hookExport(exports, "maybeShowDoubleTapReminderToast", (orig, self, args) => enabled("gestures") ? undefined : orig.apply(self, args)) : exports;
             case 14104: return features.gestures ? hookExport(exports, "DoubleTapToReactChatInputBanner", hideWhenGestures) : exports;
-            case 11763: return (features.gestures || features.bulkDelete || features.noDelete || features.voiceDownload || features.urlUnshortener) ? hookTapHandlers(exports) : exports;
+            case 11763: return (features.gestures || features.bulkDelete || features.noDelete || features.voiceDownload || features.zipPreview || features.latexRender) ? hookTapHandlers(exports) : exports;
             case 7745: {
                 let actions = exports.default;
                 if (!actions) return exports;

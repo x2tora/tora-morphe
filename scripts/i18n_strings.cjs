@@ -224,6 +224,42 @@ for (const table of ['HIGHLIGHT_PING_CHOICES', 'HIGHLIGHT_DELETED_CHOICES', 'MY_
     const match = new RegExp('const ' + table + ' = \\[([\\s\\S]*?)\\];').exec(source);
     if (match) for (const value of match[1].matchAll(/\["\w+", "([^"]+)"/g)) found.add(value[1]);
 }
+for (const reTable of [
+    /const KEYWORD_MODES = \[([\s\S]*?)\];/,
+    /const modes = \[(\s*\["ask"[\s\S]*?)\];/
+]) {
+    const match = reTable.exec(source);
+    if (match) {
+        for (const row of match[1].matchAll(/\["\w+",\s*("(?:[^"\\]|\\.)*"),\s*("(?:[^"\\]|\\.)*")/g)) {
+            found.add(JSON.parse(row[1]));
+            found.add(JSON.parse(row[2]));
+        }
+    }
+}
+const kwPlaceholders = /const placeholders = \{(contains:[^}]*)\};/.exec(source);
+if (kwPlaceholders) {
+    for (const entry of kwPlaceholders[1].matchAll(/\w+\s*:\s*("(?:[^"\\]|\\.)*")/g)) {
+        const val = JSON.parse(entry[1]);
+        if (/[A-Za-z]/.test(val)) found.add(val);
+    }
+}
+const lockTimeouts = /const timeouts = \[(\[\[0,\s*"Immediately"[^\]]*(?:\],[^\]]*)*\])\];/.exec(source);
+if (lockTimeouts) {
+    for (const entry of lockTimeouts[1].matchAll(/\[\d+,\s*("(?:[^"\\]|\\.)*")\]/g)) {
+        found.add(JSON.parse(entry[1]));
+    }
+}
+for (const lineRe of [
+    /\[\[15,\s*"In 15 minutes"[^\n]+\]/,
+    /\[\[9,\s*0,\s*"09:00 AM"[^\n]+\]/
+]) {
+    const match = lineRe.exec(source);
+    if (match) {
+        for (const strLit of match[0].matchAll(/,\s*("(?:[^"\\]|\\.)*")\]/g)) {
+            found.add(JSON.parse(strLit[1]));
+        }
+    }
+}
 const names = /const LANGUAGE_NAMES = \{([\s\S]*?)\};/.exec(source);
 if (names) for (const match of names[1].matchAll(/:"([^"]+)"/g)) found.add(match[1]);
 found.add('another language');

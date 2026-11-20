@@ -77,7 +77,7 @@ private val runtimeAssets = rawResourcePatch {
                 "favouriteAnything:$favouriteAnythingSelected,freeNitro:$freeNitroSelected," +
                 listOf("noTyping", "quickDelete", "noDelete", "jumpToTop", "hiddenChannels", "pastelize", "platformIndicators", "reviewDB", "readAll", "quests", "badges", "systemFont",
                     "systemEmoji", "gestures", "validUser", "youBarSettings", "splitMessages", "translate", "userNotif", "accountSwitcher", "appIcons", "nitroThemes", "customThemes", "materialYou", "iconPacks", "messageHighlight", "serverInfo", "serverEdit", "fixEmbeds", "tenorGifs", "hideBlocked", "bulkDelete", "experiments", "cleanChannels", "noHandsfree", "voiceOptions", "anonFiles", "staffTag", "removedAlerts", "fullImages", "hideAnything", "alwaysTrust", "noConfirmPin", "clickableMentions", "expandBar", "quietReplies", "silentLeave", "guildLurk", "compressUploads", "timeoutDuration", "dndBanners", "landscapeFull", "voiceDownload", "cloneExpressions", "listenAlong", "silentEdit", "silentDelete", "localEdit", "hypeSquad", "customIdle", "mutualGroupDMs", "fastDeleteChannels", "pauseInvites", "platformSpoof", "backgroundMedia", "viewRaw", "fakeDeafen",
-                    "keywordNotify", "bookmarks", "privacyBlur", "batchMediaSave", "stripExif", "urlUnshortener", "zipPreview", "reminders", "appLock", "mediaEditor", "latexRender")
+                    "keywordNotify", "bookmarks", "privacyBlur", "batchMediaSave", "stripExif", "zipPreview", "reminders", "appLock", "mediaEditor", "latexRender")
                     .joinToString(",") { "$it:${it in additionalSelections}" } + "}"
         )
         asset.writeText(selected)
@@ -1286,11 +1286,11 @@ val keepBluetoothAudioClear = bytecodePatch(
 
 @Suppress("unused")
 val keywordNotifications = bundledPlugin("keywordNotify", "Keyword notifications",
-    "Shows a notification and logs a match when a message contains your chosen words or regular expressions.")
+    "Shows a notification and logs a match when a message matches your keyword rules.")
 
 @Suppress("unused")
 val messageBookmarks = bundledPlugin("bookmarks", "Message bookmarks",
-    "Save messages to an offline bookmark list from the hold menu, search them and jump back to the chat.")
+    "Save messages to an offline bookmark list, highlight them in chat, and add a profile shortcut.")
 
 @Suppress("unused")
 val privacyBlur = bundledPlugin("privacyBlur", "Privacy blur",
@@ -1312,20 +1312,16 @@ val stripExif = bytecodePatch(
 }
 
 @Suppress("unused")
-val urlUnshortener = bundledPlugin("urlUnshortener", "Preview link destination",
-    "Follows shortened links and shows the final address before you open or copy them.")
-
-@Suppress("unused")
 val zipPreview = bundledPlugin("zipPreview", "Preview ZIP archives",
-    "Inspect the files and read text inside .zip attachments without leaving Discord.")
+    "Expand and inspect files or read text inside .zip attachments without leaving Discord.")
 
 @Suppress("unused")
 val localReminders = bundledPlugin("reminders", "Message reminders",
-    "Set a reminder on any message from the hold menu to get notified later and jump back to it.")
+    "Set a reminder on any message from the hold menu to get notified at a set delay or clock time.")
 
 @Suppress("unused")
-val appLock = bundledPlugin("appLock", "App lock and secret DMs",
-    "Lock Discord with your fingerprint or screen lock and hide chosen DMs behind authentication.")
+val appLock = bundledPlugin("appLock", "App lock",
+    "Lock Discord behind a PIN passcode or your device screen lock when opening or returning to the app.")
 
 @Suppress("unused")
 val mediaEditor = bytecodePatch(

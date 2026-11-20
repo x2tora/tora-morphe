@@ -66,6 +66,7 @@ import java.util.TimeZone
  */
 object Diagnostics {
     private const val PREFS = "venus-patches.json"
+    private const val LOCK_FILE = "venus_app_lock.json"
     private const val FOLDER = "venus-files"
     private const val PENDING = "crash-pending.txt"
     private const val LAST = "crash-last.txt"
@@ -96,8 +97,11 @@ object Diagnostics {
     @Volatile private var current: WeakReference<Activity>? = null
     @Volatile private var appLockOn = false
     @Volatile private var appLockTimeoutMs = 0L
+    @Volatile private var appLockPin = ""
+    @Volatile private var appLockUnlockedInSession = false
     @Volatile private var lockRequired = false
     @Volatile private var lockShowing = false
+    @Volatile private var appLockDialog: Dialog? = null
     @Volatile private var lastPausedAt = 0L
     @Volatile private var activeCount = 0
     private val main = Handler(Looper.getMainLooper())
@@ -122,12 +126,29 @@ object Diagnostics {
 
     private fun loadAppLockPref(c: Context) {
         try {
+            val lockFile = File(c.filesDir, LOCK_FILE)
+            if (lockFile.isFile && lockFile.length() < 16384L) {
+                val json = JSONObject(read(lockFile))
+                appLockOn = json.optBoolean("enabled", false)
+                val sec = json.optInt("timeoutSec", 0)
+                appLockTimeoutMs = if (sec > 0) sec.toLong() * 1000L else 0L
+                appLockPin = json.optString("pin", "")
+                if (appLockOn) {
+                    appLockUnlockedInSession = false
+                    lockRequired = true
+                }
+                return
+            }
             val text = prefs(c) ?: return
             val json = JSONObject(text)
             appLockOn = json.optBoolean("appLock", false)
             val sec = json.optInt("appLockTimeout", 0)
             appLockTimeoutMs = if (sec > 0) sec.toLong() * 1000L else 0L
-            if (appLockOn) lockRequired = true
+            appLockPin = json.optString("appLockPin", "")
+            if (appLockOn) {
+                appLockUnlockedInSession = false
+                lockRequired = true
+            }
         } catch (_: Throwable) { }
     }
 
@@ -151,10 +172,12 @@ object Diagnostics {
             current = WeakReference(activity)
             if (appLockOn) {
                 val now = System.currentTimeMillis()
-                if (lockRequired || (lastPausedAt > 0L && now - lastPausedAt >= appLockTimeoutMs)) {
+                val timedOut = lastPausedAt > 0L && now - lastPausedAt >= appLockTimeoutMs
+                if (!appLockUnlockedInSession || lockRequired || timedOut) {
+                    appLockUnlockedInSession = false
                     lockRequired = true
                     lastPausedAt = 0L
-                    main.post(object : Runnable { override fun run() { showLockOverlay(activity) } })
+                    main.post(object : Runnable { override fun run() { showLockOverlay(activity, false) } })
                 }
             }
             // After Discord's first frames, so the page lands on top of its splash instead of under it.
@@ -949,9 +972,6 @@ object Diagnostics {
                     promise.resolve("ok")
                 } })
             }
-            "unshorten" -> Thread(object : Runnable { override fun run() {
-                try { promise.resolve(unshortenUrl(argument ?: "")) } catch (error: Throwable) { promise.reject("VENUS_DIAG", error.toString()) }
-            } }, "venus-unshorten").start()
             "zipList" -> Thread(object : Runnable { override fun run() {
                 try { promise.resolve(zipList(c, argument ?: "")) } catch (error: Throwable) { promise.reject("VENUS_DIAG", error.toString()) }
             } }, "venus-zip-list").start()
@@ -966,18 +986,33 @@ object Diagnostics {
             }
             "lockConfig" -> {
                 try {
-                    updateLockConfig(argument ?: "")
+                    updateLockConfig(c, argument ?: "")
                     promise.resolve("ok")
                 } catch (error: Throwable) { promise.reject("VENUS_DIAG", error.toString()) }
             }
-            "biometricAuth" -> main.post(object : Runnable { override fun run() {
+            "lockTest" -> main.post(object : Runnable { override fun run() {
                 val activity = current?.get()
                 if (activity == null) { promise.reject("VENUS_DIAG", "No active screen"); return }
-                promptBiometric(activity, argument ?: "", promise)
+                lockRequired = true
+                appLockUnlockedInSession = false
+                try { appLockDialog?.dismiss() } catch (_: Throwable) { }
+                appLockDialog = null
+                lockShowing = false
+                showLockOverlay(activity, true)
+                promise.resolve("ok")
             } })
+            "mediaProbe" -> Thread(object : Runnable { override fun run() {
+                try { promise.resolve(probeMediaFile(c, argument ?: "")) } catch (error: Throwable) { promise.reject("VENUS_DIAG", error.toString()) }
+            } }, "venus-media-probe").start()
+            "exifInspect" -> Thread(object : Runnable { override fun run() {
+                try { promise.resolve(inspectImageExif(c, argument ?: "")) } catch (error: Throwable) { promise.reject("VENUS_DIAG", error.toString()) }
+            } }, "venus-exif-inspect").start()
+            "exifStrip" -> Thread(object : Runnable { override fun run() {
+                try { promise.resolve(stripImageExif(c, argument ?: "")) } catch (error: Throwable) { promise.reject("VENUS_DIAG", error.toString()) }
+            } }, "venus-exif-strip").start()
             "mediaEditDialog" -> Thread(object : Runnable { override fun run() {
                 try { openMediaEditDialog(c, argument ?: "", promise) } catch (error: Throwable) { promise.reject("VENUS_DIAG", error.toString()) }
-            } }, "venus-media-probe").start()
+            } }, "venus-media-dialog").start()
             "latexModal" -> main.post(object : Runnable { override fun run() {
                 val activity = current?.get()
                 if (activity == null) { promise.reject("VENUS_DIAG", "No active screen"); return }
@@ -1068,69 +1103,186 @@ object Diagnostics {
         return out.toString()
     }
 
-    // --------------------------------------------------------- URL unshortener
+    // --------------------------------------------------------- media & EXIF helpers
 
-    private fun unshortenUrl(arg: String): String {
-        val initial = try {
-            if ((arg as java.lang.String).startsWith("{")) JSONObject(arg).getString("url") else arg
-        } catch (_: Throwable) { arg }
-        var currentUrl = initial
-        val hops = org.json.JSONArray()
-        hops.put(currentUrl)
-        var status = 0
-        var hop = 0
-        while (hop < 5) {
-            val parsed = java.net.URL(currentUrl)
-            val protocol = parsed.protocol
-            if (protocol != "http" && protocol != "https") break
-            var conn = parsed.openConnection() as java.net.HttpURLConnection
-            var code: Int
-            var location: String? = null
-            try {
-                conn.instanceFollowRedirects = false
-                conn.connectTimeout = 3000
-                conn.readTimeout = 3000
-                conn.requestMethod = "HEAD"
-                conn.setRequestProperty("User-Agent", "Mozilla/5.0 (Linux; Android 14) AppleWebKit/537.36 Chrome/120.0.0.0 Mobile Safari/537.36")
-                code = conn.responseCode
-                location = conn.getHeaderField("Location")
-            } finally {
-                try { conn.disconnect() } catch (_: Throwable) { }
+    private fun resolveUriToLocalFile(c: Context, rawUri: String, tempPrefix: String): File {
+        val j = rawUri as java.lang.String
+        if (j.startsWith("file://")) {
+            val f = File(android.net.Uri.parse(rawUri).path ?: rawUri.substring(7))
+            if (f.isFile) return f
+        }
+        if (j.startsWith("/")) {
+            val f = File(rawUri)
+            if (f.isFile) return f
+        }
+        val dir = File(c.cacheDir, "venus-exif")
+        if (!dir.isDirectory) dir.mkdirs()
+        val temp = File(dir, tempPrefix + "_" + System.currentTimeMillis() + ".tmp")
+        val uri = android.net.Uri.parse(if (j.startsWith("/")) "file://" + rawUri else rawUri)
+        val input = c.contentResolver.openInputStream(uri) ?: throw IllegalStateException("File is inaccessible")
+        val out = FileOutputStream(temp)
+        val buf = ByteArray(32 * 1024)
+        try {
+            while (true) {
+                val n = input.read(buf)
+                if (n < 0) break
+                out.write(buf, 0, n)
             }
-            if ((code == 405 || code == 403 || code == 400) && location == null) {
-                conn = parsed.openConnection() as java.net.HttpURLConnection
-                try {
-                    conn.instanceFollowRedirects = false
-                    conn.connectTimeout = 3000
-                    conn.readTimeout = 3000
-                    conn.requestMethod = "GET"
-                    conn.setRequestProperty("Range", "bytes=0-0")
-                    conn.setRequestProperty("User-Agent", "Mozilla/5.0 (Linux; Android 14) AppleWebKit/537.36 Chrome/120.0.0.0 Mobile Safari/537.36")
-                    code = conn.responseCode
-                    location = conn.getHeaderField("Location")
-                } finally {
-                    try { conn.disconnect() } catch (_: Throwable) { }
+        } finally {
+            try { out.close() } catch (_: Throwable) { }
+            try { input.close() } catch (_: Throwable) { }
+        }
+        return temp
+    }
+
+    private fun probeMediaFile(c: Context, arg: String): String {
+        val req = JSONObject(arg)
+        val rawUri = req.getString("uri")
+        val j = rawUri as java.lang.String
+        val normUri = if (j.startsWith("/")) "file://" + rawUri else rawUri
+        val uri = android.net.Uri.parse(normUri)
+        var durationMs = 0L
+        var hasVideo = false
+        var hasAudio = false
+        val extractor = android.media.MediaExtractor()
+        var tempFile: File? = null
+        try {
+            try {
+                extractor.setDataSource(c, uri, null)
+            } catch (_: Throwable) {
+                tempFile = resolveUriToLocalFile(c, rawUri, "probe")
+                extractor.setDataSource(tempFile.absolutePath)
+            }
+            var i = 0
+            while (i < extractor.trackCount) {
+                val format = extractor.getTrackFormat(i)
+                val mime = format.getString(android.media.MediaFormat.KEY_MIME) ?: ""
+                if (mime.length >= 6 && mime.substring(0, 6) == "video/") hasVideo = true
+                if (mime.length >= 6 && mime.substring(0, 6) == "audio/") hasAudio = true
+                if (format.containsKey(android.media.MediaFormat.KEY_DURATION)) {
+                    val d = format.getLong(android.media.MediaFormat.KEY_DURATION) / 1000L
+                    if (d > durationMs) durationMs = d
+                }
+                i++
+            }
+        } finally {
+            try { extractor.release() } catch (_: Throwable) { }
+            if (tempFile != null) try { tempFile.delete() } catch (_: Throwable) { }
+        }
+        return JSONObject()
+            .put("durationMs", durationMs)
+            .put("hasVideo", hasVideo)
+            .put("hasAudio", hasAudio)
+            .toString()
+    }
+
+    private fun inspectImageExif(c: Context, arg: String): String {
+        val req = JSONObject(arg)
+        val rawUri = req.getString("uri")
+        val local = resolveUriToLocalFile(c, rawUri, "inspect")
+        val isTemp = !(rawUri as java.lang.String).startsWith("file://") && !rawUri.startsWith("/")
+        try {
+            val exif = android.media.ExifInterface(local.absolutePath)
+            val tags = org.json.JSONArray()
+            val make = exif.getAttribute(android.media.ExifInterface.TAG_MAKE)
+            val model = exif.getAttribute(android.media.ExifInterface.TAG_MODEL)
+            val date = exif.getAttribute(android.media.ExifInterface.TAG_DATETIME)
+            val gpsLat = exif.getAttribute(android.media.ExifInterface.TAG_GPS_LATITUDE)
+            val gpsLon = exif.getAttribute(android.media.ExifInterface.TAG_GPS_LONGITUDE)
+            val software = exif.getAttribute(android.media.ExifInterface.TAG_SOFTWARE)
+            val orient = exif.getAttributeInt(android.media.ExifInterface.TAG_ORIENTATION, android.media.ExifInterface.ORIENTATION_NORMAL)
+            if (make != null && make.length > 0) tags.put("Make: " + make)
+            if (model != null && model.length > 0) tags.put("Model: " + model)
+            if (date != null && date.length > 0) tags.put("Date: " + date)
+            if ((gpsLat != null && gpsLat.length > 0) || (gpsLon != null && gpsLon.length > 0)) tags.put("GPS Coordinates")
+            if (software != null && software.length > 0) tags.put("Software: " + software)
+            if (orient != android.media.ExifInterface.ORIENTATION_NORMAL && orient != android.media.ExifInterface.ORIENTATION_UNDEFINED) {
+                tags.put("Orientation: " + orient)
+            }
+            return JSONObject()
+                .put("hadExif", tags.length() > 0)
+                .put("tags", tags)
+                .put("size", local.length())
+                .toString()
+        } finally {
+            if (isTemp) try { local.delete() } catch (_: Throwable) { }
+        }
+    }
+
+    private fun stripImageExif(c: Context, arg: String): String {
+        val req = JSONObject(arg)
+        val rawUri = req.getString("uri")
+        val local = resolveUriToLocalFile(c, rawUri, "strip_in")
+        val isTemp = !(rawUri as java.lang.String).startsWith("file://") && !rawUri.startsWith("/")
+        try {
+            val exif = try { android.media.ExifInterface(local.absolutePath) } catch (_: Throwable) { null }
+            val orient = exif?.getAttributeInt(android.media.ExifInterface.TAG_ORIENTATION, android.media.ExifInterface.ORIENTATION_NORMAL)
+                ?: android.media.ExifInterface.ORIENTATION_NORMAL
+            val hadExif = exif != null && (
+                exif.getAttribute(android.media.ExifInterface.TAG_MAKE) != null ||
+                exif.getAttribute(android.media.ExifInterface.TAG_MODEL) != null ||
+                exif.getAttribute(android.media.ExifInterface.TAG_DATETIME) != null ||
+                exif.getAttribute(android.media.ExifInterface.TAG_GPS_LATITUDE) != null ||
+                orient != android.media.ExifInterface.ORIENTATION_NORMAL
+            )
+            val bounds = android.graphics.BitmapFactory.Options()
+            bounds.inJustDecodeBounds = true
+            android.graphics.BitmapFactory.decodeFile(local.absolutePath, bounds)
+            val mime = bounds.outMimeType ?: "image/jpeg"
+            if (mime == "image/gif" || bounds.outWidth <= 0 || bounds.outHeight <= 0) {
+                return JSONObject().put("changed", false).put("hadExif", hadExif).put("size", local.length()).toString()
+            }
+            val bitmap = android.graphics.BitmapFactory.decodeFile(local.absolutePath)
+                ?: throw IllegalStateException("Could not decode image")
+            var currentBmp = bitmap
+            if (orient != android.media.ExifInterface.ORIENTATION_NORMAL && orient != android.media.ExifInterface.ORIENTATION_UNDEFINED) {
+                val matrix = android.graphics.Matrix()
+                var rotated = true
+                when (orient) {
+                    android.media.ExifInterface.ORIENTATION_ROTATE_90 -> matrix.postRotate(90f)
+                    android.media.ExifInterface.ORIENTATION_ROTATE_180 -> matrix.postRotate(180f)
+                    android.media.ExifInterface.ORIENTATION_ROTATE_270 -> matrix.postRotate(270f)
+                    android.media.ExifInterface.ORIENTATION_FLIP_HORIZONTAL -> matrix.postScale(-1f, 1f)
+                    android.media.ExifInterface.ORIENTATION_FLIP_VERTICAL -> matrix.postScale(1f, -1f)
+                    android.media.ExifInterface.ORIENTATION_TRANSPOSE -> { matrix.postRotate(90f); matrix.postScale(-1f, 1f) }
+                    android.media.ExifInterface.ORIENTATION_TRANSVERSE -> { matrix.postRotate(270f); matrix.postScale(-1f, 1f) }
+                    else -> rotated = false
+                }
+                if (rotated) {
+                    val turned = android.graphics.Bitmap.createBitmap(bitmap, 0, 0, bitmap.width, bitmap.height, matrix, true)
+                    if (turned !== bitmap) { bitmap.recycle(); currentBmp = turned }
                 }
             }
-            status = code
-            if ((code == 301 || code == 302 || code == 303 || code == 307 || code == 308) && location != null && location.length > 0) {
-                val next = java.net.URL(parsed, location).toString()
-                if (next == currentUrl) break
-                currentUrl = next
-                hops.put(currentUrl)
-                hop++
-            } else {
-                break
+            val dir = File(c.cacheDir, "venus-exif")
+            if (!dir.isDirectory) dir.mkdirs()
+            val isPng = mime == "image/png" && currentBmp.hasAlpha()
+            val ext = if (isPng) "png" else "jpg"
+            val outMime = if (isPng) "image/png" else "image/jpeg"
+            val outFile = File(dir, "clean_" + System.currentTimeMillis() + "." + ext)
+            val w = currentBmp.width
+            val h = currentBmp.height
+            val fos = FileOutputStream(outFile)
+            try {
+                val fmt = if (isPng) android.graphics.Bitmap.CompressFormat.PNG else android.graphics.Bitmap.CompressFormat.JPEG
+                currentBmp.compress(fmt, 95, fos)
+            } finally {
+                currentBmp.recycle()
+                try { fos.close() } catch (_: Throwable) { }
             }
+            return JSONObject()
+                .put("changed", true)
+                .put("hadExif", hadExif)
+                .put("path", outFile.absolutePath)
+                .put("uri", android.net.Uri.fromFile(outFile).toString())
+                .put("mimeType", outMime)
+                .put("extension", ext)
+                .put("size", outFile.length())
+                .put("width", w)
+                .put("height", h)
+                .toString()
+        } finally {
+            if (isTemp) try { local.delete() } catch (_: Throwable) { }
         }
-        val domain = try { java.net.URL(currentUrl).host ?: "" } catch (_: Throwable) { "" }
-        return JSONObject()
-            .put("initial", initial)
-            .put("finalUrl", currentUrl)
-            .put("domain", domain)
-            .put("hops", hops)
-            .put("status", status)
-            .toString()
     }
 
     // --------------------------------------------------------- ZIP preview
@@ -1277,173 +1429,245 @@ object Diagnostics {
         nm.notify(0x56454E00 + (idHash and 0xFFFF), builder.build())
     }
 
-    // --------------------------------------------------------- app lock & biometric auth
+    // --------------------------------------------------------- app lock
 
-    private fun updateLockConfig(arg: String) {
+    @Volatile private var lockLabelTitle = "Discord is Locked"
+    @Volatile private var lockLabelSub = "Enter your PIN passcode to unlock"
+    @Volatile private var lockLabelPinHint = "Enter PIN"
+    @Volatile private var lockLabelWrong = "Incorrect PIN. Try again."
+    @Volatile private var lockLabelUnlock = "Unlock"
+    @Volatile private var lockLabelNoPin = "No PIN set yet. Tap Unlock to close, and set a PIN in Venus -> App lock."
+
+    private fun updateLockConfig(c: Context, arg: String) {
         val req = JSONObject(arg)
         val wasOn = appLockOn
         appLockOn = req.optBoolean("enabled", false)
         val sec = req.optInt("timeoutSec", 0)
         appLockTimeoutMs = if (sec > 0) sec.toLong() * 1000L else 0L
-        if (!appLockOn) lockRequired = false
-        else if (!wasOn && req.optBoolean("lockNow", false)) lockRequired = true
+        if (req.has("pin")) appLockPin = req.optString("pin", "")
+        if (req.optString("title", "").length > 0) lockLabelTitle = req.optString("title")
+        if (req.optString("subtitle", "").length > 0) lockLabelSub = req.optString("subtitle")
+        if (req.optString("hint", "").length > 0) lockLabelPinHint = req.optString("hint")
+        if (req.optString("wrongPin", "").length > 0) lockLabelWrong = req.optString("wrongPin")
+        if (req.optString("unlock", "").length > 0) lockLabelUnlock = req.optString("unlock")
+        if (req.optString("noPin", "").length > 0) lockLabelNoPin = req.optString("noPin")
+        try {
+            val saved = JSONObject()
+                .put("enabled", appLockOn)
+                .put("timeoutSec", sec)
+                .put("pin", appLockPin)
+                .put("title", lockLabelTitle)
+                .put("subtitle", lockLabelSub)
+                .put("hint", lockLabelPinHint)
+                .put("wrongPin", lockLabelWrong)
+                .put("unlock", lockLabelUnlock)
+                .put("noPin", lockLabelNoPin)
+            write(File(c.filesDir, LOCK_FILE), saved.toString())
+        } catch (_: Throwable) { }
+        if (!appLockOn) {
+            lockRequired = false
+            appLockUnlockedInSession = true
+            main.post(object : Runnable {
+                override fun run() {
+                    try { appLockDialog?.dismiss() } catch (_: Throwable) { }
+                    appLockDialog = null
+                    lockShowing = false
+                }
+            })
+        } else {
+            if (!wasOn && appLockPin.length > 0 && req.optBoolean("lockNow", false)) {
+                appLockUnlockedInSession = false
+                lockRequired = true
+            } else {
+                appLockUnlockedInSession = true
+            }
+        }
     }
 
-    private fun showLockOverlay(activity: Activity) {
+    private fun dpPx(c: Context, v: Int): Int = (v * c.resources.displayMetrics.density + 0.5f).toInt()
+
+    private fun showLockOverlay(activity: Activity, isTest: Boolean) {
         if (lockShowing || activity.isFinishing || activity.isDestroyed) return
-        val km = activity.getSystemService(Context.KEYGUARD_SERVICE) as? android.app.KeyguardManager
-        if (km == null || !km.isKeyguardSecure) {
-            lockRequired = false
-            return
-        }
         try {
             lockShowing = true
-            val density = activity.resources.displayMetrics.density
-            fun dp(v: Int): Int = (v * density + 0.5f).toInt()
             val dialog = Dialog(activity, android.R.style.Theme_DeviceDefault_NoActionBar)
+            appLockDialog = dialog
             dialog.setCancelable(false)
+            dialog.setOnKeyListener(object : android.content.DialogInterface.OnKeyListener {
+                override fun onKey(d: android.content.DialogInterface?, keyCode: Int, event: android.view.KeyEvent?): Boolean {
+                    if (keyCode == android.view.KeyEvent.KEYCODE_BACK) {
+                        if (isTest && event != null && event.action == android.view.KeyEvent.ACTION_UP) {
+                            lockRequired = false
+                            lockShowing = false
+                            appLockDialog = null
+                            try { dialog.dismiss() } catch (_: Throwable) { }
+                        } else if (!isTest) {
+                            try { activity.moveTaskToBack(true) } catch (_: Throwable) { }
+                        }
+                        return true
+                    }
+                    return false
+                }
+            })
+
             val root = LinearLayout(activity)
             root.orientation = LinearLayout.VERTICAL
             root.gravity = Gravity.CENTER
             root.setBackgroundColor(BG)
-            root.setPadding(dp(32), dp(32), dp(32), dp(32))
+            root.setPadding(dpPx(activity, 28), dpPx(activity, 28), dpPx(activity, 28), dpPx(activity, 28))
+
+            val card = LinearLayout(activity)
+            card.orientation = LinearLayout.VERTICAL
+            card.gravity = Gravity.CENTER_HORIZONTAL
+            card.setPadding(dpPx(activity, 24), dpPx(activity, 28), dpPx(activity, 24), dpPx(activity, 24))
+            val cardBg = GradientDrawable()
+            cardBg.setColor(CARD)
+            cardBg.cornerRadius = dpPx(activity, 18).toFloat()
+            cardBg.setStroke(dpPx(activity, 1), CARD_EDGE)
+            card.background = cardBg
+
+            val badge = TextView(activity)
+            badge.text = "\uD83D\uDD12"
+            badge.textSize = 26f
+            badge.gravity = Gravity.CENTER
+            val badgeBg = GradientDrawable()
+            badgeBg.setColor(0x265865F2)
+            badgeBg.cornerRadius = dpPx(activity, 28).toFloat()
+            badge.background = badgeBg
+            val badgeLp = LinearLayout.LayoutParams(dpPx(activity, 56), dpPx(activity, 56))
+            badgeLp.bottomMargin = dpPx(activity, 16)
+            card.addView(badge, badgeLp)
 
             val title = TextView(activity)
-            title.text = "Discord is Locked"
-            title.textSize = 22f
+            title.text = lockLabelTitle
+            title.textSize = 20f
             title.setTextColor(TEXT)
             title.typeface = Typeface.create("sans-serif-medium", Typeface.BOLD)
             title.gravity = Gravity.CENTER
-            root.addView(title)
+            card.addView(title)
 
+            val hasPin = appLockPin.length > 0
             val sub = TextView(activity)
-            sub.text = "Verify your identity to continue"
+            sub.text = if (hasPin) lockLabelSub else lockLabelNoPin
             sub.textSize = 14f
             sub.setTextColor(MUTED)
             sub.gravity = Gravity.CENTER
-            val subLp = LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT)
-            subLp.topMargin = dp(10)
-            subLp.bottomMargin = dp(28)
-            root.addView(sub, subLp)
+            val subLp = LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT)
+            subLp.topMargin = dpPx(activity, 8)
+            subLp.bottomMargin = dpPx(activity, 20)
+            card.addView(sub, subLp)
+
+            val errView = TextView(activity)
+            errView.text = ""
+            errView.textSize = 13f
+            errView.setTextColor(RED)
+            errView.gravity = Gravity.CENTER
+            errView.visibility = View.GONE
+
+            var pinInput: android.widget.EditText? = null
+            if (hasPin) {
+                val input = android.widget.EditText(activity)
+                pinInput = input
+                input.hint = lockLabelPinHint
+                input.setHintTextColor(MUTED)
+                input.setTextColor(TEXT)
+                input.textSize = 20f
+                input.gravity = Gravity.CENTER
+                input.inputType = android.text.InputType.TYPE_CLASS_NUMBER or android.text.InputType.TYPE_NUMBER_VARIATION_PASSWORD
+                input.imeOptions = android.view.inputmethod.EditorInfo.IME_ACTION_DONE
+                input.filters = arrayOf(android.text.InputFilter.LengthFilter(8))
+                input.setPadding(dpPx(activity, 16), dpPx(activity, 14), dpPx(activity, 16), dpPx(activity, 14))
+                val inBg = GradientDrawable()
+                inBg.setColor(BG)
+                inBg.cornerRadius = dpPx(activity, 12).toFloat()
+                inBg.setStroke(dpPx(activity, 1), 0x33FFFFFF)
+                input.background = inBg
+                val inLp = LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT)
+                inLp.bottomMargin = dpPx(activity, 10)
+                card.addView(input, inLp)
+
+                val errLp = LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT)
+                errLp.bottomMargin = dpPx(activity, 12)
+                card.addView(errView, errLp)
+            }
 
             val btn = TextView(activity)
-            btn.text = "Unlock"
+            btn.text = lockLabelUnlock
             btn.textSize = 15f
-            btn.setTextColor(TEXT)
+            btn.setTextColor(Color.WHITE)
             btn.typeface = Typeface.create("sans-serif-medium", Typeface.BOLD)
             btn.gravity = Gravity.CENTER
-            btn.setPadding(dp(28), dp(12), dp(28), dp(12))
-            val bg = GradientDrawable()
-            bg.setColor(BRAND)
-            bg.cornerRadius = dp(10).toFloat()
-            btn.background = bg
-            root.addView(btn, LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT))
+            btn.setPadding(dpPx(activity, 24), dpPx(activity, 13), dpPx(activity, 24), dpPx(activity, 13))
+            val btnBg = GradientDrawable()
+            btnBg.setColor(BRAND)
+            btnBg.cornerRadius = dpPx(activity, 12).toFloat()
+            btn.background = btnBg
+            card.addView(btn, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT))
 
-            val trigger = object : Runnable {
+            val verifyAction = object : Runnable {
                 override fun run() {
-                    authenticateNative(activity, "Unlock Discord", "Confirm your screen lock or biometric", object : Runnable {
-                        override fun run() {
-                            lockRequired = false
-                            lockShowing = false
-                            try { dialog.dismiss() } catch (_: Throwable) { }
+                    if (hasPin) {
+                        val entered = (pinInput?.text?.toString() ?: "") as java.lang.String
+                        if (!entered.equals(appLockPin)) {
+                            errView.text = lockLabelWrong
+                            errView.visibility = View.VISIBLE
+                            pinInput?.setText("")
+                            return
                         }
-                    }, object : Runnable {
-                        override fun run() { }
-                    })
+                    }
+                    lockRequired = false
+                    appLockUnlockedInSession = true
+                    lockShowing = false
+                    appLockDialog = null
+                    try { dialog.dismiss() } catch (_: Throwable) { }
                 }
             }
             btn.setOnClickListener(object : View.OnClickListener {
-                override fun onClick(v: View?) { trigger.run() }
+                override fun onClick(v: View?) { verifyAction.run() }
             })
+            pinInput?.setOnEditorActionListener(object : TextView.OnEditorActionListener {
+                override fun onEditorAction(v: TextView?, actionId: Int, event: android.view.KeyEvent?): Boolean {
+                    verifyAction.run()
+                    return true
+                }
+            })
+
+            val cardLp = LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT)
+            cardLp.leftMargin = dpPx(activity, 12)
+            cardLp.rightMargin = dpPx(activity, 12)
+            root.addView(card, cardLp)
+
             dialog.setContentView(root)
-            dialog.window?.let { w ->
+            val w = dialog.window
+            if (w != null) {
                 w.setLayout(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT)
+                w.addFlags(android.view.WindowManager.LayoutParams.FLAG_SECURE)
                 w.statusBarColor = BG
                 w.navigationBarColor = BG
+                if (hasPin) w.setSoftInputMode(android.view.WindowManager.LayoutParams.SOFT_INPUT_STATE_VISIBLE)
             }
             dialog.show()
-            main.postDelayed(trigger, 200)
+            if (hasPin) pinInput?.requestFocus()
         } catch (_: Throwable) {
             lockShowing = false
+            appLockDialog = null
         }
-    }
-
-    private fun promptBiometric(activity: Activity, arg: String, promise: Promise) {
-        val title = try {
-            if ((arg as java.lang.String).startsWith("{")) JSONObject(arg).optString("title", "Verify Identity")
-            else if (arg.length > 0) arg else "Verify Identity"
-        } catch (_: Throwable) { "Verify Identity" }
-        authenticateNative(activity, title, "Authenticate to access protected content", object : Runnable {
-            override fun run() { promise.resolve("ok") }
-        }, object : Runnable {
-            override fun run() { promise.resolve("cancelled") }
-        })
-    }
-
-    private fun authenticateNative(activity: Activity, title: String, subtitle: String, onSuccess: Runnable, onCancel: Runnable) {
-        val km = activity.getSystemService(Context.KEYGUARD_SERVICE) as? android.app.KeyguardManager
-        if (km == null || !km.isKeyguardSecure) {
-            onSuccess.run()
-            return
-        }
-        if (Build.VERSION.SDK_INT >= 28) {
-            try {
-                val builder = android.hardware.biometrics.BiometricPrompt.Builder(activity)
-                    .setTitle(title)
-                    .setSubtitle(subtitle)
-                if (Build.VERSION.SDK_INT >= 29) {
-                    builder.setDeviceCredentialAllowed(true)
-                } else {
-                    builder.setNegativeButton("Cancel", activity.mainExecutor, object : android.content.DialogInterface.OnClickListener {
-                        override fun onClick(d: android.content.DialogInterface?, w: Int) { onCancel.run() }
-                    })
-                }
-                val prompt = builder.build()
-                val signal = android.os.CancellationSignal()
-                prompt.authenticate(signal, activity.mainExecutor, object : android.hardware.biometrics.BiometricPrompt.AuthenticationCallback() {
-                    override fun onAuthenticationSucceeded(result: android.hardware.biometrics.BiometricPrompt.AuthenticationResult?) {
-                        main.post(onSuccess)
-                    }
-                    override fun onAuthenticationError(errorCode: Int, errString: CharSequence?) {
-                        main.post(onCancel)
-                    }
-                    override fun onAuthenticationFailed() { }
-                })
-                return
-            } catch (_: Throwable) { }
-        }
-        onSuccess.run()
     }
 
     // --------------------------------------------------------- media editor dialog
 
     private fun openMediaEditDialog(c: Context, arg: String, promise: Promise) {
         val req = JSONObject(arg)
-        val uriStr = req.getString("uri")
         val name = req.optString("name", "media")
-        val uri = android.net.Uri.parse(uriStr)
         var durationMs = 0L
         var hasVideo = false
         var hasAudio = false
-        val extractor = android.media.MediaExtractor()
         try {
-            extractor.setDataSource(c, uri, null)
-            var i = 0
-            while (i < extractor.trackCount) {
-                val format = extractor.getTrackFormat(i)
-                val mime = format.getString(android.media.MediaFormat.KEY_MIME) ?: ""
-                if (mime.length >= 6 && mime.substring(0, 6) == "video/") hasVideo = true
-                if (mime.length >= 6 && mime.substring(0, 6) == "audio/") hasAudio = true
-                if (format.containsKey(android.media.MediaFormat.KEY_DURATION)) {
-                    val d = format.getLong(android.media.MediaFormat.KEY_DURATION) / 1000L
-                    if (d > durationMs) durationMs = d
-                }
-                i++
-            }
-        } catch (_: Throwable) {
-        } finally {
-            try { extractor.release() } catch (_: Throwable) { }
-        }
+            val probed = JSONObject(probeMediaFile(c, arg))
+            durationMs = probed.optLong("durationMs", 0L)
+            hasVideo = probed.optBoolean("hasVideo", false)
+            hasAudio = probed.optBoolean("hasAudio", false)
+        } catch (_: Throwable) { }
         val totalSec = if (durationMs > 0L) Math.round(durationMs / 100.0) / 10.0 else 0.0
         main.post(object : Runnable {
             override fun run() {

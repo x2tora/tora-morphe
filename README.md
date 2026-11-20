@@ -37,14 +37,13 @@ You can also import `patches-<version>.mpp` from [Releases](https://github.com/x
 | | Always trust links and files | No link or download warnings (based on AlwaysTrust by zt and Trwy) |
 | |Jump to first message | Go straight to the start of a chat |
 | | Favourite any image or video | Save any image or video to your GIF favourites |
-| | Keyword notifications | Get notified and log a match when a message contains your chosen words or regular expressions |
-| | Message bookmarks | Save messages to an offline bookmark list from the hold menu, search them and jump back to the chat |
-| | Privacy blur | Blur photos, videos, GIFs and link previews in chat until you tap to reveal them |
-| | Save all media | Download every image, video or audio attachment from a message in one tap |
-| | Preview link destination | Follow shortened links and show the final address before opening or copying |
-| | Preview ZIP archives | Inspect the files and read text inside `.zip` attachments without leaving Discord |
-| | Message reminders | Set a reminder on any message from the hold menu to get notified later and jump back to it |
-| | Render LaTeX math | Format inline and block LaTeX math in chat and open a clean formula view from the hold menu |
+| | Keyword notifications | Get notified and log matches using beginner-friendly match rules, server filters and live preview |
+| | Message bookmarks | Save messages offline, highlight them in chat, add a profile shortcut and jump back to them |
+| | Privacy blur | Blur photos, videos, GIFs and link previews with Discord's spoiler overlay until tapped |
+| | Save all media | Download every image, video or embed media from a message in one tap |
+| | Preview ZIP archives | Expand `.zip` file lists inline in chat or inspect folders and text files in a sheet |
+| | Message reminders | Schedule local reminders by relative delay or specific clock time and jump back when notified |
+| | Render LaTeX math | Format inline and block LaTeX math in chat and open a clean MathML formula viewer |
 | **Sending** | Send Nitro stickers and emojis as links | Sends Nitro emojis and stickers as image links |
 | | Bring back Tenor GIFs | Tenor GIFs in Discord's GIF picker |
 | | Fix link previews | Working embeds for X, Instagram, TikTok, Reddit and more, with tracking removed |
@@ -104,7 +103,7 @@ You can also import `patches-<version>.mpp` from [Releases](https://github.com/x
 | | Keep Bluetooth audio clear in calls | Keeps headphones in music quality during calls |
 | | Voice channel options | Join volume, audio output, join chimes and a goodbye sound |
 | | Fake deafen | Look deafened while still hearing the call (by maayan080) |
-| | App lock and secret DMs | Lock Discord with your fingerprint or screen lock and hide chosen DMs behind authentication |
+| | App lock | Lock Discord behind a PIN passcode on startup or when returning from background |
 
 Venus settings also have **Language** (30 languages), **Backup and restore**, and **About** with debug logs and a crash screen.
 

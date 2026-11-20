@@ -212,6 +212,7 @@ The supported Discord version and bundle hash live in `DiscordPatches.kt` and `H
 | 8771 | `design/components/Icon/native/redesign/generated/LockIcon.tsx` | LockIcon | LockIcon |
 | 8777 | `design/components/Icon/native/redesign/generated/VoiceNormalIcon.tsx` | VoiceNormalIcon | VoiceNormalIcon (Voice channel options) |
 | 8782 | `design/components/Icon/native/redesign/generated/AppsIcon.tsx` | AppsIcon | AppsIcon |
+| 8792 | `modules/messages/native/renderer/transformEmbeds.tsx` | Embed, MessageEmbedTypes | transformEmbeds (Privacy blur: embed spoiler obscures) |
 | 8815 | `modules/suspicious_downloads/SuspiciousDownloadUtils.tsx` | isSuspiciousDownload | SuspiciousDownloadUtils (Always trust) |
 | 8854 | `modules/user_profile/native/showUserProfileActionSheet.tsx` | default, showUserProfileActionSheet | showUserProfileActionSheet |
 | 8856 | `actions/UserActionCreators.tsx` | fetchCurrentUser, acceptAgreements, setFlag | UserActionCreators |
@@ -253,6 +254,7 @@ The supported Discord version and bundle hash live in `DiscordPatches.kt` and `H
 | 9879 | `design/components/Icon/native/redesign/generated/MoreHorizontalIcon.tsx` | MoreHorizontalIcon | MoreHorizontalIcon (preview server header) |
 | 9881 | `design/components/Icon/native/redesign/generated/ServerIcon.tsx` | ServerIcon | ServerIcon |
 | 9898 | `modules/messages/useMessageMaxLength.tsx` | default, getMaxMessageLength | useMessageMaxLength |
+| 9901 | `actions/UploadAttachmentActionCreators.tsx` | default, addFile, addFiles | UploadAttachmentActionCreators (Trim and mute media: update upload item) |
 | 9986 | `design/components/Icon/native/redesign/generated/PhoneCallIcon.tsx` | PhoneCallIcon | PhoneCallIcon |
 | 10006 | `design/components/Icon/native/redesign/generated/PaperIcon.tsx` | PaperIcon | PaperIcon |
 | 10023 | `design/components/Icon/native/redesign/generated/ThumbsUpIcon.tsx` | ThumbsUpIcon | ThumbsUpIcon |
@@ -284,6 +286,7 @@ The supported Discord version and bundle hash live in `DiscordPatches.kt` and `H
 | 10438 | `modules/stickers/native/StickerDetailActionSheet.tsx` | default | StickerDetailActionSheet (Clone emojis and stickers) |
 | 10441 | `modules/premium/components/native/NitroUpsellButton.tsx` | default | NitroUpsellButton |
 | 10675 | `design/components/Icon/native/redesign/generated/IdIcon.tsx` | IdIcon | IdIcon |
+| 10680 | `modules/media_uploads/native/UploadPreviewActionSheet.tsx` | BottomSheet, DraftType | UploadPreviewActionSheet (Trim and mute media & Strip EXIF rows) |
 | 10684 | `design/components/Icon/native/redesign/generated/PollsIcon.tsx` | PollsIcon | PollsIcon (Hide extra buttons) |
 | 10686 | `design/components/Icon/native/redesign/generated/AttachmentIcon.tsx` | AttachmentIcon | AttachmentIcon |
 | 10690 | `modules/media_keyboard/native/components/MediaKeyboardBottomSheetActions.tsx` | default | MediaKeyboardBottomSheetActions (Hide extra buttons: attach menu) |
@@ -398,6 +401,7 @@ The supported Discord version and bundle hash live in `DiscordPatches.kt` and `H
 | 14862 | `modules/scheduled_messages/native/ScheduledMessageEditContentModal.tsx` | default | ScheduledMessageEditContentModal (Send long messages keeps the real limit) |
 | 14878 | `design/components/Icon/native/redesign/generated/ChatSmileIcon.tsx` | ChatSmileIcon | ChatSmileIcon |
 | 14887 | `design/components/Icon/native/redesign/generated/EmbedIcon.tsx` | EmbedIcon | EmbedIcon (Fix link previews) |
+| 14978 | `modules/main_tabs_v2/native/tabs/you/YouScreenNavIcon.tsx` | IconComponent, PressableScale | YouScreenNavIcon (Message bookmarks: profile shortcut) |
 | 14983 | `design/components/Icon/native/redesign/generated/QuestsIcon.tsx` | QuestsIcon | QuestsIcon |
 | 15004 | `design/components/Icon/native/redesign/generated/ShieldLockIcon.tsx` | ShieldLockIcon | ShieldLockIcon (View raw data) |
 | 15040 | `modules/media_viewer/native/components/overlay/MediaViewerOverlayButtonFavoriteGIF.tsx` | default | MediaViewerHeader |
