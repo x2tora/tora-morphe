@@ -87,7 +87,7 @@
     if (features.appLock) selectModules([1385]);
     if (features.mediaEditor) selectModules([8311, 8333, 9901, 10366, 10680]);
     if (features.latexRender) selectModules([572, 6226, 8481, 10340, 11763]);
-    const revision = "1.23.7";
+    const revision = "1.23.8";
     // The Discord build these patches are pinned to (DiscordPatches.kt compatibleWith); shown on the About page.
     const DISCORD_VERSION = "354.12";
     // Module 120 owns setUpDefaltReactNativeEnvironment in this exact asset.
@@ -24087,7 +24087,7 @@
             ]),
             el(Group, {key:"test", title:tr("Test")},
                 actionRow(ui, "testLock", "Test lock screen now", "Opens the native lock overlay right now to verify your PIN.",
-                    () => { haptic("SELECTION"); appLockSync(false); diagCall("lockTest", "").catch(() => {}); }, !on, false, rowIcon(8771, "LockIcon"))),
+                    () => { haptic("SELECTION"); appLockSync(false); diagCall("lockTest", "").catch(() => {}); }, !on || !hasPin, false, rowIcon(8771, "LockIcon"))),
             footnote("hint", "Locks Discord automatically on startup and whenever you return to the app after the selected timeout.")
         ];
         return settingsBody(ui, groups);

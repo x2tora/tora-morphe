@@ -1,8 +1,8 @@
 {
-  "created_at": "2026-11-20T18:16:24",
-  "description": "### \ud83d\udc1b Bug Fixes\n\n* **Discord - App lock:** Fixed the **Next** / **Start over** action buttons, header, and close handler not rendering in the PIN setup sheet (`inspectedExport(5790, \"Button\")` and `ui.sheets.hideActionSheet`)\n",
-  "download_url": "https://github.com/x2tora/tora-morphe/releases/download/v1.23.7/patches-1.23.7.mpp",
-  "page_url": "https://github.com/x2tora/tora-morphe/releases/tag/v1.23.7",
+  "created_at": "2026-11-20T18:24:25",
+  "description": "### \ud83d\udc1b Bug Fixes\n\n* **Discord - App lock:** Fixed the lock screen still appearing when App lock is enabled without a configured PIN\n",
+  "download_url": "https://github.com/x2tora/tora-morphe/releases/download/v1.23.8/patches-1.23.8.mpp",
+  "page_url": "https://github.com/x2tora/tora-morphe/releases/tag/v1.23.8",
   "signature_download_url": "",
-  "version": "1.23.7"
+  "version": "1.23.8"
 }

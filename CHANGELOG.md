@@ -1,3 +1,9 @@
+## [1.23.8](https://github.com/x2tora/tora-morphe/compare/v1.23.7...v1.23.8) (2026-11-21)
+
+### 🐛 Bug Fixes
+
+* **Discord - App lock:** Fixed the lock screen still appearing when App lock is enabled without a configured PIN
+
 ## [1.23.7](https://github.com/x2tora/tora-morphe/compare/v1.23.6...v1.23.7) (2026-11-21)
 
 ### 🐛 Bug Fixes

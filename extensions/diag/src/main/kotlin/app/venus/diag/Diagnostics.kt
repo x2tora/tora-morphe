@@ -160,7 +160,7 @@ object Diagnostics {
                 if (lClear.length > 0) lockLabelClear = lClear
                 val lUseBio = json.optString("useBio", "")
                 if (lUseBio.length > 0) lockLabelUseBio = lUseBio
-                if (appLockOn) {
+                if (appLockOn && appLockPin.length >= 4) {
                     appLockUnlockedInSession = false
                     lockRequired = true
                 }
@@ -175,7 +175,7 @@ object Diagnostics {
             appLockBiometric = json.optBoolean("appLockBiometric", false)
             val anim = json.optString("appLockAnim", "slideUp")
             if (anim.length > 0) appLockAnim = anim
-            if (appLockOn) {
+            if (appLockOn && appLockPin.length >= 4) {
                 appLockUnlockedInSession = false
                 lockRequired = true
             }
@@ -194,7 +194,7 @@ object Diagnostics {
     }
 
     private fun maybeLockActivity(activity: Activity) {
-        if (!appLockOn) return
+        if (!appLockOn || appLockPin.length < 4) return
         val now = System.currentTimeMillis()
         val timedOut = lastPausedAt > 0L && now - lastPausedAt >= appLockTimeoutMs
         if (!appLockUnlockedInSession || lockRequired || timedOut) {
@@ -224,7 +224,7 @@ object Diagnostics {
             main.postDelayed(object : Runnable { override fun run() { showPending() } }, 700)
         }
         override fun onActivityPaused(activity: Activity) {
-            if (appLockOn) {
+            if (appLockOn && appLockPin.length >= 4) {
                 try { activity.window?.addFlags(android.view.WindowManager.LayoutParams.FLAG_SECURE) } catch (_: Throwable) { }
             }
         }
@@ -1574,7 +1574,7 @@ object Diagnostics {
                 .put("useBio", lockLabelUseBio)
             write(File(c.filesDir, LOCK_FILE), saved.toString())
         } catch (_: Throwable) { }
-        if (!appLockOn) {
+        if (!appLockOn || appLockPin.length < 4) {
             lockRequired = false
             appLockUnlockedInSession = true
             main.post(object : Runnable {
@@ -1582,10 +1582,17 @@ object Diagnostics {
                     try { appLockDialog?.dismiss() } catch (_: Throwable) { }
                     appLockDialog = null
                     lockShowing = false
+                    val act = current?.get()
+                    if (act != null) {
+                        try {
+                            val win = act.window
+                            if (win != null) win.clearFlags(android.view.WindowManager.LayoutParams.FLAG_SECURE)
+                        } catch (_: Throwable) { }
+                    }
                 }
             })
         } else {
-            if (!wasOn && appLockPin.length > 0 && req.optBoolean("lockNow", false)) {
+            if (!wasOn && req.optBoolean("lockNow", false)) {
                 appLockUnlockedInSession = false
                 lockRequired = true
             } else {
@@ -1598,6 +1605,7 @@ object Diagnostics {
 
     private fun showLockOverlay(activity: Activity, isTest: Boolean) {
         if (lockShowing || activity.isFinishing || activity.isDestroyed) return
+        if (!isTest && (!appLockOn || appLockPin.length < 4)) return
         try {
             lockShowing = true
             val dialog = Dialog(activity, android.R.style.Theme_DeviceDefault_NoActionBar)
