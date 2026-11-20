@@ -77,7 +77,18 @@
     if (features.experiments) selectModules([572, 1385, 1401]);
     if (features.hideAnything) selectModules([15076, 16939, 16940, 9745, 10690, 17422, 17511, 14062, 14066, 14070, 14078, 14079, 14832, 15316, 16759, 18457, 16199, 9092, 9328, 11586, 14111, 16139, 16145, 16075, 16149, 12374, 12375, 15309, 11669, 7448, 15290, 15171, 18456, 18561, 14312, 12741, 11569, 19290, 18065, 18563, 19204, 19192, 11812, 10340, 14805, 13656, 11150, 14815, 8770, 10237]);
     if (features.voiceOptions) { targetModules[572] = 1; targetModules[11192] = 1; targetModules[6793] = 1; }
-    const revision = "1.22.0";
+    if (features.keywordNotify) selectModules([572, 1099, 1385, 5019, 5041, 5073, 10362, 15843, 15878]);
+    if (features.bookmarks) selectModules([1099, 1385, 5019, 5041, 6226, 10340]);
+    if (features.privacyBlur) selectModules([572, 6226, 8481, 10340]);
+    if (features.batchMediaSave) selectModules([1441, 6226, 10340]);
+    if (features.stripExif) selectModules([8311, 8333, 10366]);
+    if (features.urlUnshortener) selectModules([10340, 11763]);
+    if (features.zipPreview) selectModules([6226, 10340]);
+    if (features.reminders) selectModules([572, 1099, 1385, 5019, 5041, 6226, 10340]);
+    if (features.appLock) selectModules([572, 1099, 1385, 5019, 10340, 10954, 11177]);
+    if (features.mediaEditor) selectModules([8311, 8333, 10366]);
+    if (features.latexRender) selectModules([572, 6226, 8481, 10340]);
+    const revision = "1.23.0";
     // The Discord build these patches are pinned to (DiscordPatches.kt compatibleWith); shown on the About page.
     const DISCORD_VERSION = "354.12";
     // Module 120 owns setUpDefaltReactNativeEnvironment in this exact asset.
@@ -99,7 +110,13 @@
         iconPacks:false, iconPacksTheme:true,
         messageHighlight:false, messageHighlightThickness:2, messageHighlightBrightness:50, messageHighlightPingColor:"default", serverInfo:false, serverInfoFriends:true, serverEdit:false,
         fixEmbeds:false, fixEmbedsSites:"", fixEmbedsOptions:"", tenorGifs:false, tenorGifsSource:"both", hideBlocked:false, hideBlockedBlocked:true, hideBlockedIgnored:true, hideBlockedReplies:false, hideBlockedCloseDms:false, bulkDelete:false, bulkDeleteConfirm:true, bulkDeleteIncludeCached:true, experiments:false, noHandsfree:false, voiceOptions:false, voiceOptionsVolume:false, voiceOptionsVolumeLevel:50, voiceOptionsOutput:"default", voiceOptionsJoinSound:true, voiceOptionsLeaveSound:true, voiceOptionsSoundVolume:100, voiceOptionsExit:false, voiceOptionsExitSound:"", cleanChannels:false, cleanChannelsEmoji:true, cleanChannelsSymbols:true, cleanChannelsFonts:true, cleanChannelsSpaces:false, anonFiles:false, staffTag:false, staffTagOwner:true, staffTagAdmin:true, staffTagManager:true, staffTagMod:true, staffTagCrown:true, removedAlerts:false, removedAlertsFriends:true, removedAlertsServers:true, removedAlertsClosed:true, removedAlertsPush:false, fullImages:false, fullImagesChat:true, fullImagesViewer:true, fullImagesGifs:false, fullImagesAvatars:true, alwaysTrust:false, alwaysTrustLinks:true, alwaysTrustFiles:true, noConfirmPin:false, clickableMentions:false, expandBar:false, expandBarSending:true, expandBarChats:true, silentLeave:false, silentEdit:false, silentEditNotice:true, silentDelete:false, localEdit:false, localEditMark:true, guildLurk:false, guildLurkIds:"", quietReplies:false, viewRaw:false, viewRawMessages:true, viewRawChannels:true, viewRawServers:true, viewRawPeople:true, viewRawRoles:true, viewRawHideContact:true, viewRawWrap:true, timeoutDuration:false, dndBanners:false, voiceDownload:false, cloneExpressions:false, listenAlong:false, listenAlongOffset:0, backgroundMedia:false, backgroundMediaAudio:true, backgroundMediaVideo:true, backgroundMediaSkip:10, landscapeFull:false, quietRepliesGuilds:true, quietRepliesGroups:true, quietRepliesMentioned:false, compressUploads:false, compressUploadsPhotos:true, compressUploadsVideos:true, compressUploadsAudio:true, hideAnything:false, hideAnythingSpots:"", fakeDeafen:false, fakeDeafenMuteMic:true, language:"auto", hiddenFeatures:"",
-        hypeSquad:false, customIdle:false, customIdleMinutes:10, pauseInvites:false, fastDeleteChannels:false, fastDeleteChannelsConfirm:true, fastDeleteChannelsMenu:true, mutualGroupDMs:false, platformSpoof:false, platformSpoofDevice:"desktop" };
+        hypeSquad:false, customIdle:false, customIdleMinutes:10, pauseInvites:false, fastDeleteChannels:false, fastDeleteChannelsConfirm:true, fastDeleteChannelsMenu:true, mutualGroupDMs:false, platformSpoof:false, platformSpoofDevice:"desktop",
+        keywordNotify:false, keywordNotifyWords:"", keywordNotifyExcluded:"", keywordNotifyCase:false, keywordNotifyPush:true, keywordNotifyLog:true,
+        bookmarks:false, privacyBlur:false, privacyBlurAvatars:false, batchMediaSave:false, stripExif:false,
+        urlUnshortener:false, urlUnshortenerAll:false, zipPreview:false, reminders:false,
+        appLock:false, appLockTimeout:0, secretDms:true, secretDmIds:"",
+        mediaEditor:false, mediaEditorMode:"ask", mediaEditorDefaultMute:false,
+        latexRender:false, latexRenderInline:true };
     // The settings every feature starts from, for Reset to defaults on the Backup page.
     let DEFAULT_SETTINGS = null;
     function defaultSettings() {
@@ -117,7 +134,13 @@
             iconPacks: false, iconPacksTheme: true,
             messageHighlight: false, messageHighlightThickness: 2, messageHighlightBrightness: 50, messageHighlightPingColor: "default", serverInfo: false, serverInfoFriends: true, serverEdit: false,
             fixEmbeds: false, fixEmbedsSites: "", fixEmbedsOptions: "", tenorGifs: false, tenorGifsSource: "both", hideBlocked: false, hideBlockedBlocked: true, hideBlockedIgnored: true, hideBlockedReplies: false, hideBlockedCloseDms: false, bulkDelete: false, bulkDeleteConfirm: true, bulkDeleteIncludeCached: true, experiments: false, noHandsfree: false, voiceOptions: false, voiceOptionsVolume: false, voiceOptionsVolumeLevel: 50, voiceOptionsOutput: "default", voiceOptionsJoinSound: true, voiceOptionsLeaveSound: true, voiceOptionsSoundVolume: 100, voiceOptionsExit: false, voiceOptionsExitSound: "", cleanChannels: false, cleanChannelsEmoji: true, cleanChannelsSymbols: true, cleanChannelsFonts: true, cleanChannelsSpaces: false, anonFiles: false, staffTag: false, staffTagOwner: true, staffTagAdmin: true, staffTagManager: true, staffTagMod: true, staffTagCrown: true, removedAlerts: false, removedAlertsFriends: true, removedAlertsServers: true, removedAlertsClosed: true, removedAlertsPush: false, fullImages: false, fullImagesChat: true, fullImagesViewer: true, fullImagesGifs: false, fullImagesAvatars: true, alwaysTrust: false, alwaysTrustLinks: true, alwaysTrustFiles: true, noConfirmPin: false, clickableMentions: false, expandBar: false, expandBarSending: true, expandBarChats: true, silentLeave: false, silentEdit: false, silentEditNotice: true, silentDelete: false, localEdit: false, localEditMark: true, guildLurk: false, guildLurkIds: "", quietReplies: false, viewRaw: false, viewRawMessages: true, viewRawChannels: true, viewRawServers: true, viewRawPeople: true, viewRawRoles: true, viewRawHideContact: true, viewRawWrap: true, timeoutDuration: false, dndBanners: false, voiceDownload: false, cloneExpressions: false, listenAlong: false, listenAlongOffset: 0, backgroundMedia: false, backgroundMediaAudio: true, backgroundMediaVideo: true, backgroundMediaSkip: 10, landscapeFull: false, quietRepliesGuilds: true, quietRepliesGroups: true, quietRepliesMentioned: false, compressUploads: false, compressUploadsPhotos: true, compressUploadsVideos: true, compressUploadsAudio: true, hideAnything: false, hideAnythingSpots: "", fakeDeafen: false, fakeDeafenMuteMic: true, language: "auto", hiddenFeatures: "",
-            hypeSquad: false, customIdle: false, customIdleMinutes: 10, pauseInvites: false, fastDeleteChannels: false, fastDeleteChannelsConfirm: true, fastDeleteChannelsMenu: true, mutualGroupDMs: false, platformSpoof: false, platformSpoofDevice: "desktop"
+            hypeSquad: false, customIdle: false, customIdleMinutes: 10, pauseInvites: false, fastDeleteChannels: false, fastDeleteChannelsConfirm: true, fastDeleteChannelsMenu: true, mutualGroupDMs: false, platformSpoof: false, platformSpoofDevice: "desktop",
+            keywordNotify: false, keywordNotifyWords: "", keywordNotifyExcluded: "", keywordNotifyCase: false, keywordNotifyPush: true, keywordNotifyLog: true,
+            bookmarks: false, privacyBlur: false, privacyBlurAvatars: false, batchMediaSave: false, stripExif: false,
+            urlUnshortener: false, urlUnshortenerAll: false, zipPreview: false, reminders: false,
+            appLock: false, appLockTimeout: 0, secretDms: true, secretDmIds: "",
+            mediaEditor: false, mediaEditorMode: "ask", mediaEditorDefaultMute: false,
+            latexRender: false, latexRenderInline: true
         }));
     }
     // Backup and restore (#68): when you last saved a backup, and whether a restore is being applied right now.
@@ -372,6 +395,8 @@
         if (features.serverEdit && serverEdits.size) extra.serverEdits = serverEditData(false);
         if (features.localEdit && localEdits.size) extra.localEdits = localEditData();
         if ((features.nitroThemes || features.accountSwitcher) && nitroThemeHasAny()) extra.nitroThemes = nitroThemeData();
+        if (features.bookmarks && bookmarks.list.length) extra.bookmarksList = bookmarks.list.slice(0, 300);
+        if (features.reminders && reminders.list.length) extra.remindersList = reminders.list.slice(0, 100);
         return JSON.stringify(Object.keys(extra).length ? Object.assign({}, settings, extra) : settings);
     }
     function save() {
@@ -468,6 +493,10 @@
         if (key === "hideAnythingSpots") return hideSpotsText(value);
         if (key === "materialYouColor") return myIsColor(value) ? value.toLowerCase() : undefined;
         if (key === "materialYouTint") return MY_TINTS.includes(value) ? value : undefined;
+        if (key === "keywordNotifyWords") return typeof value === "string" && value.length <= 4000 ? value : undefined;
+        if (key === "keywordNotifyExcluded" || key === "secretDmIds") return typeof value === "string" && value.length <= 4000 ? value : undefined;
+        if (key === "appLockTimeout") return [0, 60, 300, 900].includes(value) ? value : undefined;
+        if (key === "mediaEditorMode") return ["ask", "mute"].includes(value) ? value : undefined;
         return typeof value === "number" && !Number.isFinite(value) ? undefined : value;
     }
     function setSetting(key, value) {
@@ -650,6 +679,24 @@
             if (settings[key] === clean && status.storage !== "loading" && status.storage !== "waiting") return true;
             settings[key] = clean; dirty.add(key); save(); notify(key); later(messageHighlightRedraw, 0); return true;
         }
+        if (key === "keywordNotifyWords" || key === "keywordNotifyExcluded" || key === "secretDmIds") {
+            if (typeof value !== "string" || value.length > 4000) return false;
+            if (settings[key] === value && status.storage !== "loading" && status.storage !== "waiting") return true;
+            settings[key] = value; dirty.add(key); save(); notify(key);
+            if (key === "secretDmIds") secretDmsSync();
+            else keywordNotifyCompile();
+            return true;
+        }
+        if (key === "appLockTimeout") {
+            if (![0, 60, 300, 900].includes(value)) return false;
+            if (settings.appLockTimeout === value && status.storage !== "loading" && status.storage !== "waiting") return true;
+            settings.appLockTimeout = value; dirty.add(key); save(); notify(key); appLockSync(false); return true;
+        }
+        if (key === "mediaEditorMode") {
+            if (!["ask", "mute"].includes(value)) return false;
+            if (settings.mediaEditorMode === value && status.storage !== "loading" && status.storage !== "waiting") return true;
+            settings.mediaEditorMode = value; dirty.add(key); save(); notify(key); return true;
+        }
         if (settings[key] === !!value && status.storage !== "loading" && status.storage !== "waiting") return true;
         value = !!value;
         if (key === "reviewDB" && !value) { reviewAuthAttempt++; reviewCache.clear(); }
@@ -703,7 +750,10 @@
         if (features.bulkDelete && key === "bulkDelete" && !value) bulkDeleteCancel();
         if (features.bulkDelete && (key === "bulkDeleteIncludeCached" || key === "noDelete") && bulkDelete.active) { bulkDeletePruneKept(); bulkDeleteRedrawAll(); }
         if (features.experiments && key === "experiments") { if (value) experimentsEnable(); else if (experiments.unlocked && !backup.restoring) later(experimentsAskReopen, 0); }
-        if (features.quests || features.badges || features.userNotif || features.removedAlerts) backgroundSync();
+        if (features.keywordNotify && featureFor(key) === "keywordNotify") keywordNotifySync();
+        if (features.appLock && featureFor(key) === "appLock") { appLockSync(false); secretDmsSync(); }
+        if (features.reminders && key === "reminders") remindersSync();
+        if (features.quests || features.badges || features.userNotif || features.removedAlerts || features.keywordNotify) backgroundSync();
         return true;
     }
     function initFiles(module) {
@@ -759,6 +809,10 @@
                 if (features.removedAlerts) removedLoad(loaded.removedSeen);
                 if (features.serverEdit && !serverEdit.dirty) serverEditLoad(serverEditClean(loaded.serverEdits, false));
                 if (features.localEdit) localEditLoad(loaded.localEdits);
+                if (features.bookmarks && Array.isArray(loaded.bookmarksList) && !bookmarks.list.length)
+                    bookmarksLoad(loaded.bookmarksList);
+                if (features.reminders && Array.isArray(loaded.remindersList) && !reminders.list.length)
+                    remindersLoad(loaded.remindersList);
                 if (features.badges) {
                     const accounts = loaded.badgesAccounts, played = loaded.badgesPlayed, snowflake = id => typeof id === "string" && /^\d{17,20}$/.test(id);
                     if (Array.isArray(accounts)) accounts.slice(0, 50).forEach(id => { if (snowflake(id)) badges.accounts.add(id); });
@@ -807,7 +861,10 @@
             if (features.iconPacks && enabled("iconPacks")) iconPacksRestore();
             if (features.hideBlocked && enabled("hideBlocked")) hideBlockedChanged();
             if (features.experiments && enabled("experiments")) experimentsEnable();
-            if (features.quests || features.badges || features.userNotif || features.removedAlerts) backgroundSync();
+            if (features.keywordNotify) { keywordNotifyCompile(); keywordNotifySync(); }
+            if (features.appLock) { appLockSync(false); secretDmsSync(); }
+            if (features.reminders) remindersSync();
+            if (features.quests || features.badges || features.userNotif || features.removedAlerts || features.keywordNotify) backgroundSync();
             // Saved translations are read as soon as Discord starts, so the first chat you open already has them.
             if (enabled("translate")) translateRestore();
             i18n.shownIn = uiLanguage(); loadLanguage(i18n.shownIn);
@@ -1180,7 +1237,7 @@
     const featureFor = key => {
         const cached = featureTable[key];
         if (cached !== undefined) return cached;
-        return featureTable[key] = key === "reviewWarning" ? "reviewDB" : key === "emojis" || key === "stickers" || key === "hyperlinks" ? "freeNitro" : /^noDelete[A-Z]/.test(key) ? "noDelete" : /^pi[A-Z]/.test(key) ? "platformIndicators" : key === "pastelAll" || key === "pastelContent" ? "pastelize" : key === "readAllMode" ? "readAll" : /^compressUploads[A-Z]/.test(key) ? "compressUploads" : /^quests[A-Z]/.test(key) ? "quests" : /^badges[A-Z]/.test(key) ? "badges" : /^gesture[A-Z]/.test(key) ? "gestures" : /^translate[A-Z]/.test(key) ? "translate" : /^removedAlerts[A-Z]/.test(key) ? "removedAlerts" : /^userNotif[A-Z]/.test(key) ? "userNotif" : /^accountSwitcher[A-Z]/.test(key) ? "accountSwitcher" : /^hiddenChannels[A-Z]/.test(key) ? "hiddenChannels" : /^customThemes[A-Z]/.test(key) ? "customThemes" : /^materialYou[A-Z]/.test(key) ? "materialYou" : /^iconPacks[A-Z]/.test(key) ? "iconPacks" : /^messageHighlight[A-Z]/.test(key) ? "messageHighlight" : /^serverInfo[A-Z]/.test(key) ? "serverInfo" : /^fixEmbeds[A-Z]/.test(key) ? "fixEmbeds" : /^tenorGifs[A-Z]/.test(key) ? "tenorGifs" : /^hideBlocked[A-Z]/.test(key) ? "hideBlocked" : /^bulkDelete[A-Z]/.test(key) ? "bulkDelete" : /^expandBar[A-Z]/.test(key) ? "expandBar" : key === "systemFontSource" ? "systemFont" : key === "systemEmojiSource" ? "systemEmoji" : /^cleanChannels[A-Z]/.test(key) ? "cleanChannels" : /^voiceOptions[A-Z]/.test(key) ? "voiceOptions" : /^anonFiles[A-Z]/.test(key) ? "anonFiles" : /^staffTag[A-Z]/.test(key) ? "staffTag" : /^fullImages[A-Z]/.test(key) ? "fullImages" : /^alwaysTrust[A-Z]/.test(key) ? "alwaysTrust" : /^quietReplies[A-Z]/.test(key) ? "quietReplies" : /^viewRaw[A-Z]/.test(key) ? "viewRaw" : /^hideAnything[A-Z]/.test(key) ? "hideAnything" : /^guildLurk[A-Z]/.test(key) ? "guildLurk" : /^customIdle[A-Z]/.test(key) ? "customIdle" : /^fastDeleteChannels[A-Z]/.test(key) ? "fastDeleteChannels" : /^platformSpoof[A-Z]/.test(key) ? "platformSpoof" : /^silentEdit[A-Z]/.test(key) ? "silentEdit" : /^localEdit[A-Z]/.test(key) ? "localEdit" : /^listenAlong[A-Z]/.test(key) ? "listenAlong" : /^backgroundMedia[A-Z]/.test(key) ? "backgroundMedia" : /^fakeDeafen[A-Z]/.test(key) ? "fakeDeafen" : key;
+        return featureTable[key] = key === "reviewWarning" ? "reviewDB" : key === "emojis" || key === "stickers" || key === "hyperlinks" ? "freeNitro" : /^noDelete[A-Z]/.test(key) ? "noDelete" : /^pi[A-Z]/.test(key) ? "platformIndicators" : key === "pastelAll" || key === "pastelContent" ? "pastelize" : key === "readAllMode" ? "readAll" : /^compressUploads[A-Z]/.test(key) ? "compressUploads" : /^quests[A-Z]/.test(key) ? "quests" : /^badges[A-Z]/.test(key) ? "badges" : /^gesture[A-Z]/.test(key) ? "gestures" : /^translate[A-Z]/.test(key) ? "translate" : /^removedAlerts[A-Z]/.test(key) ? "removedAlerts" : /^userNotif[A-Z]/.test(key) ? "userNotif" : /^accountSwitcher[A-Z]/.test(key) ? "accountSwitcher" : /^hiddenChannels[A-Z]/.test(key) ? "hiddenChannels" : /^customThemes[A-Z]/.test(key) ? "customThemes" : /^materialYou[A-Z]/.test(key) ? "materialYou" : /^iconPacks[A-Z]/.test(key) ? "iconPacks" : /^messageHighlight[A-Z]/.test(key) ? "messageHighlight" : /^serverInfo[A-Z]/.test(key) ? "serverInfo" : /^fixEmbeds[A-Z]/.test(key) ? "fixEmbeds" : /^tenorGifs[A-Z]/.test(key) ? "tenorGifs" : /^hideBlocked[A-Z]/.test(key) ? "hideBlocked" : /^bulkDelete[A-Z]/.test(key) ? "bulkDelete" : /^expandBar[A-Z]/.test(key) ? "expandBar" : key === "systemFontSource" ? "systemFont" : key === "systemEmojiSource" ? "systemEmoji" : /^cleanChannels[A-Z]/.test(key) ? "cleanChannels" : /^voiceOptions[A-Z]/.test(key) ? "voiceOptions" : /^anonFiles[A-Z]/.test(key) ? "anonFiles" : /^staffTag[A-Z]/.test(key) ? "staffTag" : /^fullImages[A-Z]/.test(key) ? "fullImages" : /^alwaysTrust[A-Z]/.test(key) ? "alwaysTrust" : /^quietReplies[A-Z]/.test(key) ? "quietReplies" : /^viewRaw[A-Z]/.test(key) ? "viewRaw" : /^hideAnything[A-Z]/.test(key) ? "hideAnything" : /^guildLurk[A-Z]/.test(key) ? "guildLurk" : /^customIdle[A-Z]/.test(key) ? "customIdle" : /^fastDeleteChannels[A-Z]/.test(key) ? "fastDeleteChannels" : /^platformSpoof[A-Z]/.test(key) ? "platformSpoof" : /^silentEdit[A-Z]/.test(key) ? "silentEdit" : /^localEdit[A-Z]/.test(key) ? "localEdit" : /^listenAlong[A-Z]/.test(key) ? "listenAlong" : /^backgroundMedia[A-Z]/.test(key) ? "backgroundMedia" : /^fakeDeafen[A-Z]/.test(key) ? "fakeDeafen" : /^keywordNotify[A-Z]/.test(key) ? "keywordNotify" : /^privacyBlur[A-Z]/.test(key) ? "privacyBlur" : /^urlUnshortener[A-Z]/.test(key) ? "urlUnshortener" : /^appLock[A-Z]/.test(key) || /^secretDm/.test(key) ? "appLock" : /^mediaEditor[A-Z]/.test(key) ? "mediaEditor" : /^latexRender[A-Z]/.test(key) ? "latexRender" : key;
     };
     // Section titles are read whenever Discord draws the list, so they follow the language too. "Venus" is a name.
     function section(label, keys) {
@@ -1216,7 +1273,8 @@
         youBarSettings:[7666, "SettingsIcon"], quests:[14983, "QuestsIcon"],
         badges:[9492, "TrophyIcon"], userNotif:[9321, "BellIcon"], accountSwitcher:[8765, "GroupIcon"], appIcons:[8782, "AppsIcon"],
         compressUploads:[12429, "FileUpIcon"], customThemes:[17699, "EyeDropperIcon"], iconPacks:[12127, "ImageSparkleIcon"], messageHighlight:[18940, "PaintbrushThinIcon"], serverInfo:[5891, "CircleInformationIcon"], serverEdit:[10383, "PencilIcon"], fixEmbeds:[14887, "EmbedIcon"], tenorGifs:[10411, "GifIcon"], nitroThemes:[12467, "SparklesIcon"], materialYou:[17608, "PaintPaletteIcon"], hideBlocked:[13242, "ChatShieldIcon"], bulkDelete:[7434, "CircleCheckIcon"], experiments:[12440, "BeakerIcon"], cleanChannels:[11137, "MagicWandIcon"], noHandsfree:[14375, "HeadphonesIcon"], voiceOptions:[8777, "VoiceNormalIcon"], staffTag:[10921, "CrownIcon"], removedAlerts:[5881, "UserMinusIcon"], hideAnything:[10919, "XLargeIcon"], fullImages:[13049, "ImagesIcon"], alwaysTrust:[11453, "ShieldIcon"], noConfirmPin:[11141, "PinIcon"], clickableMentions:[8766, "AtIcon"], expandBar:[17307, "FullscreenEnterIcon"], quietReplies:[11154, "BellSlashIcon"], viewRaw:[11226, "FileIcon"], timeoutDuration:[5896, "ClockIcon"], dndBanners:[11336, "BellZIcon"], voiceDownload:[5889, "DownloadIcon"], cloneExpressions:[12314, "ImagePlusIcon"], listenAlong:[14375, "HeadphonesIcon"], backgroundMedia:[8955, "PlayIcon"], landscapeFull:[17307, "FullscreenEnterIcon"], silentLeave:[12078, "DoorExitIcon"], guildLurk:[7197, "EyeIcon"], silentEdit:[14792, "PencilSparkleIcon"], silentDelete:[5894, "TrashIcon"], localEdit:[10383, "PencilIcon"],
-        hypeSquad:[20165, "HomeIcon"], customIdle:[15317, "UserClockIcon"], pauseInvites:[8957, "PauseIcon"], fastDeleteChannels:[20099, "ChannelListIcon"], mutualGroupDMs:[8765, "GroupIcon"], platformSpoof:[5879, "UserPlatformIcon"]};
+        hypeSquad:[20165, "HomeIcon"], customIdle:[15317, "UserClockIcon"], pauseInvites:[8957, "PauseIcon"], fastDeleteChannels:[20099, "ChannelListIcon"], mutualGroupDMs:[8765, "GroupIcon"], platformSpoof:[5879, "UserPlatformIcon"],
+        keywordNotify:[9321, "BellIcon"], bookmarks:[10216, "StarIcon"], privacyBlur:[7195, "EyeSlashIcon"], batchMediaSave:[5889, "DownloadIcon"], stripExif:[11453, "ShieldIcon"], urlUnshortener:[14887, "EmbedIcon"], zipPreview:[11226, "FileIcon"], reminders:[5896, "ClockIcon"], appLock:[8771, "LockIcon"], mediaEditor:[10383, "PencilIcon"], latexRender:[18022, "LettersIcon"]};
     const venusIcons = new Map();
     function venusIcon(id, name, fallback) {
         const slot = id + ":" + name;
@@ -1229,7 +1287,7 @@
         venusIcons.set(slot, VenusIcon);
         return VenusIcon;
     }
-    const REPO = "https://github.com/VenusIsJaded/Venus-Patches";
+    const REPO = "https://github.com/x2tora/tora-morphe";
     function openLink(url) {
         try { if (RN && RN.Linking && typeof RN.Linking.openURL === "function") RN.Linking.openURL(url).catch(() => {}); } catch (_) {}
     }
@@ -1293,7 +1351,18 @@
         voiceOptions:["Soundboard", "Goodbye sound", "Call volume", "Chime volume", "Mute everyone", "Speaker", "Earpiece", "Bluetooth", "Wired headset", "Headphones", "Output", "Join chime", "Leave chime", "Voice channels", "Notification", "Mute"],
         fakeDeafen:["Deafen", "Fake deafen", "Headphones", "Calls", "Voice channels", "Microphone"],
         bulkDelete:["Select Messages", "Select all", "Delete", "Clear kept deleted messages", "Include kept deleted messages", "Ask before deleting"],
-        badges:["Game time", "Unique games", "Switch games every", "Games at once", "Add hours now", "Advanced", "Hours Played", "Unique Games Played", "Years Active", "Personalization"]};
+        badges:["Game time", "Unique games", "Switch games every", "Games at once", "Add hours now", "Advanced", "Hours Played", "Unique Games Played", "Years Active", "Personalization"],
+        keywordNotify:["Keyword", "Keywords", "Regex", "Alert", "Mention", "Watch words", "Highlight", "Filter"],
+        bookmarks:["Bookmark", "Bookmarks", "Saved messages", "Star", "Favourite", "Jump to message"],
+        privacyBlur:["Blur", "Privacy", "Spoiler", "NSFW", "Hide media", "Hide images", "Public", "Reveal"],
+        batchMediaSave:["Save all", "Download all", "Batch download", "Gallery", "Images", "Videos"],
+        stripExif:["EXIF", "Metadata", "GPS", "Location", "Camera", "Privacy", "Photo metadata"],
+        urlUnshortener:["Short link", "Unshorten", "Redirect", "bit.ly", "tinyurl", "t.co", "Destination", "Link preview"],
+        zipPreview:["ZIP", "Archive", "Unzip", "Inspect files", "Source code", "Preview"],
+        reminders:["Reminder", "Remind me", "Snooze", "Alarm", "Later", "Schedule"],
+        appLock:["App lock", "Biometric", "Fingerprint", "PIN", "Passcode", "Secret DM", "Hidden DM", "Lock screen"],
+        mediaEditor:["Trim", "Cut", "Mute", "Remove audio", "Video editor", "Audio editor", "Clip"],
+        latexRender:["LaTeX", "Math", "Formula", "Equation", "KaTeX", "MathML", "Calculus", "Symbols"]};
     function searchFold(text) {
         let out = String(text || "").toLowerCase();
         // Hermes has normalize only with Intl; without it, accents simply have to match.
@@ -1745,6 +1814,14 @@
         withOptions("messages", "alwaysTrust", "VENUS_ALWAYSTRUST", "Always trust links and files", "Opens links and files without Discord's \"Are you sure?\" warnings.", "Always trust", AlwaysTrustSettings);
         toggle("messages", "jumpToTop", "Jump to first message", "A button to jump to the start of any chat.");
         toggle("messages", "favouriteAnything", "Favourite any image or video", "Star any image or video to keep it in your GIF favourites.");
+        withOptions("messages", "keywordNotify", "VENUS_KEYWORDNOTIFY", "Keyword notifications", "Get notified and log a match when a message contains your chosen words or regular expressions.", "Keyword notifications", KeywordNotifySettings);
+        withOptions("messages", "bookmarks", "VENUS_BOOKMARKS", "Message bookmarks", "Save messages to an offline bookmark list from the hold menu, search them and jump back to the chat.", "Bookmarks", BookmarksSettings);
+        withOptions("messages", "privacyBlur", "VENUS_PRIVACYBLUR", "Privacy blur", "Blurs photos, videos, GIFs and link previews in chat until you tap to reveal them.", "Privacy blur", PrivacyBlurSettings);
+        toggle("messages", "batchMediaSave", "Save all media", "Download every image, video or audio attachment from a message in one tap from the hold menu.");
+        withOptions("messages", "urlUnshortener", "VENUS_URLUNSHORTENER", "Preview link destination", "Follows shortened links and shows the final address before you open or copy them.", "Link destination", UrlUnshortenerSettings);
+        toggle("messages", "zipPreview", "Preview ZIP archives", "Inspect the files and read text inside .zip attachments from the hold menu.");
+        withOptions("messages", "reminders", "VENUS_REMINDERS", "Message reminders", "Set a reminder on any message from the hold menu to get notified later and jump back to it.", "Reminders", RemindersSettings);
+        withOptions("messages", "latexRender", "VENUS_LATEXRENDER", "Render LaTeX math", "Formats inline and block LaTeX math in chat and opens a clean formula view from the hold menu.", "LaTeX math", LatexRenderSettings);
         // Sending
         withOptions("sending", "freeNitro", "VENUS_FREENITRO", "Send Nitro stickers and emojis as links", "Sends Nitro emojis and stickers as links that show as the image.", "Nitro stickers and emojis",
             () => ({page:FreeNitroSettings, sections:[section("Send as links", [option("emojis", "Emojis", "Emojis from other servers, and animated emojis.", "VENUS_FREENITRO"),
@@ -1757,6 +1834,8 @@
         toggle("sending", "noTyping", "Hide typing indicator", "Others won't see when you're typing.");
         toggle("sending", "picker", "Show file sizes when attaching", "Photos and videos in the picker show their size.");
         toggle("sending", "anonFiles", "Anonymous file names", "Files you send get a random name instead of the one on your phone.");
+        toggle("sending", "stripExif", "Strip image metadata", "Removes location, camera and date metadata from photos before you upload them.");
+        withOptions("sending", "mediaEditor", "VENUS_MEDIAEDITOR", "Trim and mute media", "Cut the start and end of videos or audio and remove sound before uploading.", "Trim and mute", MediaEditorSettings);
         withOptions("sending", "compressUploads", "VENUS_COMPRESSUPLOADS", "Compress big files", "Photos, videos and audio over Discord's file size limit are made smaller to fit as you send them, instead of being refused.", "Compress big files", CompressUploadsSettings);
         withOptions("sending", "quietReplies", "VENUS_QUIETREPLIES", "Reply without pinging", "Replies start with the ping off, so nobody gets pinged unless you turn it on.", "Reply without pinging", QuietRepliesSettings);
         toggle("messages", "voiceDownload", "Download voice messages", "A Download button under each voice message saves it to your phone.");
@@ -1819,6 +1898,7 @@
         withOptions("advanced", "voiceOptions", "VENUS_VOICEOPTIONS", "Voice channel options", "Choose the volume, audio output and sounds for voice channels.", "Voice channel options", VoiceOptionsSettings);
         toggle("advanced", "noHandsfree", "Keep Bluetooth audio clear in calls", "Headphones stay in music quality in calls. Your phone's mic picks up your voice.");
         withOptions("advanced", "fakeDeafen", "VENUS_FAKEDEAFEN", "Fake deafen", "Look deafened in a call while you can still hear. Choose whether your mic stays muted.", "Fake deafen", FakeDeafenSettings);
+        withOptions("advanced", "appLock", "VENUS_APPLOCK", "App lock and secret DMs", "Lock Discord with your fingerprint or screen lock and hide chosen DMs behind authentication.", "App lock & secret DMs", AppLockSettings);
         withOptions("quests", "badges", "VENUS_BADGES", "Complete badges automatically", "Plays real PC games in the background for game time and unique games.", "Badges", BadgeSettings);
         const listed = [["Messages", groups.messages], ["Sending", groups.sending], ["People", groups.people],
             ["Servers", groups.servers], ["Appearance", groups.appearance], ["Quests", groups.quests], ["Advanced", groups.advanced]];
@@ -5053,8 +5133,9 @@
                 return cta.apply(this, arguments);
             };
             const link = handlers && handlers.handleTapLink;
-            if (typeof link === "function" && features.noDelete) handlers.handleTapLink = function (event) {
-                try { if (noDeleteTapLink(event)) return undefined; } catch (_) {}
+            if (typeof link === "function" && (features.noDelete || features.urlUnshortener)) handlers.handleTapLink = function (event) {
+                try { if (features.noDelete && noDeleteTapLink(event)) return undefined; } catch (_) {}
+                try { if (features.urlUnshortener && urlUnshortenerTapLink(event)) return undefined; } catch (_) {}
                 return link.apply(this, arguments);
             };
             const hold = handlers && handlers.handleLongPressMessage;
@@ -8598,13 +8679,22 @@
             }
         });
     }
-    function messageRow(orig, self, args) { const row = features.localEdit ? localEditRow(args[0]) : args[0]; return messageRowResult(orig.call(self, row), row); }
+    function messageRow(orig, self, args) {
+        let row = features.localEdit ? localEditRow(args[0]) : args[0];
+        if (features.privacyBlur || features.latexRender) row = extraPrepareRow(row);
+        return messageRowResult(orig.call(self, row), row);
+    }
     // generate(row) is called once per chat row as you scroll: skip the arguments object (2.3x).
-    messageRow.call1 = (orig, self, row) => { if (features.localEdit) row = localEditRow(row); return messageRowResult(orig.call(self, row), row); };
+    messageRow.call1 = (orig, self, row) => {
+        if (features.localEdit) row = localEditRow(row);
+        if (features.privacyBlur || features.latexRender) row = extraPrepareRow(row);
+        return messageRowResult(orig.call(self, row), row);
+    };
     function messageRowResult(result, row) {
         if (!result || !row || row.rowType !== 1 || !result.message) return result;
         const pastelOn = enabled("pastelize"), translateOn = enabled("translate"), noDeleteOn = enabled("noDelete"), highlightOn = enabled("messageHighlight"), bulkOn = features.bulkDelete && bulkDelete.active;
         let message = result.message;
+        if (features.privacyBlur && enabled("privacyBlur")) message = privacyBlurPostMessage(message, row.message);
         if (pastelOn) message = pastelMessage(message,row.message);
         if (features.pastelize && message.referencedMessage && message.referencedMessage.message) {
             const reply = pastelReply(message.referencedMessage.message);
@@ -19636,9 +19726,13 @@
         return hookExport(hookExport(hookExport(exports, "canSkipVideoTranscode", compressSkipCheck), "calculateTargetDimensions", compressDimensions),
             "calculateOptimalBitrate", compressBitrate);
     }
-    function nativeCompress(action, id, uri, kind, limit, budget) {
+    function nativeCompress(action, id, uri, kind, limit, budget, stripExif) {
         if (!files || typeof files.removeFile !== "function") return Promise.reject(new Error("Discord file bridge has not loaded"));
-        return Promise.resolve().then(() => files.removeFile(COMPRESS_PREFIX + JSON.stringify({action, id, uri, kind, limit, budget}), ""));
+        return Promise.resolve().then(() => files.removeFile(COMPRESS_PREFIX + JSON.stringify({action, id, uri, kind, limit, budget, stripExif:!!stripExif}), ""));
+    }
+    function nativeCompressTrim(id, uri, startMs, endMs, mute) {
+        if (!files || typeof files.removeFile !== "function") return Promise.reject(new Error("Discord file bridge has not loaded"));
+        return Promise.resolve().then(() => files.removeFile(COMPRESS_PREFIX + JSON.stringify({action:"trim", id, uri, startMs, endMs, mute:!!mute}), ""));
     }
     function compressSizeOf(uri) {
         if (typeof uri !== "string" || !files || typeof files.getSize !== "function") return Promise.resolve(NaN);
@@ -19655,19 +19749,22 @@
         if (Number.isFinite(from) && Number.isFinite(to) && to < from) compressToast(tr("Made smaller: {from} to {to}", {from:formatSize(from), to:formatSize(to)}));
     }
     // Photos and sound: what Discord left too big goes to the native extension.
-    function compressNative(upload, job, limit) {
+    function compressNative(upload, job, limit, wantCompress, wantStrip) {
         const uri = compressUri(upload);
         if (typeof uri !== "string" || !/^(content|file):\/\//.test(uri)) return Promise.resolve();
         return compressSizeOf(uri).then(size => {
-            if (!(size > limit) || compressCancelled(upload, job)) return undefined;
-            compressToast(tr("Making it smaller to fit\u2026"));
+            const over = wantCompress && size > limit;
+            if (!over && !wantStrip || compressCancelled(upload, job)) return undefined;
+            if (over) compressToast(tr("Making it smaller to fit\u2026"));
             job.native = true;
-            return nativeCompress("prepare", job.id, uri, job.kind, limit, Math.floor(limit * COMPRESS_FILL[job.kind])).then(text => {
+            const targetLimit = over ? limit : Math.max(limit, Number.isFinite(size) && size > 0 ? size * 2 : limit);
+            const targetBudget = over ? Math.floor(limit * COMPRESS_FILL[job.kind]) : targetLimit;
+            return nativeCompress("prepare", job.id, uri, job.kind, targetLimit, targetBudget, wantStrip).then(text => {
                 const result = JSON.parse(text);
                 if (!result || result.changed === false) return undefined;
                 if (typeof result.uri !== "string" || !result.uri.startsWith("file://") || typeof result.mimeType !== "string" ||
                     typeof result.extension !== "string" || !/^[a-z0-9]{1,5}$/.test(result.extension) ||
-                    !Number.isSafeInteger(result.size) || !(result.size > 0) || result.size > limit)
+                    !Number.isSafeInteger(result.size) || !(result.size > 0) || (over && result.size > limit))
                     throw new Error("Native compression returned invalid metadata");
                 if (compressCancelled(upload, job)) { releaseCompress(upload, false); return undefined; }
                 const item = upload.item || {}, filename = compressName(upload.filename || item.filename, result.extension);
@@ -19680,7 +19777,8 @@
                 upload.currentSize = result.size;
                 upload.postCompressionSize = result.size;
                 if (upload.uploadAnalytics && typeof upload.uploadAnalytics === "object") upload.uploadAnalytics.convertedMimeType = result.mimeType;
-                compressDoneToast(size, result.size);
+                if (over) compressDoneToast(size, result.size);
+                else if (wantStrip) compressToast(tr("Photo metadata removed"));
                 return undefined;
             });
         });
@@ -19723,18 +19821,25 @@
     function compressUpload(orig, upload, args) {
         const old = compressJobs.get(upload);
         if (old) return old.promise;
-        const kind = enabled("compressUploads") ? compressKind(upload) : null;
-        if (!kind || !enabled(COMPRESS_KEYS[kind])) return orig.apply(upload, args);
+        const kind = compressKind(upload);
+        const wantCompress = !!(enabled("compressUploads") && kind && enabled(COMPRESS_KEYS[kind]));
+        const wantStrip = !!(enabled("stripExif") && kind === "image");
+        const wantEdit = !!(enabled("mediaEditor") && (kind === "video" || kind === "audio"));
+        if (!wantCompress && !wantStrip && !wantEdit) return orig.apply(upload, args);
         const job = {id:"c" + Date.now().toString(36) + "-" + (++compressCounter), kind, cancelled:false, released:false, native:false};
         const limit = compressLimit(upload.item, upload.channelId);
-        const done = result => compressSizeOf(compressUri(upload)).then(size => {
+        const done = result => !wantCompress ? Promise.resolve(result) : compressSizeOf(compressUri(upload)).then(size => {
             // Still too big: Discord turns the file away next, so say why and what to do.
             if (size > limit && !compressCancelled(upload, job))
                 showProblem("Couldn't make it small enough", tr("It can't be made small enough without losing too much quality. Try a shorter clip or a smaller file, or get Nitro for a bigger limit."));
             return result;
         });
-        const promise = (kind === "video" ? compressVideo(orig, upload, args, job, limit) :
-            Promise.resolve(orig.apply(upload, args)).then(result => compressNative(upload, job, limit).then(() => result, () => result))).then(done);
+        const runUpload = () => {
+            if (kind === "video") return wantCompress ? compressVideo(orig, upload, args, job, limit) : Promise.resolve(orig.apply(upload, args));
+            return Promise.resolve(orig.apply(upload, args)).then(result =>
+                (wantCompress || wantStrip ? compressNative(upload, job, limit, wantCompress, wantStrip) : Promise.resolve()).then(() => result, () => result));
+        };
+        const promise = (wantEdit ? mediaEditorPrepare(upload, job) : Promise.resolve()).then(runUpload).then(done);
         // A failed attempt is forgotten, so Discord's Retry prepares the file again instead of getting the same failure back.
         promise.catch(() => { if (compressJobs.get(upload) === job) compressJobs.delete(upload); });
         job.promise = promise;
@@ -19748,7 +19853,7 @@
         if (job.native && !job.released) { job.released = true; nativeCompress("release", job.id).catch(() => {}); }
     }
     function instrumentCompressUpload(CloudUpload) {
-        if (!features.compressUploads || typeof CloudUpload !== "function" || !CloudUpload.prototype || compressInstrumented.has(CloudUpload.prototype)) return;
+        if (!(features.compressUploads || features.stripExif || features.mediaEditor) || typeof CloudUpload !== "function" || !CloudUpload.prototype || compressInstrumented.has(CloudUpload.prototype)) return;
         const prototype = CloudUpload.prototype, orig = prototype.reactNativeCompressAndExtractData;
         if (typeof orig !== "function") return;
         compressInstrumented.add(prototype);
@@ -22738,6 +22843,937 @@
         ];
         return settingsBody(ui, groups);
     }
+
+    // =========================================================================
+    // v1.23.0 — 11 New Features (Phases 1-4)
+    // =========================================================================
+
+    // ------------------------------------------------- 1. Keyword notifications
+    const keywordNotify = {dispatcher:null, subscribed:false, rules:[], excluded:new Set(), matches:[], cooldowns:new Map()};
+    function keywordNotifyCompile() {
+        keywordNotify.rules = [];
+        keywordNotify.excluded.clear();
+        const rawWords = String(settings.keywordNotifyWords || "");
+        const parts = rawWords.split(/[\r\n,]+/);
+        const flags = settings.keywordNotifyCase ? "" : "i";
+        for (let i = 0; i < parts.length && keywordNotify.rules.length < 100; i++) {
+            const token = parts[i].trim();
+            if (!token) continue;
+            if (token.length >= 3 && token[0] === "/" && token.lastIndexOf("/") > 0) {
+                const last = token.lastIndexOf("/");
+                const body = token.slice(1, last), customFlags = token.slice(last + 1).replace(/[^gimsuy]/g, "");
+                try { keywordNotify.rules.push({label:token, re:new RegExp(body, customFlags || flags)}); } catch (_) {}
+            } else {
+                const escaped = token.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+                try { keywordNotify.rules.push({label:token, re:new RegExp(escaped, flags)}); } catch (_) {}
+            }
+        }
+        const exParts = String(settings.keywordNotifyExcluded || "").split(/[\r\n,\s]+/);
+        for (let i = 0; i < exParts.length; i++) {
+            const id = exParts[i].trim();
+            if (/^\d{15,22}$/.test(id)) keywordNotify.excluded.add(id);
+        }
+    }
+    function keywordNotifyEvent(event) {
+        if (!enabled("keywordNotify") || !keywordNotify.rules.length || !event || event.optimistic) return;
+        const message = event.message;
+        if (!message || message.state === "SENDING" || typeof message.content !== "string" || !message.content) return;
+        const author = message.author, authorId = author && author.id;
+        const me = currentUser();
+        if (me && authorId === me.id) return;
+        const channelId = String(message.channel_id || message.channelId || event.channelId || "");
+        const guildId = String(message.guild_id || message.guildId || event.guildId || "");
+        if ((channelId && keywordNotify.excluded.has(channelId)) || (guildId && keywordNotify.excluded.has(guildId))) return;
+        let matched = null;
+        for (let i = 0; i < keywordNotify.rules.length; i++) {
+            const rule = keywordNotify.rules[i];
+            rule.re.lastIndex = 0;
+            if (rule.re.test(message.content)) { matched = rule.label; break; }
+        }
+        if (!matched) return;
+        const now = Date.now(), cdKey = channelId + ":" + matched;
+        if (now - (keywordNotify.cooldowns.get(cdKey) || 0) < 3000) return;
+        keywordNotify.cooldowns.set(cdKey, now);
+        const authorName = (author && (author.globalName || author.global_name || author.username)) || "Someone";
+        const snippet = message.content.length > 90 ? message.content.slice(0, 90) + "\u2026" : message.content;
+        const entry = {id:String(message.id || now), c:channelId, g:guildId, u:authorName, kw:matched, x:snippet, t:now};
+        keywordNotify.matches.unshift(entry);
+        if (keywordNotify.matches.length > 50) keywordNotify.matches.length = 50;
+        const title = tr("Keyword \"{kw}\" from {name}", {kw:matched, name:authorName});
+        showToast(reviewUI(), "venus-kw:" + now, title + ": " + snippet, venusIcon(9321, "BellIcon"));
+        if (settings.keywordNotifyPush) {
+            diagCall("reminderNotify", JSON.stringify({id:"kw-" + entry.id, title, text:snippet})).catch(() => {});
+        }
+        notify("keywordNotify");
+    }
+    function keywordNotifySync() {
+        const d = keywordNotify.dispatcher;
+        if (!d || typeof d.subscribe !== "function") return;
+        const want = enabled("keywordNotify");
+        if (want && !keywordNotify.subscribed) {
+            keywordNotify.subscribed = true;
+            keywordNotifyCompile();
+            d.subscribe("MESSAGE_CREATE", keywordNotifyEvent);
+        } else if (!want && keywordNotify.subscribed) {
+            keywordNotify.subscribed = false;
+            if (typeof d.unsubscribe === "function") d.unsubscribe("MESSAGE_CREATE", keywordNotifyEvent);
+        }
+    }
+    function keywordNotifyInit(d) {
+        if (keywordNotify.dispatcher || !d || typeof d.subscribe !== "function") return;
+        keywordNotify.dispatcher = d;
+        keywordNotifySync();
+    }
+    function jumpToChatMessage(guildId, channelId, messageId) {
+        if (!channelId) return;
+        const go = inspectedExport(1099, "transitionTo");
+        if (typeof go === "function") {
+            later(() => {
+                try { go("/channels/" + (guildId || "@me") + "/" + channelId + (messageId ? "/" + messageId : "")); } catch (_) {}
+            }, 150);
+        }
+    }
+    function KeywordNotifySettings() {
+        useSettings("keywordNotify");
+        useLanguage();
+        const ui = reviewUI(), on = enabled("keywordNotify");
+        if (!RN) return null;
+        const Group = ui.TableRowGroup || RN.View, Switch = ui.TableSwitchRow, Row = ui.TableRow;
+        const [wordsDraft, setWordsDraft] = React.useState(settings.keywordNotifyWords || "");
+        const [exclDraft, setExclDraft] = React.useState(settings.keywordNotifyExcluded || "");
+        const s = useLogStyles();
+        const saveWords = () => { haptic("SELECTION"); setSetting("keywordNotifyWords", wordsDraft.trim()); reviewToast(ui, "Keywords saved", venusIcon(7434, "CircleCheckIcon")); };
+        const saveExcl = () => { haptic("SELECTION"); setSetting("keywordNotifyExcluded", exclDraft.trim()); reviewToast(ui, "Excluded IDs saved", venusIcon(7434, "CircleCheckIcon")); };
+        const groups = [
+            on ? null : offCard("status", venusIcon(9321, "BellIcon"), "keywordNotify"),
+            el(Group, {key:"words", title:tr("Keywords & Regex (comma or line separated)")},
+                el(RN.View, {style:[s.card, {padding:12, gap:10}]},
+                    el(RN.TextInput, {value:wordsDraft, onChangeText:setWordsDraft, multiline:true, placeholder:"venus, /\\bupdate\\b/i",
+                        placeholderTextColor:"#949ba4", style:[s.body, {minHeight:64, padding:8, borderRadius:8, backgroundColor:"#1e1f22"}]}),
+                    actionRow(ui, "saveKw", "Save keywords", pl(keywordNotify.rules.length, "{n} active rule", "{n} active rules"), saveWords, !on, false))),
+            el(Group, {key:"excl", title:tr("Excluded Server or Channel IDs")},
+                el(RN.View, {style:[s.card, {padding:12, gap:10}]},
+                    el(RN.TextInput, {value:exclDraft, onChangeText:setExclDraft, placeholder:"123456789012345678, ...",
+                        placeholderTextColor:"#949ba4", style:[s.body, {padding:8, borderRadius:8, backgroundColor:"#1e1f22"}]}),
+                    actionRow(ui, "saveExcl", "Save excluded IDs", tr("Messages in these servers or channels won't trigger keyword alerts."), saveExcl, !on, false))),
+            el(Group, {key:"opts", title:tr("Options")},
+                switchRow(Switch, "keywordNotifyCase", "Case-sensitive matching", "Match exact uppercase and lowercase letters.", rowIcon(18022, "LettersIcon")),
+                switchRow(Switch, "keywordNotifyPush", "System notifications", "Also post an Android notification when a keyword matches.", rowIcon(9321, "BellIcon")),
+                switchRow(Switch, "keywordNotifyLog", "Keep recent matches here", "Lists the latest 50 keyword matches below.", rowIcon(5896, "ClockIcon"))),
+            settings.keywordNotifyLog && keywordNotify.matches.length && Row ? el(Group, {key:"recent", title:tr("Recent Matches")},
+                keywordNotify.matches.slice(0, 20).map(m => el(Row, {key:m.id + ":" + m.t, label:"[" + m.kw + "] " + m.u, subLabel:m.x, arrow:true,
+                    onPress:() => { haptic("SELECTION"); jumpToChatMessage(m.g, m.c, m.id); }}))) : null
+        ];
+        return settingsBody(ui, groups);
+    }
+
+    // ------------------------------------------------- 2. Message bookmarks
+    const bookmarks = {list:[], ids:new Set()};
+    function bookmarksLoad(arr) {
+        bookmarks.list = [];
+        bookmarks.ids.clear();
+        if (!Array.isArray(arr)) return;
+        for (let i = 0; i < arr.length && bookmarks.list.length < 300; i++) {
+            const it = arr[i];
+            if (!it || typeof it.id !== "string" || typeof it.c !== "string") continue;
+            bookmarks.list.push({
+                id:it.id, c:it.c, g:typeof it.g === "string" ? it.g : "",
+                u:typeof it.u === "string" ? it.u.slice(0, 80) : "Unknown",
+                x:typeof it.x === "string" ? it.x.slice(0, 500) : "",
+                t:typeof it.t === "number" ? it.t : Date.now()
+            });
+            bookmarks.ids.add(it.id);
+        }
+    }
+    function bookmarkToggle(message) {
+        if (!message || !message.id) return;
+        const id = String(message.id), channelId = String(message.channel_id || message.channelId || "");
+        const ui = reviewUI(), icon = venusIcon(10216, "StarIcon");
+        if (bookmarks.ids.has(id)) {
+            bookmarks.ids.delete(id);
+            bookmarks.list = bookmarks.list.filter(b => b.id !== id);
+            save(); notify("bookmarks");
+            showToast(ui, "venus-bm", tr("Bookmark removed"), icon);
+            return;
+        }
+        const ch = channelStore && typeof channelStore.getChannel === "function" ? channelStore.getChannel(channelId) : null;
+        const guildId = String(message.guild_id || message.guildId || (ch && (ch.guild_id || ch.guildId)) || "");
+        const author = message.author || {};
+        const authorName = String(author.globalName || author.global_name || author.username || "Unknown").slice(0, 80);
+        let text = typeof message.content === "string" ? message.content : "";
+        if (!text && Array.isArray(message.attachments) && message.attachments.length) {
+            text = "[" + message.attachments.length + " attachment(s)] " + (message.attachments[0].filename || "");
+        }
+        bookmarks.ids.add(id);
+        bookmarks.list.unshift({id, c:channelId, g:guildId, u:authorName, x:text.slice(0, 500), t:Date.now()});
+        if (bookmarks.list.length > 300) {
+            const dropped = bookmarks.list.pop();
+            if (dropped) bookmarks.ids.delete(dropped.id);
+        }
+        save(); notify("bookmarks");
+        showToast(ui, "venus-bm", tr("Message bookmarked"), icon);
+    }
+    function BookmarksSettings() {
+        useSettings("bookmarks");
+        useLanguage();
+        const ui = reviewUI(), on = enabled("bookmarks");
+        if (!RN) return null;
+        const Group = ui.TableRowGroup || RN.View, Row = ui.TableRow, SearchField = inspectedExport(7315, "SearchBar");
+        const [query, setQuery] = React.useState("");
+        const q = String(query || "").trim().toLowerCase();
+        const filtered = bookmarks.list.filter(b => !q || b.x.toLowerCase().indexOf(q) >= 0 || b.u.toLowerCase().indexOf(q) >= 0);
+        const groups = [
+            on ? null : offCard("status", venusIcon(10216, "StarIcon"), "bookmarks"),
+            SearchField ? el(RN.View, {key:"search", style:{paddingHorizontal:4}},
+                el(SearchField, {placeholder:tr("Search bookmarks\u2026"), query, onChangeText:setQuery, onClear:() => setQuery("")})) : null,
+            filtered.length && Row ? el(Group, {key:"list", title:pl(filtered.length, "{n} bookmark", "{n} bookmarks")},
+                filtered.slice(0, 100).map(b => el(Row, {key:b.id, label:b.u + " \u2022 " + new Date(b.t).toLocaleDateString(),
+                    subLabel:b.x || tr("(No text content)"), arrow:true,
+                    onPress:() => {
+                        haptic("SELECTION");
+                        if (RN.Alert && typeof RN.Alert.alert === "function") {
+                            RN.Alert.alert(b.u, b.x || tr("(No text content)"), [
+                                {text:tr("Delete"), style:"destructive", onPress:() => { bookmarks.ids.delete(b.id); bookmarks.list = bookmarks.list.filter(x => x.id !== b.id); save(); notify("bookmarks"); }},
+                                {text:tr("Cancel"), style:"cancel"},
+                                {text:tr("Jump to Message"), onPress:() => jumpToChatMessage(b.g, b.c, b.id)}
+                            ]);
+                        } else {
+                            jumpToChatMessage(b.g, b.c, b.id);
+                        }
+                    }}))) : footnote("empty", "Hold any message in chat and tap Bookmark message to save it here.")
+        ];
+        return settingsBody(ui, groups);
+    }
+
+    // ------------------------------------------------- 3. Privacy blur
+    const privacyBlur = {revealed:new Set(), copies:new WeakMap()};
+    function privacyBlurToggleMessage(message) {
+        if (!message || !message.id) return;
+        const id = String(message.id), channelId = String(message.channel_id || message.channelId || "");
+        if (privacyBlur.revealed.has(id)) privacyBlur.revealed.delete(id);
+        else privacyBlur.revealed.add(id);
+        if (channelId) localEditRedraw(channelId, id);
+    }
+    function privacyBlurPostMessage(message, source) {
+        if (!message) return message;
+        const id = String((source && source.id) || message.id || "");
+        if (id && privacyBlur.revealed.has(id)) return message;
+        let changed = false;
+        let next = message;
+        if (settings.privacyBlurAvatars && next.avatarURL) {
+            next = Object.assign({}, next, {avatarURL:undefined});
+            changed = true;
+        }
+        if (Array.isArray(next.attachments) && next.attachments.length) {
+            const atts = next.attachments.map(a => a && !a.spoiler ? Object.assign({}, a, {spoiler:true}) : a);
+            next = Object.assign({}, changed ? next : Object.assign({}, next), {attachments:atts});
+            changed = true;
+        }
+        if (Array.isArray(next.embeds) && next.embeds.length) {
+            const embs = next.embeds.map(e => e && !e.spoiler ? Object.assign({}, e, {spoiler:true, isSpoiler:true}) : e);
+            next = Object.assign({}, changed ? next : Object.assign({}, next), {embeds:embs});
+        }
+        return next;
+    }
+    function PrivacyBlurSettings() {
+        useSettings("privacyBlur");
+        useLanguage();
+        const ui = reviewUI(), on = enabled("privacyBlur");
+        if (!RN) return null;
+        const Group = ui.TableRowGroup || RN.View, Switch = ui.TableSwitchRow;
+        const groups = [
+            on ? null : offCard("status", venusIcon(7195, "EyeSlashIcon"), "privacyBlur"),
+            el(Group, {key:"opts", title:tr("What to blur")},
+                switchRow(Switch, "privacyBlurAvatars", "Also hide avatars", "Hides profile pictures in chat rows while Privacy blur is on.", rowIcon(12318, "UserIcon"))),
+            privacyBlur.revealed.size ? el(Group, {key:"reset", title:tr("Revealed messages")},
+                actionRow(ui, "reblur", "Blur revealed messages again",
+                    pl(privacyBlur.revealed.size, "{n} message currently revealed", "{n} messages currently revealed"),
+                    () => { haptic("SELECTION"); privacyBlur.revealed.clear(); notify("privacyBlur"); reviewToast(ui, "All media blurred again", venusIcon(7195, "EyeSlashIcon")); }, !on, false)) : null,
+            footnote("hint", "Media attachments and embeds are blurred with Discord's spoiler overlay. Tap an image once or use the message hold menu to reveal it.")
+        ];
+        return settingsBody(ui, groups);
+    }
+
+    // ------------------------------------------------- 4. Batch media save
+    function batchMediaItems(message) {
+        if (!message) return [];
+        const out = [];
+        if (Array.isArray(message.attachments)) {
+            for (let i = 0; i < message.attachments.length; i++) {
+                const a = message.attachments[i];
+                if (a && typeof a.url === "string" && a.url) {
+                    out.push({url:a.url, mime:a.content_type || a.contentType || "image/jpeg", name:a.filename || ("media-" + (i + 1))});
+                }
+            }
+        }
+        if (Array.isArray(message.embeds)) {
+            for (let i = 0; i < message.embeds.length; i++) {
+                const e = message.embeds[i];
+                const img = e && (e.video && (e.video.url || e.video.proxyURL) || e.image && (e.image.url || e.image.proxyURL) || e.thumbnail && (e.thumbnail.url || e.thumbnail.proxyURL));
+                if (typeof img === "string" && img) out.push({url:img, mime:e.video ? "video/mp4" : "image/jpeg", name:"embed-" + (i + 1)});
+            }
+        }
+        return out;
+    }
+    function batchMediaSaveRun(message) {
+        const items = batchMediaItems(message);
+        const ui = reviewUI(), icon = venusIcon(5889, "DownloadIcon");
+        const media = inspectedExport(1441, "default");
+        if (!items.length || !media || typeof media.downloadMediaAssetWithContentType !== "function") {
+            showToast(ui, "venus-batch-save", tr("Couldn't download media attachments."), icon);
+            return;
+        }
+        haptic("IMPACT_LIGHT");
+        showToast(ui, "venus-batch-save", tr("Saving {n} media files\u2026", {n:items.length}), icon);
+        let savedCount = 0;
+        let chain = Promise.resolve();
+        items.forEach(item => {
+            chain = chain.then(() => media.downloadMediaAssetWithContentType(item.url, 0, item.mime))
+                .then(() => { savedCount++; }, () => {});
+        });
+        chain.then(() => {
+            showToast(ui, "venus-batch-save-done", tr("Saved {done} of {total} files to device", {done:savedCount, total:items.length}), icon);
+        });
+    }
+
+    // ------------------------------------------------- 6. URL unshortener
+    const SHORT_DOMAINS = new Set(["bit.ly", "t.co", "tinyurl.com", "is.gd", "v.gd", "cutt.ly", "rb.gy", "shorturl.at", "ow.ly", "buff.ly", "rebrand.ly", "tiny.cc", "bl.ink", "s.id", "t.ly"]);
+    function urlUnshortenerShouldCheck(url) {
+        if (typeof url !== "string" || !/^https?:\/\//i.test(url)) return false;
+        const m = /^https?:\/\/([^/?#:]+)/i.exec(url);
+        if (!m) return false;
+        const host = m[1].toLowerCase().replace(/^www\./, "");
+        if (host === "discord.com" || host === "discordapp.com" || host === "discord.gg" || host.endsWith(".discord.com") || host.endsWith(".discordapp.net")) return false;
+        return settings.urlUnshortenerAll || SHORT_DOMAINS.has(host);
+    }
+    function urlUnshortenerInspect(url) {
+        const ui = reviewUI(), icon = venusIcon(14887, "EmbedIcon");
+        showToast(ui, "venus-unshorten", tr("Checking link destination\u2026"), icon);
+        diagCall("unshorten", JSON.stringify({url})).then(raw => {
+            const res = JSON.parse(raw);
+            const finalUrl = res.finalUrl || url;
+            const hops = Array.isArray(res.hops) ? res.hops : [url];
+            const body = hops.length > 1
+                ? tr("Initial: {from}\n\nFinal ({n} hops):\n{to}", {from:url, n:hops.length - 1, to:finalUrl})
+                : tr("Direct link (no redirect):\n{to}", {to:finalUrl});
+            if (RN && RN.Alert && typeof RN.Alert.alert === "function") {
+                RN.Alert.alert(tr("Link Destination"), body, [
+                    {text:tr("Copy Final URL"), onPress:() => { copyText(finalUrl); showToast(ui, "venus-copy-url", tr("Copied destination URL"), icon); }},
+                    {text:tr("Cancel"), style:"cancel"},
+                    {text:tr("Open Link"), onPress:() => openLink(finalUrl)}
+                ]);
+            } else {
+                showToast(ui, "venus-unshorten-res", finalUrl, icon);
+            }
+        }, () => {
+            if (RN && RN.Alert && typeof RN.Alert.alert === "function") {
+                RN.Alert.alert(tr("Link Destination"), tr("Couldn't resolve redirects for:\n{url}", {url}), [
+                    {text:tr("Cancel"), style:"cancel"},
+                    {text:tr("Open Anyway"), onPress:() => openLink(url)}
+                ]);
+            }
+        });
+    }
+    function urlUnshortenerTapLink(event) {
+        if (!enabled("urlUnshortener")) return false;
+        const data = event && event.nativeEvent && event.nativeEvent.data;
+        if (!data) return false;
+        const node = data.node, url = data.url || (node && typeof node.target === "string" && node.target);
+        if (!urlUnshortenerShouldCheck(url)) return false;
+        urlUnshortenerInspect(url);
+        return true;
+    }
+    function UrlUnshortenerSettings() {
+        useSettings("urlUnshortener");
+        useLanguage();
+        const ui = reviewUI(), on = enabled("urlUnshortener");
+        if (!RN) return null;
+        const Group = ui.TableRowGroup || RN.View, Switch = ui.TableSwitchRow;
+        const groups = [
+            on ? null : offCard("status", venusIcon(14887, "EmbedIcon"), "urlUnshortener"),
+            el(Group, {key:"mode", title:tr("When to check links")},
+                switchRow(Switch, "urlUnshortenerAll", "Check all external links", "Preview the destination for every external link, not only shorteners like bit.ly or t.co.", rowIcon(14887, "EmbedIcon"))),
+            footnote("info", "Follows up to 5 HTTP redirect hops natively before opening the browser, and shows you the final domain and full address.")
+        ];
+        return settingsBody(ui, groups);
+    }
+
+    // ------------------------------------------------- 7. ZIP archive preview
+    const ZIP_PREVIEW_SHEET = "VenusZipPreview";
+    function zipPreviewAttachment(message) {
+        if (!message || !Array.isArray(message.attachments)) return null;
+        for (let i = 0; i < message.attachments.length; i++) {
+            const a = message.attachments[i];
+            if (a && typeof a.url === "string" && /\.zip($|\?)/i.test(a.filename || a.url)) return a;
+        }
+        return null;
+    }
+    function zipPreviewOpen(att) {
+        const ui = reviewUI(), icon = venusIcon(11226, "FileIcon");
+        if (!att || !att.url) return;
+        showToast(ui, "venus-zip-load", tr("Inspecting ZIP archive\u2026"), icon);
+        diagCall("zipList", JSON.stringify({url:att.url, name:att.filename || "archive.zip"})).then(raw => {
+            const data = JSON.parse(raw);
+            if (typeof ui.showSheet === "function") {
+                ui.showSheet({key:ZIP_PREVIEW_SHEET, content:el(ZipPreviewSheet, {name:att.filename || "archive.zip", data}), stackingBehavior:"stack"});
+            }
+        }, err => {
+            showToast(ui, "venus-zip-err", tr("Couldn't read ZIP archive: {err}", {err:String(err)}), icon);
+        });
+    }
+    function ZipPreviewSheet(props) {
+        const ui = reviewUI(), Group = ui.TableRowGroup || RN.View, Row = ui.TableRow;
+        const [reading, setReading] = React.useState(null);
+        const s = useLogStyles();
+        const close = () => hideReviewSheet(ui, ZIP_PREVIEW_SHEET);
+        const header = ui.Header ? el(ui.Header, {title:props.name, trailing:ui.Close ? el(ui.Close, {onPress:close}) : undefined}) : null;
+        const entries = (props.data && Array.isArray(props.data.entries)) ? props.data.entries : [];
+        const openEntry = entry => {
+            if (!entry.isText) {
+                showToast(ui, "venus-zip-bin", tr("Binary file ({size})", {size:formatSize(entry.size)}), venusIcon(11226, "FileIcon"));
+                return;
+            }
+            haptic("SELECTION");
+            diagCall("zipRead", JSON.stringify({entry:entry.name})).then(raw => {
+                setReading(JSON.parse(raw));
+            }, err => {
+                showToast(ui, "venus-zip-read-err", String(err), venusIcon(11226, "FileIcon"));
+            });
+        };
+        const content = reading
+            ? el(RN.View, {style:{paddingHorizontal:12, paddingBottom:24, gap:12}},
+                actionRow(ui, "backToList", "\u2190 Back to file list", reading.entry + " (" + formatSize(reading.size || 0) + ")", () => setReading(null), false, false),
+                el(RN.View, {style:[s.card, {padding:12}]},
+                    el(RN.Text, {selectable:true, style:[s.body, {fontFamily:"monospace", fontSize:12}]}, reading.content || "")))
+            : el(RN.View, {style:{paddingHorizontal:12, paddingBottom:24, gap:12}},
+                el(Group, {key:"files", title:pl(props.data && props.data.total || entries.length, "{n} entry in archive", "{n} entries in archive")},
+                    Row ? entries.map(e => el(Row, {key:e.name, label:e.name,
+                        subLabel:e.isDir ? tr("Folder") : (formatSize(e.size >= 0 ? e.size : 0) + (e.isText ? " \u2022 Tap to read" : "")),
+                        arrow:!!e.isText, onPress:() => openEntry(e)})) : null));
+        return serverEditScroll(ui, header, content);
+    }
+
+    // ------------------------------------------------- 8. Message reminders
+    const reminders = {list:[], timer:undefined, dispatcher:null};
+    function remindersLoad(arr) {
+        reminders.list = [];
+        if (!Array.isArray(arr)) return;
+        for (let i = 0; i < arr.length && reminders.list.length < 100; i++) {
+            const it = arr[i];
+            if (!it || typeof it.id !== "string" || typeof it.due !== "number") continue;
+            reminders.list.push({
+                id:it.id, m:String(it.m || ""), c:String(it.c || ""), g:String(it.g || ""),
+                u:String(it.u || "Message").slice(0, 80), x:String(it.x || "").slice(0, 300),
+                due:it.due, done:!!it.done
+            });
+        }
+    }
+    function remindersCheck() {
+        if (!enabled("reminders")) return;
+        const now = Date.now();
+        let changed = false;
+        for (let i = 0; i < reminders.list.length; i++) {
+            const r = reminders.list[i];
+            if (!r.done && r.due <= now) {
+                r.done = true;
+                changed = true;
+                const title = tr("Reminder: {user}", {user:r.u});
+                showToast(reviewUI(), "venus-rem:" + r.id, title + " \u2014 " + r.x, venusIcon(5896, "ClockIcon"));
+                diagCall("reminderNotify", JSON.stringify({id:r.id, title, text:r.x || tr("Tap to open Discord"), channelId:r.c, messageId:r.m})).catch(() => {});
+            }
+        }
+        if (changed) { save(); notify("reminders"); }
+    }
+    function remindersSync() {
+        if (reminders.timer !== undefined) { clearInterval(reminders.timer); reminders.timer = undefined; }
+        if (enabled("reminders")) {
+            remindersCheck();
+            reminders.timer = setInterval(remindersCheck, 15000);
+        }
+    }
+    function remindersInit(d) {
+        reminders.dispatcher = d;
+        remindersSync();
+    }
+    function reminderSchedule(message, minutes) {
+        if (!message || !message.id) return;
+        const id = "r" + Date.now().toString(36), m = String(message.id);
+        const c = String(message.channel_id || message.channelId || "");
+        const ch = channelStore && typeof channelStore.getChannel === "function" ? channelStore.getChannel(c) : null;
+        const g = String(message.guild_id || message.guildId || (ch && (ch.guild_id || ch.guildId)) || "");
+        const author = message.author || {};
+        const u = String(author.globalName || author.global_name || author.username || "Message").slice(0, 80);
+        const x = String(message.content || tr("(Attachment / Embed)")).slice(0, 300);
+        const due = Date.now() + Math.max(1, minutes) * 60000;
+        reminders.list.unshift({id, m, c, g, u, x, due, done:false});
+        if (reminders.list.length > 100) reminders.list.length = 100;
+        save(); remindersSync(); notify("reminders");
+        showToast(reviewUI(), "venus-rem-set", tr("Reminder set for {min} min", {min:minutes}), venusIcon(5896, "ClockIcon"));
+    }
+    function reminderAsk(message) {
+        if (!RN || !RN.Alert || typeof RN.Alert.alert !== "function") {
+            reminderSchedule(message, 60);
+            return;
+        }
+        RN.Alert.alert(tr("Remind Me Later"), tr("When should Venus remind you about this message?"), [
+            {text:tr("15 minutes"), onPress:() => reminderSchedule(message, 15)},
+            {text:tr("1 hour"), onPress:() => reminderSchedule(message, 60)},
+            {text:tr("3 hours"), onPress:() => reminderSchedule(message, 180)},
+            {text:tr("24 hours"), onPress:() => reminderSchedule(message, 1440)},
+            {text:tr("Cancel"), style:"cancel"}
+        ]);
+    }
+    function RemindersSettings() {
+        useSettings("reminders");
+        useLanguage();
+        const ui = reviewUI(), on = enabled("reminders");
+        if (!RN) return null;
+        const Group = ui.TableRowGroup || RN.View, Row = ui.TableRow;
+        const pending = reminders.list.filter(r => !r.done);
+        const past = reminders.list.filter(r => r.done);
+        const renderRow = r => el(Row, {key:r.id, label:r.u + " \u2022 " + new Date(r.due).toLocaleTimeString([], {hour:"2-digit", minute:"2-digit"}),
+            subLabel:r.x, arrow:true,
+            onPress:() => {
+                haptic("SELECTION");
+                if (RN.Alert && typeof RN.Alert.alert === "function") {
+                    RN.Alert.alert(r.u, r.x, [
+                        {text:tr("Delete"), style:"destructive", onPress:() => { reminders.list = reminders.list.filter(x => x.id !== r.id); save(); notify("reminders"); }},
+                        {text:tr("Cancel"), style:"cancel"},
+                        {text:tr("Jump to Message"), onPress:() => jumpToChatMessage(r.g, r.c, r.m)}
+                    ]);
+                } else {
+                    jumpToChatMessage(r.g, r.c, r.m);
+                }
+            }});
+        const groups = [
+            on ? null : offCard("status", venusIcon(5896, "ClockIcon"), "reminders"),
+            pending.length && Row ? el(Group, {key:"pending", title:pl(pending.length, "{n} upcoming reminder", "{n} upcoming reminders")}, pending.map(renderRow)) : null,
+            past.length && Row ? el(Group, {key:"past", title:tr("Completed reminders")}, past.slice(0, 30).map(renderRow)) : null,
+            !pending.length && !past.length ? footnote("empty", "Hold any message in chat and tap Remind me later to schedule a notification.") : null
+        ];
+        return settingsBody(ui, groups);
+    }
+
+    // ------------------------------------------------- 9. App lock & secret DMs
+    const appLockState = {secretIds:new Set(), secretUnlocked:false};
+    function appLockSync(lockNow) {
+        diagCall("lockConfig", JSON.stringify({
+            enabled:enabled("appLock"),
+            timeoutSec:Number(settings.appLockTimeout) || 0,
+            lockNow:!!lockNow
+        })).catch(() => {});
+    }
+    function secretDmsSync() {
+        appLockState.secretIds.clear();
+        const parts = String(settings.secretDmIds || "").split(/[\r\n,\s]+/);
+        for (let i = 0; i < parts.length; i++) {
+            const id = parts[i].trim();
+            if (/^\d{15,22}$/.test(id)) appLockState.secretIds.add(id);
+        }
+        if (channelStore && typeof channelStore.emitChange === "function") {
+            try { channelStore.emitChange(); } catch (_) {}
+        }
+    }
+    function secretDmIsHidden(channelId) {
+        return enabled("appLock") && settings.secretDms && !appLockState.secretUnlocked && appLockState.secretIds.has(String(channelId || ""));
+    }
+    function secretDmToggle(channelId) {
+        if (!channelId) return;
+        const id = String(channelId);
+        const ui = reviewUI(), icon = venusIcon(8771, "LockIcon");
+        if (appLockState.secretIds.has(id)) {
+            appLockState.secretIds.delete(id);
+            showToast(ui, "venus-secret-dm", tr("Removed from Secret DMs"), icon);
+        } else {
+            appLockState.secretIds.add(id);
+            showToast(ui, "venus-secret-dm", tr("Hidden as Secret DM"), icon);
+        }
+        setSetting("secretDmIds", Array.from(appLockState.secretIds).join(","));
+    }
+    function hookSecretDmsStore(store) {
+        let patched = store;
+        if (typeof patched.getSortedPrivateChannels === "function") {
+            patched = hookExport(patched, "getSortedPrivateChannels", (orig, self, args) => {
+                const list = orig.apply(self, args);
+                if (!enabled("appLock") || !settings.secretDms || appLockState.secretUnlocked || !appLockState.secretIds.size || !Array.isArray(list)) return list;
+                return list.filter(ch => !ch || !appLockState.secretIds.has(String(ch.id)));
+            });
+        }
+        if (typeof patched.getMutablePrivateChannels === "function") {
+            patched = hookExport(patched, "getMutablePrivateChannels", (orig, self, args) => {
+                const map = orig.apply(self, args);
+                if (!enabled("appLock") || !settings.secretDms || appLockState.secretUnlocked || !appLockState.secretIds.size || !map || typeof map !== "object") return map;
+                const copy = Object.assign({}, map);
+                appLockState.secretIds.forEach(id => { delete copy[id]; });
+                return copy;
+            });
+        }
+        return patched;
+    }
+    function secretDmShouldNotify(orig, self, args) {
+        const msg = args[0], chId = msg && (msg.channel_id || msg.channelId) || args[1];
+        if (chId && secretDmIsHidden(chId)) return false;
+        return orig.apply(self, args);
+    }
+    function secretDmChannelSheet(orig, self, args) {
+        const tree = orig.apply(self, args), props = args[0], channel = props && props.channel;
+        if (!enabled("appLock") || !settings.secretDms || !React || !tree || !channel || (channel.type !== 1 && channel.type !== 3)) return tree;
+        const id = String(channel.id);
+        const isSecret = appLockState.secretIds.has(id);
+        const label = isSecret ? tr("Unhide Secret DM") : tr("Hide as Secret DM");
+        const Icon = venusIcon(8771, "LockIcon");
+        let added = false;
+        return cloneTree(tree, function (node, nodeProps) {
+            if (added || !Array.isArray(nodeProps.children)) return nodeProps;
+            const rows = nodeProps.children.filter(child => child && child.props && typeof child.props.label === "string" && typeof child.props.onPress === "function");
+            if (!rows.length || nodeProps.children.some(child => child && child.key === "venus-secret-dm")) return nodeProps;
+            added = true;
+            const template = rows[rows.length - 1], icon = template.props.icon;
+            const row = React.cloneElement(template, {key:"venus-secret-dm", label, arrow:false, variant:undefined, disabled:false,
+                icon:icon && icon.props && "IconComponent" in icon.props ? React.cloneElement(icon, {IconComponent:Icon}) : icon,
+                onPress:function () {
+                    try { const sheets = reviewUI().sheets; if (sheets && typeof sheets.hideAllActionSheets === "function") sheets.hideAllActionSheets(); } catch (_) {}
+                    secretDmToggle(id);
+                }});
+            return Object.assign({}, nodeProps, {children:nodeProps.children.concat([row])});
+        }, 0, () => added);
+    }
+    function AppLockSettings() {
+        useSettings("appLock");
+        useLanguage();
+        const ui = reviewUI(), on = enabled("appLock");
+        if (!RN) return null;
+        const Group = ui.TableRowGroup || RN.View, Switch = ui.TableSwitchRow, Radio = ui.TableRadioRow, Row = ui.TableRow;
+        const timeouts = [[0, "Immediately"], [60, "After 1 minute"], [300, "After 5 minutes"], [900, "After 15 minutes"]];
+        const toggleUnlockSecrets = () => {
+            haptic("SELECTION");
+            if (appLockState.secretUnlocked) {
+                appLockState.secretUnlocked = false;
+                secretDmsSync();
+                notify("appLock");
+                return;
+            }
+            diagCall("biometricAuth", JSON.stringify({title:tr("Unlock Secret DMs")})).then(res => {
+                if (res === "ok") {
+                    appLockState.secretUnlocked = true;
+                    secretDmsSync();
+                    notify("appLock");
+                    reviewToast(ui, "Secret DMs unlocked for this session", venusIcon(8771, "LockIcon"));
+                }
+            }, () => {});
+        };
+        const secretIds = Array.from(appLockState.secretIds);
+        const groups = [
+            on ? null : offCard("status", venusIcon(8771, "LockIcon"), "appLock"),
+            el(Group, {key:"timeout", title:tr("Relock timeout")},
+                timeouts.map(([sec, label]) => Radio ? el(Radio, {key:String(sec), label:tr(label), selected:settings.appLockTimeout === sec,
+                    disabled:!on, onPress:() => { haptic("SELECTION"); setSetting("appLockTimeout", sec); }}) : null)),
+            el(Group, {key:"secrets", title:tr("Secret DMs")},
+                switchRow(Switch, "secretDms", "Hide Secret DMs from DM list", "Hides chosen DM channels and their in-app banners until you unlock them below.", rowIcon(8771, "LockIcon")),
+                actionRow(ui, "unlockSecrets", appLockState.secretUnlocked ? "Lock Secret DMs again" : "Authenticate to reveal Secret DMs",
+                    pl(secretIds.length, "{n} hidden DM channel", "{n} hidden DM channels"), toggleUnlockSecrets, !on, false)),
+            appLockState.secretUnlocked && secretIds.length && Row ? el(Group, {key:"secretList", title:tr("Hidden Channels (Tap to open)")},
+                secretIds.map(id => el(Row, {key:id, label:"DM Channel " + id, subLabel:tr("Tap to open or remove"), arrow:true,
+                    onPress:() => {
+                        haptic("SELECTION");
+                        if (RN.Alert && typeof RN.Alert.alert === "function") {
+                            RN.Alert.alert("Secret DM", "Channel ID: " + id, [
+                                {text:tr("Unhide"), style:"destructive", onPress:() => secretDmToggle(id)},
+                                {text:tr("Cancel"), style:"cancel"},
+                                {text:tr("Open DM"), onPress:() => jumpToChatMessage("@me", id, "")}
+                            ]);
+                        } else {
+                            jumpToChatMessage("@me", id, "");
+                        }
+                    }}))) : null,
+            footnote("hint", "Hold any DM channel or message inside a DM and tap Hide as Secret DM to add it to your protected list.")
+        ];
+        return settingsBody(ui, groups);
+    }
+
+    // ------------------------------------------------- 10. Media editor (trim & mute)
+    function mediaEditorApplyTrim(upload, job, uri, startMs, endMs, mute) {
+        job.native = true;
+        compressToast(tr("Editing media before upload\u2026"));
+        return nativeCompressTrim(job.id, uri, startMs, endMs, mute).then(text => {
+            const result = JSON.parse(text);
+            if (!result || result.changed === false) return undefined;
+            const item = upload.item || {}, filename = compressName(upload.filename || item.filename, result.extension);
+            const changes = {uri:result.uri, mimeType:result.mimeType, filename, size:result.size};
+            upload.item = Object.assign({}, item, changes);
+            upload.uri = result.uri;
+            upload.mimeType = result.mimeType;
+            upload.filename = filename;
+            upload.currentSize = result.size;
+            upload.postCompressionSize = result.size;
+            compressToast(tr("Media edited ({size})", {size:formatSize(result.size)}));
+            return undefined;
+        });
+    }
+    function mediaEditorPrepare(upload, job) {
+        const uri = compressUri(upload);
+        if (typeof uri !== "string" || !/^(content|file):\/\//.test(uri)) return Promise.resolve();
+        if (settings.mediaEditorMode === "mute") {
+            if (job.kind !== "video") return Promise.resolve();
+            return mediaEditorApplyTrim(upload, job, uri, 0, -1, true).catch(() => undefined);
+        }
+        const item = upload.item || {};
+        const name = upload.filename || item.filename || (job.kind === "video" ? "video.mp4" : "audio.m4a");
+        return diagCall("mediaEditDialog", JSON.stringify({uri, name, kind:job.kind, defaultMute:!!settings.mediaEditorDefaultMute})).then(raw => {
+            const choice = JSON.parse(raw);
+            if (!choice || choice.action === "original") return undefined;
+            if (choice.action === "cancel") {
+                job.cancelled = true;
+                try { if (typeof upload.cancel === "function") upload.cancel(); } catch (_) {}
+                throw new Error("Media upload cancelled by user");
+            }
+            if (choice.action === "trim") {
+                return mediaEditorApplyTrim(upload, job, uri, choice.startMs || 0, choice.endMs || -1, !!choice.mute);
+            }
+            return undefined;
+        });
+    }
+    function MediaEditorSettings() {
+        useSettings("mediaEditor");
+        useLanguage();
+        const ui = reviewUI(), on = enabled("mediaEditor");
+        if (!RN) return null;
+        const Group = ui.TableRowGroup || RN.View, Switch = ui.TableSwitchRow, Radio = ui.TableRadioRow;
+        const modes = [["ask", "Ask before uploading", "Opens the native Trim & Mute dialog whenever you send a video or audio file."],
+            ["mute", "Always mute videos automatically", "Strips the audio track from uploaded videos right away without showing a dialog."]];
+        const groups = [
+            on ? null : offCard("status", venusIcon(10383, "PencilIcon"), "mediaEditor"),
+            el(Group, {key:"mode", title:tr("When sending video or audio")},
+                modes.map(([m, label, sub]) => Radio ? el(Radio, {key:m, label:tr(label), subLabel:tr(sub), selected:settings.mediaEditorMode === m,
+                    disabled:!on, onPress:() => { haptic("SELECTION"); setSetting("mediaEditorMode", m); }}) : null)),
+            el(Group, {key:"defaults", title:tr("Dialog defaults")},
+                switchRow(Switch, "mediaEditorDefaultMute", "Pre-select Remove audio in dialog", "Starts the Trim & Mute dialog with the mute checkbox checked.", rowIcon(9351, "HeadphonesSlashIcon"))),
+            footnote("info", "Uses Android's native MediaExtractor and MediaMuxer for fast, lossless keyframe trimming and audio track removal.")
+        ];
+        return settingsBody(ui, groups);
+    }
+
+    // ------------------------------------------------- 11. LaTeX math renderer
+    const LATEX_SYMBOLS = {
+        alpha:"\u03b1", beta:"\u03b2", gamma:"\u03b3", delta:"\u03b4", epsilon:"\u03b5", varepsilon:"\u03b5", zeta:"\u03b6", eta:"\u03b7",
+        theta:"\u03b8", iota:"\u03b9", kappa:"\u03ba", lambda:"\u03bb", mu:"\u03bc", nu:"\u03bd", xi:"\u03be", pi:"\u03c0", rho:"\u03c1",
+        sigma:"\u03c3", tau:"\u03c4", upsilon:"\u03c5", phi:"\u03c6", varphi:"\u03d5", chi:"\u03c7", psi:"\u03c8", omega:"\u03c9",
+        Gamma:"\u0393", Delta:"\u0394", Theta:"\u0398", Lambda:"\u039b", Xi:"\u039e", Pi:"\u03a0", Sigma:"\u03a3", Phi:"\u03a6", Psi:"\u03a8", Omega:"\u03a9",
+        infty:"\u221e", pm:"\u00b1", mp:"\u2213", times:"\u00d7", div:"\u00f7", cdot:"\u00b7", leq:"\u2264", le:"\u2264", geq:"\u2265", ge:"\u2265",
+        neq:"\u2260", ne:"\u2260", approx:"\u2248", equiv:"\u2261", sim:"\u223c", propto:"\u221d", partial:"\u2202", nabla:"\u2207",
+        forall:"\u2200", exists:"\u2203", in:"\u2208", notin:"\u2209", subset:"\u2282", subseteq:"\u2286", cup:"\u222a", cap:"\u2229",
+        emptyset:"\u2205", to:"\u2192", rightarrow:"\u2192", leftarrow:"\u2190", Rightarrow:"\u21d2", Leftarrow:"\u21d0", iff:"\u21d4",
+        sum:"\u2211", prod:"\u220f", int:"\u222b", oint:"\u222e", sqrt:"\u221a", درجه:"\u00b0", circ:"\u2218", angle:"\u2220", perp:"\u22a5", parallel:"\u2225"
+    };
+    const SUP_MAP = {"0":"\u2070","1":"\u00b9","2":"\u00b2","3":"\u00b3","4":"\u2074","5":"\u2075","6":"\u2076","7":"\u2077","8":"\u2078","9":"\u2079","+":"\u207a","-":"\u207b","=":"\u207c","(":"\u207d",")":"\u207e","n":"\u207f","i":"\u2071","x":"\u02e3","y":"\u02b8"};
+    const SUB_MAP = {"0":"\u2080","1":"\u2081","2":"\u2082","3":"\u2083","4":"\u2084","5":"\u2085","6":"\u2086","7":"\u2087","8":"\u2088","9":"\u2089","+":"\u208a","-":"\u208b","=":"\u208c","(":"\u208d",")":"\u208e","a":"\u2090","e":"\u2091","o":"\u2092","x":"\u2093","i":"\u1d62","j":"\u2c7c","k":"\u2096","n":"\u2099","m":"\u2098"};
+    function latexExtractFormulas(text) {
+        if (typeof text !== "string" || text.indexOf("$") < 0) return [];
+        const out = [];
+        const stripped = text.replace(/```[\s\S]*?```|`[^`\n]+`/g, "");
+        const re = /\$\$([\s\S]+?)\$\$|\$([^$\n]+?)\$/g;
+        let m;
+        while ((m = re.exec(stripped)) !== null) {
+            const expr = (m[1] || m[2] || "").trim();
+            if (expr && !/^\d+(\.\d+)?$/.test(expr)) out.push({expr, block:!!m[1]});
+        }
+        return out;
+    }
+    function latexToUnicodeExpr(expr) {
+        let s = expr;
+        for (let pass = 0; pass < 3; pass++) {
+            s = s.replace(/\\frac\s*\{([^{}]+)\}\s*\{([^{}]+)\}/g, "($1)\u2044($2)");
+            s = s.replace(/\\sqrt\s*\{([^{}]+)\}/g, "\u221a($1)");
+            s = s.replace(/\\(?:text|mathrm|mathbf|mathit)\s*\{([^{}]+)\}/g, "$1");
+        }
+        s = s.replace(/\\([A-Za-z]+)/g, (full, cmd) => LATEX_SYMBOLS[cmd] || cmd);
+        s = s.replace(/\^\{([^{}]+)\}|\^([0-9+\-=()nixy])/g, (full, g1, g2) => {
+            const raw = g1 || g2 || "";
+            let mapped = "";
+            for (let i = 0; i < raw.length; i++) {
+                const c = SUP_MAP[raw[i]];
+                if (!c) return "^(" + raw + ")";
+                mapped += c;
+            }
+            return mapped;
+        });
+        s = s.replace(/_\{([^{}]+)\}|_([0-9+\-=()aeoxijknm])/g, (full, g1, g2) => {
+            const raw = g1 || g2 || "";
+            let mapped = "";
+            for (let i = 0; i < raw.length; i++) {
+                const c = SUB_MAP[raw[i]];
+                if (!c) return "_(" + raw + ")";
+                mapped += c;
+            }
+            return mapped;
+        });
+        return s.replace(/[{}]/g, "").trim();
+    }
+    function latexFormatText(text) {
+        if (!settings.latexRenderInline || typeof text !== "string" || text.indexOf("$") < 0) return text;
+        const codeSlots = [];
+        const masked = text.replace(/```[\s\S]*?```|`[^`\n]+`/g, m => {
+            codeSlots.push(m);
+            return "\u0000CODE" + (codeSlots.length - 1) + "\u0000";
+        });
+        const replaced = masked
+            .replace(/\$\$([\s\S]+?)\$\$/g, (full, expr) => {
+                const u = latexToUnicodeExpr(expr);
+                return "\n```math\n" + u + "\n```\n";
+            })
+            .replace(/\$([^$\n]+?)\$/g, (full, expr) => {
+                if (/^\d+(\.\d+)?(\s|$)/.test(expr)) return full;
+                return "`" + latexToUnicodeExpr(expr) + "`";
+            });
+        return replaced.replace(/\u0000CODE(\d+)\u0000/g, (full, idx) => codeSlots[Number(idx)] || full);
+    }
+    function latexEscapeHtml(s) {
+        return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+    }
+    function latexToMathMLBody(expr) {
+        let s = latexEscapeHtml(expr);
+        for (let pass = 0; pass < 4; pass++) {
+            s = s.replace(/\\frac\s*\{([^{}]+)\}\s*\{([^{}]+)\}/g, "<mfrac><mrow>$1</mrow><mrow>$2</mrow></mfrac>");
+            s = s.replace(/\\sqrt\s*\{([^{}]+)\}/g, "<msqrt><mrow>$1</mrow></msqrt>");
+            s = s.replace(/([A-Za-z0-9\u0391-\u03c9)]+)\s*\^\s*\{([^{}]+)\}/g, "<msup><mrow>$1</mrow><mrow>$2</mrow></msup>");
+            s = s.replace(/([A-Za-z0-9\u0391-\u03c9)]+)\s*_\s*\{([^{}]+)\}/g, "<msub><mrow>$1</mrow><mrow>$2</mrow></msub>");
+        }
+        s = s.replace(/\\([A-Za-z]+)/g, (full, cmd) => LATEX_SYMBOLS[cmd] ? "<mi>" + LATEX_SYMBOLS[cmd] + "</mi>" : "<mi>" + cmd + "</mi>");
+        s = s.replace(/\^([0-9a-zA-Z+-])/g, "<msup><mrow></mrow><mn>$1</mn></msup>");
+        s = s.replace(/_([0-9a-zA-Z+-])/g, "<msub><mrow></mrow><mn>$1</mn></msub>");
+        s = s.replace(/[{}]/g, "");
+        return "<math xmlns=\"http://www.w3.org/1998/Math/MathML\" display=\"block\"><mrow>" + s + "</mrow></math>";
+    }
+    function latexOpenModal(message) {
+        const raw = message && typeof message.content === "string" ? message.content : "";
+        const formulas = latexExtractFormulas(raw);
+        if (!formulas.length) return;
+        const cards = formulas.map(f =>
+            "<div class=\"formula-card\">" + latexToMathMLBody(f.expr) + "</div><pre>" + latexEscapeHtml(f.expr) + "</pre>"
+        ).join("");
+        const rawJoined = formulas.map(f => f.expr).join("\n\n");
+        diagCall("latexModal", JSON.stringify({html:cards, raw:rawJoined})).catch(() => {});
+    }
+    function LatexRenderSettings() {
+        useSettings("latexRender");
+        useLanguage();
+        const ui = reviewUI(), on = enabled("latexRender");
+        if (!RN) return null;
+        const Group = ui.TableRowGroup || RN.View, Switch = ui.TableSwitchRow;
+        const sample = "$\\int_{0}^{\\infty} e^{-x^2} dx = \\frac{\\sqrt{\\pi}}{2}$";
+        const groups = [
+            on ? null : offCard("status", venusIcon(18022, "LettersIcon"), "latexRender"),
+            el(Group, {key:"opts", title:tr("Display")},
+                switchRow(Switch, "latexRenderInline", "Format inline math in chat", "Converts $...$ and $$...$$ in chat rows into clean Unicode math symbols without slowing down scrolling.", rowIcon(18022, "LettersIcon")),
+                actionRow(ui, "previewMath", "Preview typeset formula modal", sample + " \u2192 " + latexToUnicodeExpr("\\int_{0}^{\\infty} e^{-x^2} dx = \\frac{\\sqrt{\\pi}}{2}"),
+                    () => { haptic("SELECTION"); latexOpenModal({content:sample}); }, !on, false)),
+            footnote("hint", "Hold any message containing $...$ or $$...$$ in chat and tap View math formula to open the typeset MathML viewer.")
+        ];
+        return settingsBody(ui, groups);
+    }
+
+    // ------------------------------------------------- Shared row & hold-menu hooks
+    const extraRowCache = new WeakMap();
+    function extraPrepareRow(row) {
+        if (!row || row.rowType !== 1 || !row.message) return row;
+        const blurOn = features.privacyBlur && enabled("privacyBlur");
+        const latexOn = features.latexRender && enabled("latexRender") && settings.latexRenderInline;
+        if (!blurOn && !latexOn) return row;
+        const message = row.message, id = String(message.id || "");
+        let nextMsg = message;
+        if (blurOn && (!id || !privacyBlur.revealed.has(id))) {
+            if (Array.isArray(nextMsg.attachments) && nextMsg.attachments.some(a => a && !a.spoiler)) {
+                const atts = nextMsg.attachments.map(a => a && !a.spoiler ? copyWith(a, "spoiler", true) : a);
+                nextMsg = copyWith(nextMsg, "attachments", atts);
+            }
+        }
+        if (latexOn && typeof nextMsg.content === "string" && nextMsg.content.indexOf("$") >= 0) {
+            const formatted = latexFormatText(nextMsg.content);
+            if (formatted !== nextMsg.content) nextMsg = copyWith(nextMsg, "content", formatted);
+        }
+        return nextMsg === message ? row : copyWith(row, "message", nextMsg);
+    }
+    function extraFeaturesMessageSheet(orig, self, args) {
+        const tree = orig.apply(self, args), props = args[0], message = props && props.message;
+        if (!React || !tree || !message || !message.id) return tree;
+        const id = String(message.id);
+        const channelId = String(message.channel_id || message.channelId || (props.channel && props.channel.id) || "");
+        const specs = [];
+        if (features.bookmarks && enabled("bookmarks")) {
+            const hasBm = bookmarks.ids.has(id);
+            specs.push({key:"venus-bookmark", label:hasBm ? tr("Remove bookmark") : tr("Bookmark message"), icon:venusIcon(10216, "StarIcon"),
+                run:() => bookmarkToggle(message)});
+        }
+        if (features.reminders && enabled("reminders")) {
+            specs.push({key:"venus-reminder", label:tr("Remind me later"), icon:venusIcon(5896, "ClockIcon"),
+                run:() => reminderAsk(message)});
+        }
+        if (features.privacyBlur && enabled("privacyBlur")) {
+            const hasMedia = (Array.isArray(message.attachments) && message.attachments.length > 0) || (Array.isArray(message.embeds) && message.embeds.length > 0);
+            if (hasMedia) {
+                const isRev = privacyBlur.revealed.has(id);
+                specs.push({key:"venus-privacy-blur", label:isRev ? tr("Blur media again") : tr("Reveal blurred media"), icon:venusIcon(7195, "EyeSlashIcon"),
+                    run:() => privacyBlurToggleMessage(message)});
+            }
+        }
+        if (features.batchMediaSave && enabled("batchMediaSave")) {
+            const mediaItems = batchMediaItems(message);
+            if (mediaItems.length >= 2) {
+                specs.push({key:"venus-batch-save", label:tr("Save all media ({n})", {n:mediaItems.length}), icon:venusIcon(5889, "DownloadIcon"),
+                    run:() => batchMediaSaveRun(message)});
+            }
+        }
+        if (features.zipPreview && enabled("zipPreview")) {
+            const zipAtt = zipPreviewAttachment(message);
+            if (zipAtt) {
+                specs.push({key:"venus-zip-preview", label:tr("Preview ZIP archive"), icon:venusIcon(11226, "FileIcon"),
+                    run:() => zipPreviewOpen(zipAtt)});
+            }
+        }
+        if (features.latexRender && enabled("latexRender")) {
+            if (typeof message.content === "string" && latexExtractFormulas(message.content).length > 0) {
+                specs.push({key:"venus-latex-modal", label:tr("View math formula"), icon:venusIcon(18022, "LettersIcon"),
+                    run:() => latexOpenModal(message)});
+            }
+        }
+        if (features.urlUnshortener && enabled("urlUnshortener") && typeof message.content === "string") {
+            const urlMatch = /https?:\/\/[^\s<>()]+/i.exec(message.content);
+            if (urlMatch && urlUnshortenerShouldCheck(urlMatch[0])) {
+                specs.push({key:"venus-unshorten", label:tr("Preview link destination"), icon:venusIcon(14887, "EmbedIcon"),
+                    run:() => urlUnshortenerInspect(urlMatch[0])});
+            }
+        }
+        if (features.appLock && enabled("appLock") && settings.secretDms && channelId) {
+            const ch = channelStore && typeof channelStore.getChannel === "function" ? channelStore.getChannel(channelId) : null;
+            if (ch && (ch.type === 1 || ch.type === 3)) {
+                const isSec = appLockState.secretIds.has(channelId);
+                specs.push({key:"venus-secret-dm-msg", label:isSec ? tr("Unhide Secret DM") : tr("Hide as Secret DM"), icon:venusIcon(8771, "LockIcon"),
+                    run:() => secretDmToggle(channelId)});
+            }
+        }
+        if (!specs.length) return tree;
+        let added = false;
+        return cloneTree(tree, function (node, nodeProps) {
+            if (added || !Array.isArray(nodeProps.children)) return nodeProps;
+            const rows = nodeProps.children.filter(child => child && child.props && typeof child.props.label === "string" && typeof child.props.onPress === "function");
+            if (!rows.length || nodeProps.children.some(child => child && child.key === specs[0].key)) return nodeProps;
+            added = true;
+            const template = rows[rows.length - 1], tIcon = template.props.icon;
+            const newRows = specs.map(sp => React.cloneElement(template, {
+                key:sp.key, label:sp.label, arrow:false, variant:undefined, disabled:false,
+                icon:tIcon && tIcon.props && "IconComponent" in tIcon.props ? React.cloneElement(tIcon, {IconComponent:sp.icon}) : tIcon,
+                onPress:function () {
+                    const sheets = reviewUI().sheets;
+                    try { if (sheets && typeof sheets.hideActionSheet === "function") sheets.hideActionSheet("MessageLongPressActionSheet"); } catch (_) {}
+                    if (typeof props.onClose === "function") try { props.onClose(); } catch (_) {}
+                    sp.run();
+                }
+            }));
+            const index = nodeProps.children.indexOf(template) + 1;
+            return Object.assign({}, nodeProps, {children:nodeProps.children.slice(0, index).concat(newRows, nodeProps.children.slice(index))});
+        }, 0, () => added);
+    }
+
     function activatePlugins(id, exports) {
         switch (id) {
             case 2186:
@@ -22800,15 +23836,17 @@
                 if (features.userNotif && exports && exports.default) { userNotif.guilds = exports.default; userNotifSubscribeGuilds(); }
                 return exports;
             case 1411: return features.serverEdit ? serverEditHookAvatars(exports) : exports;
-            case 10362: if ((features.quests || features.badges || features.userNotif || features.removedAlerts) && exports && exports.default) { bgKeepAlive.fg = exports.default; backgroundSync(); } return exports;
+            case 10362: if ((features.quests || features.badges || features.userNotif || features.removedAlerts || features.keywordNotify) && exports && exports.default) { bgKeepAlive.fg = exports.default; backgroundSync(); } return exports;
             case 15843:
                 if (features.platformSpoof) exports = platformSpoofHook(exports);
-                return (features.quests || features.badges || features.userNotif || features.removedAlerts) ? hookGatewaySocket(exports) : exports;
-            case 15878: return (features.quests || features.badges || features.userNotif || features.removedAlerts) ? hookPauseGateway(exports) : exports;
+                return (features.quests || features.badges || features.userNotif || features.removedAlerts || features.keywordNotify) ? hookGatewaySocket(exports) : exports;
+            case 15878: return (features.quests || features.badges || features.userNotif || features.removedAlerts || features.keywordNotify) ? hookPauseGateway(exports) : exports;
             case 6657: if (features.dndBanners && exports && exports.default) dndBanners.presence = exports.default; return features.badges ? hookSelfPresenceStore(exports) : exports;
             case 10204: return features.cloneExpressions ? hookComponent(exports, cloneEmojiSheet) : exports;
             case 10438: return features.cloneExpressions ? hookComponent(exports, cloneStickerSheet) : exports;
-            case 11177: return features.dndBanners ? hookExport(exports, "shouldNotify", dndShouldNotify) : exports;
+            case 11177:
+                if (features.dndBanners) exports = hookExport(exports, "shouldNotify", dndShouldNotify);
+                return features.appLock ? hookExport(exports, "shouldNotify", secretDmShouldNotify) : exports;
             case 11190: return features.dndBanners ? hookExport(exports, "playInAppMessageSound", dndBannerSound) : exports;
             case 5349: return features.landscapeFull ? hookExport(hookExport(exports, "default", landscapeChatLayoutHook), "getChatLayout", landscapeChatLayout) : exports;
             case 8867: if (features.badges && exports && exports.default) badgesAttachStore(exports.default); return exports;
@@ -22817,6 +23855,8 @@
                 if (features.noDelete) exports = hookComponent(exports, noDeleteSheet);
                 if (features.localEdit) exports = hookComponent(exports, localEditSheet);
                 if (features.viewRaw) exports = hookComponent(exports, viewRawMessageSheet);
+                if (features.bookmarks || features.privacyBlur || features.batchMediaSave || features.zipPreview || features.reminders || features.latexRender || features.appLock || features.urlUnshortener)
+                    exports = hookComponent(exports, extraFeaturesMessageSheet);
                 return features.bulkDelete ? hookComponent(exports, bulkDeleteSheet) : exports;
             case 9898: return features.splitMessages ? maxLengthModule(exports) : exports;
             case 18855: return (features.youBarSettings || features.accountSwitcher) ? hookComponent(exports, youBarButtons) : exports;
@@ -22824,7 +23864,7 @@
             case 1251: if (features.pastelize) pastelHash = typeof exports === "function" ? exports : exports.default; return exports;
             case 5082: if (features.pastelize) guildMembers = exports.default; if (features.timeoutDuration && exports && exports.default) timeoutTag.members = exports.default; return exports;
             case 8481:
-                if ((features.pastelize || features.noDelete || features.translate || features.messageHighlight || features.bulkDelete || features.staffTag || features.timeoutDuration || features.voiceDownload || features.localEdit) && exports.default && exports.default.prototype)
+                if ((features.pastelize || features.noDelete || features.translate || features.messageHighlight || features.bulkDelete || features.staffTag || features.timeoutDuration || features.voiceDownload || features.localEdit || features.privacyBlur || features.latexRender) && exports.default && exports.default.prototype)
                     hookExport(exports.default.prototype, "generate", messageRow);
                 return exports;
             case 5922: if (features.platformIndicators || features.userNotif) { presenceStore = exports.default; if (features.userNotif) userNotifSeedStatuses(); } return exports;
@@ -22908,10 +23948,17 @@
             case 10395: return features.favouriteAnything ? hookExport(exports, "addFavoriteGIF", favouriteAdd) : exports;
             case 10398: return features.favouriteAnything ? hookExport(exports, "useFavoriteGIFsMobile", favouriteList) : exports;
             case 15309: return features.mutualGroupDMs ? hookComponent(exports, mutualGroupsRow) : exports;
-            case 5019: channelStore = exports.default; return exports;
+            case 5019:
+                channelStore = exports.default;
+                if (features.appLock && channelStore) {
+                    exports = replaceValue(exports, "default", hookSecretDmsStore(channelStore));
+                    channelStore = exports.default;
+                }
+                return exports;
             case 14019: return features.noTyping ? replaceValue(exports, "default", hookExport(hookExport(exports.default, "startTyping", typing), "stopTyping", typing)) : exports;
             case 10954:
                 if (features.fastDeleteChannels) exports = hookComponent(exports, fastDeleteSheet);
+                if (features.appLock) exports = hookComponent(exports, secretDmChannelSheet);
                 return features.viewRaw ? hookComponent(exports, viewRawChannelMenu) : exports;
             case 18545: return features.viewRaw ? hookComponent(exports, viewRawThreadMenu) : exports;
             case 11298: return features.viewRaw ? hookComponent(exports, viewRawPostMenu) : exports;
@@ -22926,12 +23973,12 @@
             case 15885: return features.fakeDeafen && exports && exports.default ? fakeDeafAttach(exports) : exports;
             case 19778: return features.fakeDeafen ? hookComponent(exports, fakeDeafSwitch, "DeafenSwitch") : exports;
             case 1385:
-                if (exports && exports.default && (features.validUser || features.splitMessages || features.fixEmbeds || features.translate || features.userNotif || features.removedAlerts || features.accountSwitcher || features.appIcons || features.nitroThemes || features.messageHighlight || features.serverInfo || features.noDelete || features.reviewDB || features.platformIndicators || features.hiddenChannels || features.gestures || features.freeNitro || features.badges || features.bulkDelete || features.experiments || features.quietReplies || features.silentEdit || features.silentDelete || features.localEdit))
+                if (exports && exports.default && (features.validUser || features.splitMessages || features.fixEmbeds || features.translate || features.userNotif || features.removedAlerts || features.accountSwitcher || features.appIcons || features.nitroThemes || features.messageHighlight || features.serverInfo || features.noDelete || features.reviewDB || features.platformIndicators || features.hiddenChannels || features.gestures || features.freeNitro || features.badges || features.bulkDelete || features.experiments || features.quietReplies || features.silentEdit || features.silentDelete || features.localEdit || features.keywordNotify || features.bookmarks || features.reminders || features.appLock))
                     userStore = exports.default;
                 if (features.noDelete || features.reviewDB || features.platformIndicators || features.hiddenChannels) restoreDeleted();
                 return exports;
             case 6226:
-                if (features.jumpToTop || features.messageHighlight || features.noDelete || features.translate || features.hideBlocked || features.bulkDelete || features.silentEdit || features.silentDelete || features.localEdit) msgStore = exports.default;
+                if (features.jumpToTop || features.messageHighlight || features.noDelete || features.translate || features.hideBlocked || features.bulkDelete || features.silentEdit || features.silentDelete || features.localEdit || features.bookmarks || features.privacyBlur || features.batchMediaSave || features.zipPreview || features.reminders || features.latexRender) msgStore = exports.default;
                 if (features.noDelete) {
                     exports = replaceValue(exports, "default", hookExport(hookExport(msgStore, "getMessage", retainedMessage), "getMessages", retainedMessages));
                     restoreDeleted();
@@ -22943,8 +23990,8 @@
             case 1411: return features.fullImages ? hookFullAvatars(exports) : exports;
             case 9054: return features.alwaysTrust && exports && exports.default ? replaceValue(exports, "default", hookExport(exports.default, "isTrustedDomain", alwaysTrustDomain)) : exports;
             case 8815: return features.alwaysTrust ? hookExport(exports, "isSuspiciousDownload", alwaysTrustFile) : exports;
-            case 8333: return features.compressUploads ? hookCompressVideo(exports) : exports;
-            case 10366: return features.compressUploads ? hookExport(exports, "getPreCompressionFileSize", compressPreSize) : exports;
+            case 8333: return (features.compressUploads || features.stripExif || features.mediaEditor) ? hookCompressVideo(exports) : exports;
+            case 10366: return (features.compressUploads || features.stripExif || features.mediaEditor) ? hookExport(exports, "getPreCompressionFileSize", compressPreSize) : exports;
             case 14592: return features.guildLurk ? hookComponent(exports, invitePreviewDetails) : exports;
             case 7582: return features.silentLeave && exports && exports.default ? replaceValue(exports, "default", hookExport(exports.default, "closePrivateChannel", silentLeaveClose)) : exports;
             case 13057: {
@@ -22959,6 +24006,8 @@
             case 9187: return features.removedAlerts ? hookRemovedMine(exports, ["leaveGuild", "deleteGuild"]) : exports;
             case 572:
                 if (features.userNotif && exports && exports.default) userNotifInit(exports.default);
+                if (features.keywordNotify && exports && exports.default) keywordNotifyInit(exports.default);
+                if (features.reminders && exports && exports.default) remindersInit(exports.default);
                 if (features.removedAlerts && exports && exports.default) removedInit(exports.default);
                 if (features.hideBlocked && exports && exports.default) hideBlockedInit(exports.default);
                 if (features.translate && exports && exports.default) translateInit(exports.default);
@@ -22970,7 +24019,7 @@
                 if (features.expandBar && exports && exports.default) expandBarInit(exports.default);
                 if (features.experiments && exports && exports.default) experimentsInit(exports.default);
                 if (features.voiceOptions && exports && exports.default) voiceOptionsInit(exports.default);
-                if ((features.messageHighlight || features.bulkDelete || features.localEdit) && exports && exports.default && !dispatcher)
+                if ((features.messageHighlight || features.bulkDelete || features.localEdit || features.privacyBlur || features.latexRender) && exports && exports.default && !dispatcher)
                     dispatcher = exports.default.dispatch.bind(exports.default);
                 if ((features.noDelete || features.reviewDB || features.hiddenChannels) && id === 572) {
                     dispatcher = exports.default.dispatch.bind(exports.default);
@@ -23034,7 +24083,7 @@
             case 14808: return features.gestures ? hookExport(exports, "DoubleTapEmojiEditNudge", hideWhenGestures) : exports;
             case 10105: return features.gestures ? hookExport(exports, "maybeShowDoubleTapReminderToast", (orig, self, args) => enabled("gestures") ? undefined : orig.apply(self, args)) : exports;
             case 14104: return features.gestures ? hookExport(exports, "DoubleTapToReactChatInputBanner", hideWhenGestures) : exports;
-            case 11763: return (features.gestures || features.bulkDelete || features.noDelete || features.voiceDownload) ? hookTapHandlers(exports) : exports;
+            case 11763: return (features.gestures || features.bulkDelete || features.noDelete || features.voiceDownload || features.urlUnshortener) ? hookTapHandlers(exports) : exports;
             case 7745: {
                 let actions = exports.default;
                 if (!actions) return exports;
@@ -23120,7 +24169,7 @@
         if (typeof data(exports, "getSize") === "function" && typeof data(exports, "readFile") === "function" &&
             typeof data(exports, "writeFile") === "function") initFiles(exports);
         if (features.voice && owns(exports, "CloudUpload")) instrumentCloudUpload(exports.CloudUpload);
-        if (features.compressUploads && owns(exports, "CloudUpload")) instrumentCompressUpload(exports.CloudUpload);
+        if ((features.compressUploads || features.stripExif || features.mediaEditor) && owns(exports, "CloudUpload")) instrumentCompressUpload(exports.CloudUpload);
         if (features.picker) {
             const patched = pickerComponent(exports);
             if (patched !== exports) return patched;

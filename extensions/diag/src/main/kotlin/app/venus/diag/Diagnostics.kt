@@ -94,6 +94,12 @@ object Diagnostics {
     @Volatile private var recording = false
     @Volatile private var showing = false
     @Volatile private var current: WeakReference<Activity>? = null
+    @Volatile private var appLockOn = false
+    @Volatile private var appLockTimeoutMs = 0L
+    @Volatile private var lockRequired = false
+    @Volatile private var lockShowing = false
+    @Volatile private var lastPausedAt = 0L
+    @Volatile private var activeCount = 0
     private val main = Handler(Looper.getMainLooper())
 
     /** Right after Application.onCreate's super call. Any problem here leaves Discord exactly as it was. */
@@ -105,11 +111,23 @@ object Diagnostics {
             app = c
             startedAt = System.currentTimeMillis()
             screenOn = crashScreenSetting(c)
+            loadAppLockPref(c)
             val previous = Thread.getDefaultUncaughtExceptionHandler()
             if (previous !is Catcher) Thread.setDefaultUncaughtExceptionHandler(Catcher(previous))
             if (c is Application) c.registerActivityLifecycleCallbacks(Lifecycle())
             // Android 11+ remembers why the last process ended: native crashes and ANRs never reach a Java handler.
             if (Build.VERSION.SDK_INT >= 30) Thread(object : Runnable { override fun run() { checkExitReasons(c) } }, "venus-exit-reasons").start()
+        } catch (_: Throwable) { }
+    }
+
+    private fun loadAppLockPref(c: Context) {
+        try {
+            val text = prefs(c) ?: return
+            val json = JSONObject(text)
+            appLockOn = json.optBoolean("appLock", false)
+            val sec = json.optInt("appLockTimeout", 0)
+            appLockTimeoutMs = if (sec > 0) sec.toLong() * 1000L else 0L
+            if (appLockOn) lockRequired = true
         } catch (_: Throwable) { }
     }
 
@@ -126,14 +144,27 @@ object Diagnostics {
 
     private class Lifecycle : Application.ActivityLifecycleCallbacks {
         override fun onActivityCreated(activity: Activity, state: Bundle?) { }
-        override fun onActivityStarted(activity: Activity) { }
+        override fun onActivityStarted(activity: Activity) {
+            activeCount++
+        }
         override fun onActivityResumed(activity: Activity) {
             current = WeakReference(activity)
+            if (appLockOn) {
+                val now = System.currentTimeMillis()
+                if (lockRequired || (lastPausedAt > 0L && now - lastPausedAt >= appLockTimeoutMs)) {
+                    lockRequired = true
+                    lastPausedAt = 0L
+                    main.post(object : Runnable { override fun run() { showLockOverlay(activity) } })
+                }
+            }
             // After Discord's first frames, so the page lands on top of its splash instead of under it.
             main.postDelayed(object : Runnable { override fun run() { showPending() } }, 700)
         }
         override fun onActivityPaused(activity: Activity) { }
-        override fun onActivityStopped(activity: Activity) { }
+        override fun onActivityStopped(activity: Activity) {
+            activeCount = Math.max(0, activeCount - 1)
+            if (activeCount == 0) lastPausedAt = System.currentTimeMillis()
+        }
         override fun onActivitySaveInstanceState(activity: Activity, state: Bundle) { }
         override fun onActivityDestroyed(activity: Activity) {
             if (current?.get() === activity) current = null
@@ -918,6 +949,40 @@ object Diagnostics {
                     promise.resolve("ok")
                 } })
             }
+            "unshorten" -> Thread(object : Runnable { override fun run() {
+                try { promise.resolve(unshortenUrl(argument ?: "")) } catch (error: Throwable) { promise.reject("VENUS_DIAG", error.toString()) }
+            } }, "venus-unshorten").start()
+            "zipList" -> Thread(object : Runnable { override fun run() {
+                try { promise.resolve(zipList(c, argument ?: "")) } catch (error: Throwable) { promise.reject("VENUS_DIAG", error.toString()) }
+            } }, "venus-zip-list").start()
+            "zipRead" -> Thread(object : Runnable { override fun run() {
+                try { promise.resolve(zipRead(c, argument ?: "")) } catch (error: Throwable) { promise.reject("VENUS_DIAG", error.toString()) }
+            } }, "venus-zip-read").start()
+            "reminderNotify" -> {
+                try {
+                    postReminderNotification(c, argument ?: "")
+                    promise.resolve("ok")
+                } catch (error: Throwable) { promise.reject("VENUS_DIAG", error.toString()) }
+            }
+            "lockConfig" -> {
+                try {
+                    updateLockConfig(argument ?: "")
+                    promise.resolve("ok")
+                } catch (error: Throwable) { promise.reject("VENUS_DIAG", error.toString()) }
+            }
+            "biometricAuth" -> main.post(object : Runnable { override fun run() {
+                val activity = current?.get()
+                if (activity == null) { promise.reject("VENUS_DIAG", "No active screen"); return }
+                promptBiometric(activity, argument ?: "", promise)
+            } })
+            "mediaEditDialog" -> Thread(object : Runnable { override fun run() {
+                try { openMediaEditDialog(c, argument ?: "", promise) } catch (error: Throwable) { promise.reject("VENUS_DIAG", error.toString()) }
+            } }, "venus-media-probe").start()
+            "latexModal" -> main.post(object : Runnable { override fun run() {
+                val activity = current?.get()
+                if (activity == null) { promise.reject("VENUS_DIAG", "No active screen"); return }
+                openLatexModal(activity, argument ?: "", promise)
+            } })
             else -> promise.reject("VENUS_DIAG", "Unknown request")
         }
         return true
@@ -1001,5 +1066,632 @@ object Diagnostics {
         out.append("java.lang.IllegalStateException: This is a preview. Nothing crashed.\n  at app.venus.diag.Diagnostics.preview(Diagnostics.kt)\n")
         details(out)
         return out.toString()
+    }
+
+    // --------------------------------------------------------- URL unshortener
+
+    private fun unshortenUrl(arg: String): String {
+        val initial = try {
+            if ((arg as java.lang.String).startsWith("{")) JSONObject(arg).getString("url") else arg
+        } catch (_: Throwable) { arg }
+        var currentUrl = initial
+        val hops = org.json.JSONArray()
+        hops.put(currentUrl)
+        var status = 0
+        var hop = 0
+        while (hop < 5) {
+            val parsed = java.net.URL(currentUrl)
+            val protocol = parsed.protocol
+            if (protocol != "http" && protocol != "https") break
+            var conn = parsed.openConnection() as java.net.HttpURLConnection
+            var code: Int
+            var location: String? = null
+            try {
+                conn.instanceFollowRedirects = false
+                conn.connectTimeout = 3000
+                conn.readTimeout = 3000
+                conn.requestMethod = "HEAD"
+                conn.setRequestProperty("User-Agent", "Mozilla/5.0 (Linux; Android 14) AppleWebKit/537.36 Chrome/120.0.0.0 Mobile Safari/537.36")
+                code = conn.responseCode
+                location = conn.getHeaderField("Location")
+            } finally {
+                try { conn.disconnect() } catch (_: Throwable) { }
+            }
+            if ((code == 405 || code == 403 || code == 400) && location == null) {
+                conn = parsed.openConnection() as java.net.HttpURLConnection
+                try {
+                    conn.instanceFollowRedirects = false
+                    conn.connectTimeout = 3000
+                    conn.readTimeout = 3000
+                    conn.requestMethod = "GET"
+                    conn.setRequestProperty("Range", "bytes=0-0")
+                    conn.setRequestProperty("User-Agent", "Mozilla/5.0 (Linux; Android 14) AppleWebKit/537.36 Chrome/120.0.0.0 Mobile Safari/537.36")
+                    code = conn.responseCode
+                    location = conn.getHeaderField("Location")
+                } finally {
+                    try { conn.disconnect() } catch (_: Throwable) { }
+                }
+            }
+            status = code
+            if ((code == 301 || code == 302 || code == 303 || code == 307 || code == 308) && location != null && location.length > 0) {
+                val next = java.net.URL(parsed, location).toString()
+                if (next == currentUrl) break
+                currentUrl = next
+                hops.put(currentUrl)
+                hop++
+            } else {
+                break
+            }
+        }
+        val domain = try { java.net.URL(currentUrl).host ?: "" } catch (_: Throwable) { "" }
+        return JSONObject()
+            .put("initial", initial)
+            .put("finalUrl", currentUrl)
+            .put("domain", domain)
+            .put("hops", hops)
+            .put("status", status)
+            .toString()
+    }
+
+    // --------------------------------------------------------- ZIP preview
+
+    private fun isTextArchiveEntry(name: String): Boolean {
+        val raw = (name as java.lang.String).toLowerCase(Locale.ROOT)
+        val slash = (raw as java.lang.String).lastIndexOf('/'.code)
+        val base = if (slash >= 0) raw.substring(slash + 1) else raw
+        if (base == "readme" || base == "license" || base == "notice" || base == "makefile" || base == "dockerfile" || base == ".gitignore" || base == ".env.example") return true
+        val dot = (base as java.lang.String).lastIndexOf('.'.code)
+        if (dot < 0) return false
+        val ext = base.substring(dot + 1)
+        return ext == "txt" || ext == "md" || ext == "json" || ext == "log" || ext == "kt" || ext == "kts" ||
+            ext == "java" || ext == "py" || ext == "js" || ext == "cjs" || ext == "mjs" || ext == "ts" ||
+            ext == "tsx" || ext == "jsx" || ext == "css" || ext == "scss" || ext == "html" || ext == "htm" ||
+            ext == "xml" || ext == "svg" || ext == "yml" || ext == "yaml" || ext == "toml" || ext == "ini" ||
+            ext == "cfg" || ext == "conf" || ext == "sh" || ext == "bash" || ext == "bat" || ext == "ps1" ||
+            ext == "c" || ext == "cpp" || ext == "cc" || ext == "h" || ext == "hpp" || ext == "rs" ||
+            ext == "go" || ext == "rb" || ext == "php" || ext == "sql" || ext == "csv" || ext == "tsv" ||
+            ext == "gradle" || ext == "properties" || ext == "smali" || ext == "diff" || ext == "patch"
+    }
+
+    private fun isSafeZipEntryName(name: String): Boolean {
+        val raw = name as java.lang.String
+        if (raw.startsWith("/") || raw.startsWith("\\")) return false
+        if (raw.indexOf("../") >= 0 || raw.indexOf("..\\") >= 0 || raw == "..") return false
+        return true
+    }
+
+    private fun zipCacheFile(c: Context): File {
+        val dir = File(c.cacheDir, "venus-zip")
+        if (!dir.isDirectory) dir.mkdirs()
+        return File(dir, "preview.zip")
+    }
+
+    private fun zipList(c: Context, arg: String): String {
+        val req = JSONObject(arg)
+        val url = req.getString("url")
+        val target = zipCacheFile(c)
+        val conn = java.net.URL(url).openConnection() as java.net.HttpURLConnection
+        try {
+            conn.connectTimeout = 8000
+            conn.readTimeout = 15000
+            conn.instanceFollowRedirects = true
+            val maxBytes = 50L * 1024L * 1024L
+            val contentLen = conn.contentLengthLong
+            if (contentLen > maxBytes) throw IllegalArgumentException("ZIP file exceeds 50 MB preview limit")
+            val input = conn.inputStream
+            val out = FileOutputStream(target)
+            var total = 0L
+            val buf = ByteArray(32 * 1024)
+            try {
+                while (true) {
+                    val n = input.read(buf)
+                    if (n < 0) break
+                    total += n.toLong()
+                    if (total > maxBytes) throw IllegalArgumentException("ZIP file exceeds 50 MB preview limit")
+                    out.write(buf, 0, n)
+                }
+            } finally {
+                try { out.close() } catch (_: Throwable) { }
+                try { input.close() } catch (_: Throwable) { }
+            }
+        } finally {
+            try { conn.disconnect() } catch (_: Throwable) { }
+        }
+        val zip = java.util.zip.ZipFile(target)
+        val list = org.json.JSONArray()
+        var totalEntries = 0
+        try {
+            val entries = zip.entries()
+            while (entries.hasMoreElements()) {
+                val entry = entries.nextElement()
+                totalEntries++
+                if (list.length() >= 400) continue
+                val name = entry.name ?: continue
+                val safe = isSafeZipEntryName(name)
+                val size = entry.size
+                val isDir = entry.isDirectory
+                val textOk = safe && !isDir && size >= 0L && size <= 512L * 1024L && isTextArchiveEntry(name)
+                list.put(JSONObject()
+                    .put("name", name)
+                    .put("size", size)
+                    .put("compressedSize", entry.compressedSize)
+                    .put("isDir", isDir)
+                    .put("safe", safe)
+                    .put("isText", textOk))
+            }
+        } finally {
+            try { zip.close() } catch (_: Throwable) { }
+        }
+        return JSONObject()
+            .put("total", totalEntries)
+            .put("fileSize", target.length())
+            .put("entries", list)
+            .toString()
+    }
+
+    private fun zipRead(c: Context, arg: String): String {
+        val req = JSONObject(arg)
+        val entryName = req.getString("entry")
+        if (!isSafeZipEntryName(entryName)) throw IllegalArgumentException("Unsafe ZIP path rejected (Zip Slip protection)")
+        val target = zipCacheFile(c)
+        if (!target.isFile) throw IllegalStateException("ZIP cache expired; reopen the archive")
+        val zip = java.util.zip.ZipFile(target)
+        try {
+            val entry = zip.getEntry(entryName) ?: throw IllegalArgumentException("Entry not found in archive")
+            if (entry.isDirectory) throw IllegalArgumentException("Cannot read a directory entry")
+            if (entry.size > 512L * 1024L) throw IllegalArgumentException("Entry is too large for text preview")
+            val content = readAll(zip.getInputStream(entry), 128 * 1024)
+            return JSONObject()
+                .put("entry", entryName)
+                .put("size", entry.size)
+                .put("content", content)
+                .toString()
+        } finally {
+            try { zip.close() } catch (_: Throwable) { }
+        }
+    }
+
+    // --------------------------------------------------------- reminders
+
+    private fun postReminderNotification(c: Context, arg: String) {
+        val req = JSONObject(arg)
+        val title = req.optString("title", "Message Reminder")
+        val text = req.optString("text", "")
+        val idHash = req.optString("id", "0").hashCode()
+        val nm = c.getSystemService(Context.NOTIFICATION_SERVICE) as android.app.NotificationManager
+        val channelId = "venus_reminders"
+        if (Build.VERSION.SDK_INT >= 26) {
+            val channel = android.app.NotificationChannel(channelId, "Venus Reminders", android.app.NotificationManager.IMPORTANCE_HIGH)
+            channel.description = "Scheduled message reminders"
+            nm.createNotificationChannel(channel)
+        }
+        val launch = c.packageManager.getLaunchIntentForPackage(c.packageName)
+        val piFlags = if (Build.VERSION.SDK_INT >= 23) android.app.PendingIntent.FLAG_UPDATE_CURRENT or android.app.PendingIntent.FLAG_IMMUTABLE else android.app.PendingIntent.FLAG_UPDATE_CURRENT
+        val pending = if (launch != null) android.app.PendingIntent.getActivity(c, idHash, launch, piFlags) else null
+        val builder = if (Build.VERSION.SDK_INT >= 26) android.app.Notification.Builder(c, channelId) else android.app.Notification.Builder(c)
+        builder.setSmallIcon(android.R.drawable.ic_popup_reminder)
+            .setContentTitle(title)
+            .setContentText(text)
+            .setAutoCancel(true)
+        if (pending != null) builder.setContentIntent(pending)
+        nm.notify(0x56454E00 + (idHash and 0xFFFF), builder.build())
+    }
+
+    // --------------------------------------------------------- app lock & biometric auth
+
+    private fun updateLockConfig(arg: String) {
+        val req = JSONObject(arg)
+        val wasOn = appLockOn
+        appLockOn = req.optBoolean("enabled", false)
+        val sec = req.optInt("timeoutSec", 0)
+        appLockTimeoutMs = if (sec > 0) sec.toLong() * 1000L else 0L
+        if (!appLockOn) lockRequired = false
+        else if (!wasOn && req.optBoolean("lockNow", false)) lockRequired = true
+    }
+
+    private fun showLockOverlay(activity: Activity) {
+        if (lockShowing || activity.isFinishing || activity.isDestroyed) return
+        val km = activity.getSystemService(Context.KEYGUARD_SERVICE) as? android.app.KeyguardManager
+        if (km == null || !km.isKeyguardSecure) {
+            lockRequired = false
+            return
+        }
+        try {
+            lockShowing = true
+            val density = activity.resources.displayMetrics.density
+            fun dp(v: Int): Int = (v * density + 0.5f).toInt()
+            val dialog = Dialog(activity, android.R.style.Theme_DeviceDefault_NoActionBar)
+            dialog.setCancelable(false)
+            val root = LinearLayout(activity)
+            root.orientation = LinearLayout.VERTICAL
+            root.gravity = Gravity.CENTER
+            root.setBackgroundColor(BG)
+            root.setPadding(dp(32), dp(32), dp(32), dp(32))
+
+            val title = TextView(activity)
+            title.text = "Discord is Locked"
+            title.textSize = 22f
+            title.setTextColor(TEXT)
+            title.typeface = Typeface.create("sans-serif-medium", Typeface.BOLD)
+            title.gravity = Gravity.CENTER
+            root.addView(title)
+
+            val sub = TextView(activity)
+            sub.text = "Verify your identity to continue"
+            sub.textSize = 14f
+            sub.setTextColor(MUTED)
+            sub.gravity = Gravity.CENTER
+            val subLp = LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT)
+            subLp.topMargin = dp(10)
+            subLp.bottomMargin = dp(28)
+            root.addView(sub, subLp)
+
+            val btn = TextView(activity)
+            btn.text = "Unlock"
+            btn.textSize = 15f
+            btn.setTextColor(TEXT)
+            btn.typeface = Typeface.create("sans-serif-medium", Typeface.BOLD)
+            btn.gravity = Gravity.CENTER
+            btn.setPadding(dp(28), dp(12), dp(28), dp(12))
+            val bg = GradientDrawable()
+            bg.setColor(BRAND)
+            bg.cornerRadius = dp(10).toFloat()
+            btn.background = bg
+            root.addView(btn, LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT))
+
+            val trigger = object : Runnable {
+                override fun run() {
+                    authenticateNative(activity, "Unlock Discord", "Confirm your screen lock or biometric", object : Runnable {
+                        override fun run() {
+                            lockRequired = false
+                            lockShowing = false
+                            try { dialog.dismiss() } catch (_: Throwable) { }
+                        }
+                    }, object : Runnable {
+                        override fun run() { }
+                    })
+                }
+            }
+            btn.setOnClickListener(object : View.OnClickListener {
+                override fun onClick(v: View?) { trigger.run() }
+            })
+            dialog.setContentView(root)
+            dialog.window?.let { w ->
+                w.setLayout(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT)
+                w.statusBarColor = BG
+                w.navigationBarColor = BG
+            }
+            dialog.show()
+            main.postDelayed(trigger, 200)
+        } catch (_: Throwable) {
+            lockShowing = false
+        }
+    }
+
+    private fun promptBiometric(activity: Activity, arg: String, promise: Promise) {
+        val title = try {
+            if ((arg as java.lang.String).startsWith("{")) JSONObject(arg).optString("title", "Verify Identity")
+            else if (arg.length > 0) arg else "Verify Identity"
+        } catch (_: Throwable) { "Verify Identity" }
+        authenticateNative(activity, title, "Authenticate to access protected content", object : Runnable {
+            override fun run() { promise.resolve("ok") }
+        }, object : Runnable {
+            override fun run() { promise.resolve("cancelled") }
+        })
+    }
+
+    private fun authenticateNative(activity: Activity, title: String, subtitle: String, onSuccess: Runnable, onCancel: Runnable) {
+        val km = activity.getSystemService(Context.KEYGUARD_SERVICE) as? android.app.KeyguardManager
+        if (km == null || !km.isKeyguardSecure) {
+            onSuccess.run()
+            return
+        }
+        if (Build.VERSION.SDK_INT >= 28) {
+            try {
+                val builder = android.hardware.biometrics.BiometricPrompt.Builder(activity)
+                    .setTitle(title)
+                    .setSubtitle(subtitle)
+                if (Build.VERSION.SDK_INT >= 29) {
+                    builder.setDeviceCredentialAllowed(true)
+                } else {
+                    builder.setNegativeButton("Cancel", activity.mainExecutor, object : android.content.DialogInterface.OnClickListener {
+                        override fun onClick(d: android.content.DialogInterface?, w: Int) { onCancel.run() }
+                    })
+                }
+                val prompt = builder.build()
+                val signal = android.os.CancellationSignal()
+                prompt.authenticate(signal, activity.mainExecutor, object : android.hardware.biometrics.BiometricPrompt.AuthenticationCallback() {
+                    override fun onAuthenticationSucceeded(result: android.hardware.biometrics.BiometricPrompt.AuthenticationResult?) {
+                        main.post(onSuccess)
+                    }
+                    override fun onAuthenticationError(errorCode: Int, errString: CharSequence?) {
+                        main.post(onCancel)
+                    }
+                    override fun onAuthenticationFailed() { }
+                })
+                return
+            } catch (_: Throwable) { }
+        }
+        onSuccess.run()
+    }
+
+    // --------------------------------------------------------- media editor dialog
+
+    private fun openMediaEditDialog(c: Context, arg: String, promise: Promise) {
+        val req = JSONObject(arg)
+        val uriStr = req.getString("uri")
+        val name = req.optString("name", "media")
+        val uri = android.net.Uri.parse(uriStr)
+        var durationMs = 0L
+        var hasVideo = false
+        var hasAudio = false
+        val extractor = android.media.MediaExtractor()
+        try {
+            extractor.setDataSource(c, uri, null)
+            var i = 0
+            while (i < extractor.trackCount) {
+                val format = extractor.getTrackFormat(i)
+                val mime = format.getString(android.media.MediaFormat.KEY_MIME) ?: ""
+                if (mime.length >= 6 && mime.substring(0, 6) == "video/") hasVideo = true
+                if (mime.length >= 6 && mime.substring(0, 6) == "audio/") hasAudio = true
+                if (format.containsKey(android.media.MediaFormat.KEY_DURATION)) {
+                    val d = format.getLong(android.media.MediaFormat.KEY_DURATION) / 1000L
+                    if (d > durationMs) durationMs = d
+                }
+                i++
+            }
+        } catch (_: Throwable) {
+        } finally {
+            try { extractor.release() } catch (_: Throwable) { }
+        }
+        val totalSec = if (durationMs > 0L) Math.round(durationMs / 100.0) / 10.0 else 0.0
+        main.post(object : Runnable {
+            override fun run() {
+                val activity = current?.get()
+                if (activity == null || activity.isFinishing || activity.isDestroyed) {
+                    promise.resolve(JSONObject().put("action", "original").toString())
+                    return
+                }
+                try {
+                    val density = activity.resources.displayMetrics.density
+                    fun dp(v: Int): Int = (v * density + 0.5f).toInt()
+                    val dialog = Dialog(activity)
+                    dialog.setCancelable(true)
+                    val card = LinearLayout(activity)
+                    card.orientation = LinearLayout.VERTICAL
+                    card.setPadding(dp(20), dp(20), dp(20), dp(16))
+                    val cardBg = GradientDrawable()
+                    cardBg.setColor(CARD)
+                    cardBg.cornerRadius = dp(14).toFloat()
+                    cardBg.setStroke(dp(1), CARD_EDGE)
+                    card.background = cardBg
+
+                    val title = TextView(activity)
+                    title.text = "Trim & Mute Media"
+                    title.textSize = 18f
+                    title.setTextColor(TEXT)
+                    title.typeface = Typeface.create("sans-serif-medium", Typeface.BOLD)
+                    card.addView(title)
+
+                    val sub = TextView(activity)
+                    sub.text = name + (if (totalSec > 0) " (" + totalSec + "s)" else "")
+                    sub.textSize = 13f
+                    sub.setTextColor(MUTED)
+                    val subLp = LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT)
+                    subLp.topMargin = dp(4)
+                    subLp.bottomMargin = dp(14)
+                    card.addView(sub, subLp)
+
+                    val row = LinearLayout(activity)
+                    row.orientation = LinearLayout.HORIZONTAL
+                    val startInput = android.widget.EditText(activity)
+                    startInput.hint = "Start (s)"
+                    startInput.setText("0")
+                    startInput.setTextColor(TEXT)
+                    startInput.setHintTextColor(MUTED)
+                    startInput.inputType = android.text.InputType.TYPE_CLASS_NUMBER or android.text.InputType.TYPE_NUMBER_FLAG_DECIMAL
+                    val endInput = android.widget.EditText(activity)
+                    endInput.hint = "End (s)"
+                    endInput.setText(if (totalSec > 0) totalSec.toString() else "")
+                    endInput.setTextColor(TEXT)
+                    endInput.setHintTextColor(MUTED)
+                    endInput.inputType = android.text.InputType.TYPE_CLASS_NUMBER or android.text.InputType.TYPE_NUMBER_FLAG_DECIMAL
+                    val lpLeft = LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f)
+                    lpLeft.rightMargin = dp(8)
+                    val lpRight = LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f)
+                    row.addView(startInput, lpLeft)
+                    row.addView(endInput, lpRight)
+                    card.addView(row)
+
+                    val muteBox = android.widget.CheckBox(activity)
+                    muteBox.text = "Remove audio track (Mute)"
+                    muteBox.setTextColor(TEXT)
+                    muteBox.isChecked = req.optBoolean("defaultMute", false)
+                    if (hasVideo && hasAudio) {
+                        val cbLp = LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT)
+                        cbLp.topMargin = dp(10)
+                        card.addView(muteBox, cbLp)
+                    } else {
+                        muteBox.isChecked = false
+                    }
+
+                    val actions = LinearLayout(activity)
+                    actions.orientation = LinearLayout.HORIZONTAL
+                    actions.gravity = Gravity.END
+                    val actLp = LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT)
+                    actLp.topMargin = dp(16)
+
+                    fun makeBtn(label: String, bgCol: Int): TextView {
+                        val b = TextView(activity)
+                        b.text = label
+                        b.textSize = 13f
+                        b.setTextColor(TEXT)
+                        b.typeface = Typeface.create("sans-serif-medium", Typeface.BOLD)
+                        b.setPadding(dp(14), dp(9), dp(14), dp(9))
+                        val d = GradientDrawable()
+                        d.setColor(bgCol)
+                        d.cornerRadius = dp(8).toFloat()
+                        b.background = d
+                        return b
+                    }
+
+                    var answered = false
+                    val cancelBtn = makeBtn("Cancel", NEUTRAL)
+                    val origBtn = makeBtn("Send Original", NEUTRAL)
+                    val applyBtn = makeBtn("Apply & Send", BRAND)
+                    val btnLp = LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT)
+                    btnLp.leftMargin = dp(8)
+                    actions.addView(cancelBtn)
+                    actions.addView(origBtn, btnLp)
+                    actions.addView(applyBtn, btnLp)
+                    card.addView(actions, actLp)
+
+                    cancelBtn.setOnClickListener(object : View.OnClickListener {
+                        override fun onClick(v: View?) {
+                            if (answered) return
+                            answered = true
+                            try { dialog.dismiss() } catch (_: Throwable) { }
+                            promise.resolve(JSONObject().put("action", "cancel").toString())
+                        }
+                    })
+                    origBtn.setOnClickListener(object : View.OnClickListener {
+                        override fun onClick(v: View?) {
+                            if (answered) return
+                            answered = true
+                            try { dialog.dismiss() } catch (_: Throwable) { }
+                            promise.resolve(JSONObject().put("action", "original").toString())
+                        }
+                    })
+                    applyBtn.setOnClickListener(object : View.OnClickListener {
+                        override fun onClick(v: View?) {
+                            if (answered) return
+                            answered = true
+                            val sSec = try { java.lang.Double.parseDouble((startInput.text.toString() as java.lang.String).trim()) } catch (_: Throwable) { 0.0 }
+                            val eSec = try { java.lang.Double.parseDouble((endInput.text.toString() as java.lang.String).trim()) } catch (_: Throwable) { -1.0 }
+                            val startMs = Math.max(0L, Math.round(sSec * 1000.0))
+                            val endMs = if (eSec > 0.0 && (totalSec <= 0.0 || eSec < totalSec)) Math.round(eSec * 1000.0) else -1L
+                            val mute = hasVideo && hasAudio && muteBox.isChecked
+                            try { dialog.dismiss() } catch (_: Throwable) { }
+                            if (startMs <= 0L && endMs <= 0L && !mute) {
+                                promise.resolve(JSONObject().put("action", "original").toString())
+                            } else {
+                                promise.resolve(JSONObject()
+                                    .put("action", "trim")
+                                    .put("startMs", startMs)
+                                    .put("endMs", endMs)
+                                    .put("mute", mute)
+                                    .toString())
+                            }
+                        }
+                    })
+                    dialog.setOnCancelListener(object : android.content.DialogInterface.OnCancelListener {
+                        override fun onCancel(d: android.content.DialogInterface?) {
+                            if (!answered) {
+                                answered = true
+                                promise.resolve(JSONObject().put("action", "original").toString())
+                            }
+                        }
+                    })
+                    dialog.setContentView(card)
+                    dialog.window?.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
+                    dialog.show()
+                } catch (_: Throwable) {
+                    promise.resolve(JSONObject().put("action", "original").toString())
+                }
+            }
+        })
+    }
+
+    // --------------------------------------------------------- LaTeX WebView modal
+
+    private fun openLatexModal(activity: Activity, arg: String, promise: Promise) {
+        try {
+            val req = JSONObject(arg)
+            val htmlBody = req.optString("html", "")
+            val rawLatex = req.optString("raw", "")
+            val density = activity.resources.displayMetrics.density
+            fun dp(v: Int): Int = (v * density + 0.5f).toInt()
+
+            val dialog = Dialog(activity, android.R.style.Theme_DeviceDefault_NoActionBar)
+            val root = LinearLayout(activity)
+            root.orientation = LinearLayout.VERTICAL
+            root.setBackgroundColor(BG)
+            root.setPadding(dp(18), dp(20), dp(18), dp(18))
+
+            val headerRow = LinearLayout(activity)
+            headerRow.orientation = LinearLayout.HORIZONTAL
+            headerRow.gravity = Gravity.CENTER_VERTICAL
+            val title = TextView(activity)
+            title.text = "LaTeX Formula View"
+            title.textSize = 19f
+            title.setTextColor(TEXT)
+            title.typeface = Typeface.create("sans-serif-medium", Typeface.BOLD)
+            headerRow.addView(title, LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f))
+
+            fun pillBtn(label: String, col: Int): TextView {
+                val b = TextView(activity)
+                b.text = label
+                b.textSize = 13f
+                b.setTextColor(TEXT)
+                b.typeface = Typeface.create("sans-serif-medium", Typeface.BOLD)
+                b.setPadding(dp(14), dp(8), dp(14), dp(8))
+                val d = GradientDrawable()
+                d.setColor(col)
+                d.cornerRadius = dp(8).toFloat()
+                b.background = d
+                return b
+            }
+
+            val copyBtn = pillBtn("Copy LaTeX", BRAND)
+            val closeBtn = pillBtn("Close", NEUTRAL)
+            val closeLp = LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT)
+            closeLp.leftMargin = dp(8)
+            headerRow.addView(copyBtn)
+            headerRow.addView(closeBtn, closeLp)
+            root.addView(headerRow, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT))
+
+            val web = android.webkit.WebView(activity)
+            web.setBackgroundColor(CARD)
+            val ws = web.settings
+            ws.javaScriptEnabled = false
+            ws.blockNetworkLoads = true
+            ws.builtInZoomControls = true
+            ws.displayZoomControls = false
+            val fullHtml = "<!DOCTYPE html><html><head><meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width,initial-scale=1\">" +
+                "<style>body{background:#242429;color:#f2f3f5;font-family:sans-serif;padding:16px;margin:0;line-height:1.6}" +
+                ".formula-card{background:#1a1a1e;border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:18px;margin-bottom:14px;overflow-x:auto;font-size:20px;text-align:center}" +
+                "math{font-size:22px;color:#f2f3f5}" +
+                "pre{background:#141417;color:#dbdee1;padding:12px;border-radius:8px;overflow-x:auto;font-size:13px;white-space:pre-wrap}</style></head><body>" +
+                htmlBody + "</body></html>"
+            web.loadDataWithBaseURL(null, fullHtml, "text/html", "UTF-8", null)
+            val webLp = LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1f)
+            webLp.topMargin = dp(14)
+            root.addView(web, webLp)
+
+            copyBtn.setOnClickListener(object : View.OnClickListener {
+                override fun onClick(v: View?) {
+                    try {
+                        val cm = activity.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+                        cm.setPrimaryClip(ClipData.newPlainText("LaTeX", rawLatex))
+                        Toast.makeText(activity, "LaTeX copied", Toast.LENGTH_SHORT).show()
+                    } catch (_: Throwable) { }
+                }
+            })
+            closeBtn.setOnClickListener(object : View.OnClickListener {
+                override fun onClick(v: View?) {
+                    try { dialog.dismiss() } catch (_: Throwable) { }
+                }
+            })
+            dialog.setContentView(root)
+            dialog.window?.let { w ->
+                w.setLayout(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT)
+                w.statusBarColor = BG
+                w.navigationBarColor = BG
+            }
+            dialog.show()
+            promise.resolve("ok")
+        } catch (error: Throwable) {
+            promise.reject("VENUS_DIAG", error.toString())
+        }
     }
 }

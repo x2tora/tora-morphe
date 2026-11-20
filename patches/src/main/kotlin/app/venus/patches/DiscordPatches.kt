@@ -537,6 +537,19 @@ private fun bundledPlugin(key: String, title: String, summary: String) = rawReso
     execute { additionalSelections += key }
 }
 
+private val uploadBridge = bytecodePatch {
+    dependsOn(venusSettings)
+    extendWith("extensions/compress.mpe")
+    execute {
+        compressBridge(Fingerprint(
+            definingClass = FILE_MODULE,
+            name = "removeFile",
+            returnType = "V",
+            parameters = listOf("Ljava/lang/String;", "Ljava/lang/String;", PROMISE)
+        ).method)
+    }
+}
+
 @Suppress("unused")
 val compressUploads = bytecodePatch(
     name = "Compress big files",
@@ -544,16 +557,9 @@ val compressUploads = bytecodePatch(
 ) {
     compatibleWith(discord)
     section(PLUGINS)
-    dependsOn(venusSettings)
-    extendWith("extensions/compress.mpe")
+    dependsOn(venusSettings, uploadBridge)
     execute {
         additionalSelections += "compressUploads"
-        compressBridge(Fingerprint(
-            definingClass = FILE_MODULE,
-            name = "removeFile",
-            returnType = "V",
-            parameters = listOf("Ljava/lang/String;", "Ljava/lang/String;", PROMISE)
-        ).method)
     }
 }
 
@@ -1276,3 +1282,61 @@ val keepBluetoothAudioClear = bytecodePatch(
         ).method)
     }
 }
+
+@Suppress("unused")
+val keywordNotifications = bundledPlugin("keywordNotify", "Keyword notifications",
+    "Shows a notification and logs a match when a message contains your chosen words or regular expressions.")
+
+@Suppress("unused")
+val messageBookmarks = bundledPlugin("bookmarks", "Message bookmarks",
+    "Save messages to an offline bookmark list from the hold menu, search them and jump back to the chat.")
+
+@Suppress("unused")
+val privacyBlur = bundledPlugin("privacyBlur", "Privacy blur",
+    "Blurs photos, videos, GIFs and link previews in chat until you tap to reveal them.")
+
+@Suppress("unused")
+val batchMediaSave = bundledPlugin("batchMediaSave", "Save all media",
+    "Download every image, video or audio attachment from a message in one tap from the hold menu.")
+
+@Suppress("unused")
+val stripExif = bytecodePatch(
+    name = "Strip image metadata",
+    description = "Removes location, camera and date metadata from photos before you upload them."
+) {
+    compatibleWith(discord)
+    section(PLUGINS)
+    dependsOn(venusSettings, uploadBridge)
+    execute { additionalSelections += "stripExif" }
+}
+
+@Suppress("unused")
+val urlUnshortener = bundledPlugin("urlUnshortener", "Preview link destination",
+    "Follows shortened links and shows the final address before you open or copy them.")
+
+@Suppress("unused")
+val zipPreview = bundledPlugin("zipPreview", "Preview ZIP archives",
+    "Inspect the files and read text inside .zip attachments without leaving Discord.")
+
+@Suppress("unused")
+val localReminders = bundledPlugin("reminders", "Message reminders",
+    "Set a reminder on any message from the hold menu to get notified later and jump back to it.")
+
+@Suppress("unused")
+val appLock = bundledPlugin("appLock", "App lock and secret DMs",
+    "Lock Discord with your fingerprint or screen lock and hide chosen DMs behind authentication.")
+
+@Suppress("unused")
+val mediaEditor = bytecodePatch(
+    name = "Trim and mute media",
+    description = "Cut the start and end of videos or audio and remove sound before uploading."
+) {
+    compatibleWith(discord)
+    section(PLUGINS)
+    dependsOn(venusSettings, uploadBridge)
+    execute { additionalSelections += "mediaEditor" }
+}
+
+@Suppress("unused")
+val latexRender = bundledPlugin("latexRender", "Render LaTeX math",
+    "Formats inline and block LaTeX math in chat and opens a clean formula view from the hold menu.")

@@ -73,6 +73,7 @@ object MediaCompressor {
                     require(kind == "image" || kind == "audio") { "Unknown media kind" }
                     val limit = command.getLong("limit")
                     val budget = command.getLong("budget")
+                    val strip = command.optBoolean("stripExif", false)
                     require(limit > 0 && budget in 1..limit) { "Invalid size limits" }
                     val cancelled = AtomicBoolean(false)
                     check(jobs.putIfAbsent(id, cancelled) == null) { "Compression job already exists" }
@@ -80,12 +81,35 @@ object MediaCompressor {
                         worker.execute {
                             try {
                                 val app = context.applicationContext
-                                val result = if (kind == "image") compressImage(app, uri, limit, budget, id, cancelled)
+                                val result = if (kind == "image") compressImage(app, uri, limit, budget, id, cancelled, strip)
                                     else compressAudio(app, uri, limit, budget, id, cancelled)
                                 promise.resolve(result.toString())
                             } catch (error: Throwable) {
                                 // OutOfMemoryError too: left unanswered, the upload waited forever.
                                 promise.reject("VENUS_COMPRESS", error.message ?: "Compression failed")
+                            } finally { jobs.remove(id, cancelled) }
+                        }
+                    } catch (_: RejectedExecutionException) {
+                        jobs.remove(id, cancelled)
+                        promise.reject("VENUS_BUSY", "Compression queue is full; try again shortly")
+                    }
+                }
+                "trim" -> {
+                    val uri = Uri.parse(command.getString("uri"))
+                    require(uri.scheme == "content" || uri.scheme == "file") { "Only local files are accepted" }
+                    val startMs = command.optLong("startMs", 0L)
+                    val endMs = command.optLong("endMs", -1L)
+                    val mute = command.optBoolean("mute", false)
+                    val cancelled = AtomicBoolean(false)
+                    check(jobs.putIfAbsent(id, cancelled) == null) { "Edit job already exists" }
+                    try {
+                        worker.execute {
+                            try {
+                                val app = context.applicationContext
+                                val result = trimMedia(app, uri, startMs, endMs, mute, id, cancelled)
+                                promise.resolve(result.toString())
+                            } catch (error: Throwable) {
+                                promise.reject("VENUS_COMPRESS", error.message ?: "Media edit failed")
                             } finally { jobs.remove(id, cancelled) }
                         }
                     } catch (_: RejectedExecutionException) {
@@ -206,17 +230,41 @@ object MediaCompressor {
         return Fit(best, atFloor.size.toLong())
     }
 
-    private fun compressImage(context: Context, uri: Uri, limit: Long, budget: Long, id: String, cancelled: AtomicBoolean): JSONObject {
+    private fun isAnimatedWebp(context: Context, uri: Uri): Boolean {
+        val stream = try { open(context, uri) } catch (_: Exception) { return false }
+        try {
+            val header = ByteArray(32)
+            var offset = 0
+            while (offset < 21) {
+                val read = stream.read(header, offset, 21 - offset)
+                if (read <= 0) return false
+                offset += read
+            }
+            // RIFF....WEBPVP8X with animation flag (bit 1 of byte 20)
+            if (header[0].toInt() == 'R'.code && header[1].toInt() == 'I'.code && header[2].toInt() == 'F'.code && header[3].toInt() == 'F'.code &&
+                header[8].toInt() == 'W'.code && header[9].toInt() == 'E'.code && header[10].toInt() == 'B'.code && header[11].toInt() == 'P'.code &&
+                header[12].toInt() == 'V'.code && header[13].toInt() == 'P'.code && header[14].toInt() == '8'.code && header[15].toInt() == 'X'.code) {
+                return (header[20].toInt() and 2) != 0
+            }
+            return false
+        } catch (_: Exception) {
+            return false
+        } finally { try { stream.close() } catch (_: Exception) { } }
+    }
+
+    private fun compressImage(context: Context, uri: Uri, limit: Long, budget: Long, id: String, cancelled: AtomicBoolean, stripExif: Boolean = false): JSONObject {
         check(!cancelled.get()) { "Compression cancelled" }
         val size = sourceSize(context, uri)
-        if (size in 0..limit) return unchanged(size)
+        if (!stripExif && size in 0..limit) return unchanged(size)
         val bounds = BitmapFactory.Options()
         bounds.inJustDecodeBounds = true
         val boundsStream = open(context, uri)
         try { BitmapFactory.decodeStream(boundsStream, null, bounds) } finally { try { boundsStream.close() } catch (_: Exception) { } }
         val mime = bounds.outMimeType ?: ""
-        // Animated GIFs cannot be re-encoded without losing the animation; leave them for Discord to refuse.
+        // Animated GIFs and animated WebP cannot be re-encoded via BitmapFactory without losing animation frames.
         if (bounds.outWidth <= 0 || bounds.outHeight <= 0 || mime == "image/gif") return unchanged(size)
+        if (mime == "image/webp" && isAnimatedWebp(context, uri)) return unchanged(size)
+        val effectiveBudget = if (size in 1..limit && stripExif) limit else budget
         // At most ~24 MP in memory (96 MB as ARGB): 48 MP ran phones out of memory, and nothing over the limit needs more.
         var sample = 1
         while ((bounds.outWidth / sample).toLong() * (bounds.outHeight / sample).toLong() > 24000000L) sample *= 2
@@ -238,10 +286,14 @@ object MediaCompressor {
         var outMime = "image/jpeg"
         try {
             if (transparent || mime == "image/png") {
+                if (stripExif && size in 1..limit && mime == "image/png") {
+                    val png = encode(current, Bitmap.CompressFormat.PNG, 100)
+                    if (png.size <= effectiveBudget) { bytes = png; extension = "png"; outMime = "image/png" }
+                }
                 // Pixel-exact first: lossless WebP often fits a screenshot or drawing that PNG made too big.
-                if (Build.VERSION.SDK_INT >= 30) {
+                if (bytes == null && Build.VERSION.SDK_INT >= 30) {
                     val lossless = encode(current, Bitmap.CompressFormat.WEBP_LOSSLESS, 100)
-                    if (lossless.size <= budget) { bytes = lossless; extension = "webp"; outMime = "image/webp" }
+                    if (lossless.size <= effectiveBudget) { bytes = lossless; extension = "webp"; outMime = "image/webp" }
                 }
             }
             val lossy = if (transparent) {
@@ -252,20 +304,20 @@ object MediaCompressor {
                 // Keep the picture whole while quality 88 or better fits. Otherwise shrink it straight to the size that should
                 // fit (file size follows the pixel count), always from the full picture so it is resampled once, not blurred a
                 // step at a time: usually one more round instead of up to ten.
-                var fit = bestQuality(current, lossy, 98, 88, budget, cancelled)
+                var fit = bestQuality(current, lossy, 98, 88, effectiveBudget, cancelled)
                 bytes = fit.bytes
                 val source = current
                 var scale = 1.0
                 var tries = 0
                 while (bytes == null && tries < 6) {
-                    val step = Math.sqrt(budget.toDouble() / Math.max(1L, fit.floorSize)) * 0.96
+                    val step = Math.sqrt(effectiveBudget.toDouble() / Math.max(1L, fit.floorSize)) * 0.96
                     scale *= Math.max(0.5, Math.min(0.95, step))
                     if (scale < 0.2) break
                     val smaller = Bitmap.createScaledBitmap(source, Math.max(1, Math.round(source.width * scale).toInt()),
                         Math.max(1, Math.round(source.height * scale).toInt()), true)
                     if (current !== source && current !== smaller) current.recycle()
                     current = smaller
-                    fit = bestQuality(current, lossy, 94, 88, budget, cancelled)
+                    fit = bestQuality(current, lossy, 94, 88, effectiveBudget, cancelled)
                     bytes = fit.bytes
                     tries++
                 }
@@ -578,6 +630,133 @@ object MediaCompressor {
             }
             try { extractor.release() } catch (_: Exception) { }
             if (!success) output.delete()
+        }
+    }
+
+    // --------------------------------------------------------- lossless trim & mute
+
+    private fun trimMedia(context: Context, uri: Uri, startMs: Long, endMs: Long, mute: Boolean, id: String, cancelled: AtomicBoolean): JSONObject {
+        check(!cancelled.get()) { "Media edit cancelled" }
+        val size = sourceSize(context, uri)
+        if (startMs <= 0L && endMs <= 0L && !mute) return unchanged(size)
+        val directory = outputDirectory(context)
+        val extractor = MediaExtractor()
+        var muxer: MediaMuxer? = null
+        var muxerStarted = false
+        var output: File? = null
+        var success = false
+        try {
+            extractor.setDataSource(context, uri, null)
+            require(extractor.drmInitData == null) { "Protected media is not supported" }
+            val trackCount = extractor.trackCount
+            val trackMap = IntArray(trackCount)
+            java.util.Arrays.fill(trackMap, -1)
+            var hasVideo = false
+            var hasAudio = false
+            var isWebm = false
+            var rotation = 0
+            var maxBufferSize = 1024 * 1024
+            var i = 0
+            while (i < trackCount) {
+                val format = extractor.getTrackFormat(i)
+                val mime = format.getString(MediaFormat.KEY_MIME) ?: ""
+                val isVid = mime.length >= 6 && mime.substring(0, 6) == "video/"
+                val isAud = mime.length >= 6 && mime.substring(0, 6) == "audio/"
+                if (isVid || (isAud && !mute)) {
+                    extractor.selectTrack(i)
+                    trackMap[i] = 0
+                    if (isVid) {
+                        hasVideo = true
+                        if (format.containsKey(MediaFormat.KEY_ROTATION)) {
+                            try { rotation = format.getInteger(MediaFormat.KEY_ROTATION) } catch (_: Exception) { }
+                        }
+                        if ((mime as java.lang.String).indexOf("vp8") >= 0 || (mime as java.lang.String).indexOf("vp9") >= 0) isWebm = true
+                    }
+                    if (isAud) {
+                        hasAudio = true
+                        if ((mime as java.lang.String).indexOf("vorbis") >= 0 || (mime as java.lang.String).indexOf("opus") >= 0) isWebm = true
+                    }
+                    if (format.containsKey(MediaFormat.KEY_MAX_INPUT_SIZE)) {
+                        try {
+                            val requested = format.getInteger(MediaFormat.KEY_MAX_INPUT_SIZE)
+                            if (requested > maxBufferSize && requested <= 16 * 1024 * 1024) maxBufferSize = requested
+                        } catch (_: Exception) { }
+                    }
+                }
+                i++
+            }
+            require(hasVideo || hasAudio) { "Cannot remove audio from an audio-only file" }
+            val ext = if (isWebm) "webm" else if (hasVideo) "mp4" else "m4a"
+            val outMime = if (isWebm) (if (hasVideo) "video/webm" else "audio/webm") else (if (hasVideo) "video/mp4" else "audio/mp4")
+            val muxFormat = if (isWebm) MediaMuxer.OutputFormat.MUXER_OUTPUT_WEBM else MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4
+            val outFile = File(directory, "$id.$ext")
+            output = outFile
+            val createdMuxer = MediaMuxer(outFile.absolutePath, muxFormat)
+            muxer = createdMuxer
+            if (hasVideo && rotation != 0 && !isWebm) {
+                try { createdMuxer.setOrientationHint(rotation) } catch (_: Exception) { }
+            }
+            i = 0
+            while (i < trackCount) {
+                if (trackMap[i] == 0) {
+                    trackMap[i] = createdMuxer.addTrack(extractor.getTrackFormat(i))
+                }
+                i++
+            }
+            createdMuxer.start()
+            muxerStarted = true
+
+            val startUs = if (startMs > 0L) startMs * 1000L else 0L
+            val endUs = if (endMs > 0L) endMs * 1000L else -1L
+            if (startUs > 0L) extractor.seekTo(startUs, MediaExtractor.SEEK_TO_CLOSEST_SYNC)
+
+            val buffer = java.nio.ByteBuffer.allocate(maxBufferSize)
+            val info = MediaCodec.BufferInfo()
+            var baseUs = -1L
+            var writtenSamples = 0
+            while (true) {
+                check(!cancelled.get()) { "Media edit cancelled" }
+                val trackIndex = extractor.sampleTrackIndex
+                if (trackIndex < 0) break
+                val sampleTime = extractor.sampleTime
+                if (endUs > 0L && sampleTime > endUs) break
+                val outTrack = if (trackIndex < trackCount) trackMap[trackIndex] else -1
+                if (outTrack >= 0) {
+                    buffer.clear()
+                    val sampleSize = extractor.readSampleData(buffer, 0)
+                    if (sampleSize < 0) break
+                    if (baseUs < 0L && sampleTime >= 0L) baseUs = sampleTime
+                    info.offset = 0
+                    info.size = sampleSize
+                    info.presentationTimeUs = if (baseUs >= 0L && sampleTime >= baseUs) sampleTime - baseUs else Math.max(0L, sampleTime)
+                    var flags = 0
+                    val sampleFlags = extractor.sampleFlags
+                    if ((sampleFlags and MediaExtractor.SAMPLE_FLAG_SYNC) != 0) flags = flags or MediaCodec.BUFFER_FLAG_KEY_FRAME
+                    if ((sampleFlags and MediaExtractor.SAMPLE_FLAG_PARTIAL_FRAME) != 0 && Build.VERSION.SDK_INT >= 26) {
+                        flags = flags or MediaCodec.BUFFER_FLAG_PARTIAL_FRAME
+                    }
+                    info.flags = flags
+                    createdMuxer.writeSampleData(outTrack, buffer, info)
+                    writtenSamples++
+                }
+                extractor.advance()
+            }
+            require(writtenSamples > 0) { "Selected time range contains no media frames" }
+            createdMuxer.stop()
+            muxerStarted = false
+            val length = outFile.length()
+            require(length > 0L) { "Media editor produced an empty file" }
+            success = true
+            return JSONObject().put("changed", true).put("uri", Uri.fromFile(outFile).toString())
+                .put("mimeType", outMime).put("extension", ext).put("size", length)
+        } finally {
+            val m = muxer
+            if (m != null) {
+                if (muxerStarted) try { m.stop() } catch (_: Exception) { }
+                try { m.release() } catch (_: Exception) { }
+            }
+            try { extractor.release() } catch (_: Exception) { }
+            if (!success && output != null) output.delete()
         }
     }
 }

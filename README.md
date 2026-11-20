@@ -35,8 +35,16 @@ You can also import `patches-<version>.mpp` from [Releases](https://github.com/x
 | | Keep media playing | Audio keeps playing in the background, videos pop out into a small window |
 | | Banners in Do Not Disturb | Silent in-app message banners while on Do Not Disturb |
 | | Always trust links and files | No link or download warnings (based on AlwaysTrust by zt and Trwy) |
-| | Jump to first message | Go straight to the start of a chat |
+| |Jump to first message | Go straight to the start of a chat |
 | | Favourite any image or video | Save any image or video to your GIF favourites |
+| | Keyword notifications | Get notified and log a match when a message contains your chosen words or regular expressions |
+| | Message bookmarks | Save messages to an offline bookmark list from the hold menu, search them and jump back to the chat |
+| | Privacy blur | Blur photos, videos, GIFs and link previews in chat until you tap to reveal them |
+| | Save all media | Download every image, video or audio attachment from a message in one tap |
+| | Preview link destination | Follow shortened links and show the final address before opening or copying |
+| | Preview ZIP archives | Inspect the files and read text inside `.zip` attachments without leaving Discord |
+| | Message reminders | Set a reminder on any message from the hold menu to get notified later and jump back to it |
+| | Render LaTeX math | Format inline and block LaTeX math in chat and open a clean formula view from the hold menu |
 | **Sending** | Send Nitro stickers and emojis as links | Sends Nitro emojis and stickers as image links |
 | | Bring back Tenor GIFs | Tenor GIFs in Discord's GIF picker |
 | | Fix link previews | Working embeds for X, Instagram, TikTok, Reddit and more, with tracking removed |
@@ -45,6 +53,8 @@ You can also import `patches-<version>.mpp` from [Releases](https://github.com/x
 | | Hide typing indicator | Others won't see you typing |
 | | Show file sizes when attaching | File sizes in the media picker |
 | | Anonymous file names | Sent files get random names (based on Anonymous File Names by k1ng_op) |
+| | Strip image metadata | Removes location, camera and date metadata from photos before you upload them |
+| | Trim and mute media | Cut the start and end of videos or audio and remove sound before uploading |
 | | Tap mentions to open profiles | Tap a typed @mention to open that profile (based on ClickableMentions by mwittrien) |
 | | Expand the message bar | A button that makes the message bar taller |
 | | Compress big files | Shrinks photos, videos and audio to fit the upload limit |
@@ -94,6 +104,7 @@ You can also import `patches-<version>.mpp` from [Releases](https://github.com/x
 | | Keep Bluetooth audio clear in calls | Keeps headphones in music quality during calls |
 | | Voice channel options | Join volume, audio output, join chimes and a goodbye sound |
 | | Fake deafen | Look deafened while still hearing the call (by maayan080) |
+| | App lock and secret DMs | Lock Discord with your fingerprint or screen lock and hide chosen DMs behind authentication |
 
 Venus settings also have **Language** (30 languages), **Backup and restore**, and **About** with debug logs and a crash screen.
 

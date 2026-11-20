@@ -1,3 +1,19 @@
+## [1.23.0](https://github.com/x2tora/tora-morphe/compare/v1.22.0...v1.23.0) (2026-11-20)
+
+### ✨ New Features
+
+* **Discord:** Added **Keyword notifications** to get notified and log matches when messages contain chosen keywords or regular expressions
+* **Discord:** Added **Message bookmarks** to save messages offline from the hold menu, search them and jump back to the chat
+* **Discord:** Added **Privacy blur** to blur photos, videos, GIFs and link previews in chat until tapped to reveal
+* **Discord:** Added **Save all media** to download every image, video or audio attachment from a message in one tap
+* **Discord:** Added **Strip image metadata** to remove EXIF location, camera and date metadata from photos before uploading
+* **Discord:** Added **Preview link destination** to follow shortened URLs and preview the final redirect address before opening
+* **Discord:** Added **Preview ZIP archives** to inspect file trees and read text/code inside `.zip` attachments in-app
+* **Discord:** Added **Message reminders** to schedule reminders on any message and jump back when notified
+* **Discord:** Added **App lock and secret DMs** to lock Discord with biometric/device credentials and hide chosen DMs
+* **Discord:** Added **Trim and mute media** to losslessly trim video/audio time ranges and strip audio tracks before uploading
+* **Discord:** Added **Render LaTeX math** to format inline `$...$` and block `$$...$$` math in chat and open a typeset MathML formula viewer
+
 ## [1.22.0](https://github.com/x2tora/tora-morphe/compare/v1.21.1...v1.22.0) (2026-11-20)
 
 ### 🚀 Updated App Support
