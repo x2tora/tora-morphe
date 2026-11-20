@@ -1,3 +1,13 @@
+## [1.23.5](https://github.com/x2tora/tora-morphe/compare/v1.23.4...v1.23.5) (2026-11-21)
+
+### 🐛 Bug Fixes
+
+* **Discord - App lock:** Fixed the **Relock timeout** and **Unlock animation** radio groups not rendering in App lock settings
+
+### 🔧 Improvements
+
+* **Discord - App lock:** Added an outward-expanding circular touch pulse ring that spreads beyond the keypad button bounds
+
 ## [1.23.4](https://github.com/x2tora/tora-morphe/compare/v1.23.3...v1.23.4) (2026-11-21)
 
 ### 🐛 Bug Fixes

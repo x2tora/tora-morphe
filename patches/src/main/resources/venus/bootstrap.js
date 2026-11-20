@@ -87,7 +87,7 @@
     if (features.appLock) selectModules([1385]);
     if (features.mediaEditor) selectModules([8311, 8333, 9901, 10366, 10680]);
     if (features.latexRender) selectModules([572, 6226, 8481, 10340, 11763]);
-    const revision = "1.23.4";
+    const revision = "1.23.5";
     // The Discord build these patches are pinned to (DiscordPatches.kt compatibleWith); shown on the About page.
     const DISCORD_VERSION = "354.12";
     // Module 120 owns setUpDefaltReactNativeEnvironment in this exact asset.
@@ -23945,17 +23945,40 @@
         const winW = (RN.Dimensions && typeof RN.Dimensions.get === "function" && RN.Dimensions.get("window")?.width) || 360;
         const keySize = Math.min(86, Math.max(72, Math.floor((winW - 88) / 3)));
         const rows = [["1", "2", "3"], ["4", "5", "6"], ["7", "8", "9"], ["CLR", "0", "DEL"]];
+        const Anim = RN && RN.Animated && RN.Animated.Value && RN.Animated.View ? RN.Animated : null;
+        const pulseRef = React.useRef(null);
+        if (!pulseRef.current && Anim) {
+            const map = {};
+            for (const r of rows) for (const c of r) map[c] = new Anim.Value(0);
+            pulseRef.current = map;
+        }
+        const firePulse = code => {
+            if (!Anim || !pulseRef.current || !pulseRef.current[code]) return;
+            const v = pulseRef.current[code];
+            v.stopAnimation();
+            v.setValue(0);
+            Anim.timing(v, {toValue:1, duration:340, useNativeDriver:true}).start();
+        };
         const keyBtn = code => {
             const label = code === "DEL" ? "\u232B" : code === "CLR" ? tr("Clear") : code;
             const isAction = code === "DEL" || code === "CLR";
-            return el(Press, {key:code, onPress:() => onKey(code),
-                style:state => [k.card, {width:keySize, height:keySize, borderRadius:keySize / 2, borderWidth:1.2, alignItems:"center", justifyContent:"center",
-                    backgroundColor:state && state.pressed ? (k.secondary && k.secondary.backgroundColor || "#3a3d45") : k.card.backgroundColor,
-                    borderColor:state && state.pressed ? brandColor : k.card.borderColor,
-                    transform:state && state.pressed ? [{scale:0.90}] : [{scale:1}]}]},
-                el(RN.Text, {style:[s.name, {fontSize:isAction ? 14 : 25, color:isAction ? s.muted.color : s.name.color}]}, label));
+            const pv = Anim && pulseRef.current && pulseRef.current[code];
+            const ring = pv ? el(Anim.View, {pointerEvents:"none", style:{
+                position:"absolute", width:keySize, height:keySize, borderRadius:keySize / 2,
+                borderWidth:2, borderColor:brandColor, backgroundColor:brandColor + "33",
+                opacity:pv.interpolate({inputRange:[0, 0.2, 1], outputRange:[0, 0.85, 0]}),
+                transform:[{scale:pv.interpolate({inputRange:[0, 1], outputRange:[1, 1.65]})}]
+            }}) : null;
+            return el(RN.View, {key:code, style:{width:keySize, height:keySize, overflow:"visible", alignItems:"center", justifyContent:"center"}},
+                ring,
+                el(Press, {onPressIn:() => firePulse(code), onPress:() => onKey(code),
+                    style:state => [k.card, {width:keySize, height:keySize, borderRadius:keySize / 2, borderWidth:1.2, alignItems:"center", justifyContent:"center",
+                        backgroundColor:state && state.pressed ? (k.secondary && k.secondary.backgroundColor || "#3a3d45") : k.card.backgroundColor,
+                        borderColor:state && state.pressed ? brandColor : k.card.borderColor,
+                        transform:state && state.pressed ? [{scale:0.92}] : [{scale:1}]}]},
+                    el(RN.Text, {style:[s.name, {fontSize:isAction ? 14 : 25, color:isAction ? s.muted.color : s.name.color}]}, label)));
         };
-        const content = el(RN.View, {style:{minHeight:520, justifyContent:"space-between", paddingHorizontal:16, paddingTop:12, paddingBottom:32, gap:20, alignItems:"center"}},
+        const content = el(RN.View, {style:{minHeight:520, justifyContent:"space-between", paddingHorizontal:16, paddingTop:12, paddingBottom:32, gap:20, alignItems:"center", overflow:"visible"}},
             el(RN.View, {style:{alignItems:"center", gap:12, width:"100%"}},
                 el(RN.View, {style:[k.secondary, {width:48, height:48, borderRadius:24, alignItems:"center", justifyContent:"center"}]},
                     el(Lock, {size:"md", color:k.brandFg.color})),
@@ -23971,9 +23994,9 @@
                         }});
                     })),
                 mismatch ? el(RN.Text, {style:{color:"#f23f43", fontSize:13, fontWeight:"600"}}, tr("PINs do not match. Try again.")) : null),
-            el(RN.View, {style:{width:"100%", alignItems:"center", gap:14}},
-                el(RN.View, {style:{alignItems:"center", gap:12}},
-                    rows.map((r, idx) => el(RN.View, {key:String(idx), style:{flexDirection:"row", justifyContent:"center", gap:18}}, r.map(keyBtn)))),
+            el(RN.View, {style:{width:"100%", alignItems:"center", gap:14, overflow:"visible"}},
+                el(RN.View, {style:{alignItems:"center", gap:12, overflow:"visible"}},
+                    rows.map((r, idx) => el(RN.View, {key:String(idx), style:{flexDirection:"row", justifyContent:"center", gap:18, overflow:"visible"}}, r.map(keyBtn)))),
                 step === 1
                     ? (Button ? el(Button, {text:tr("Next"), size:"lg", variant:"primary", style:{width:"100%"}, disabled:firstPin.length < 4, onPress:goNext}) : null)
                     : (Button ? el(Button, {text:tr("Start over"), size:"md", variant:"secondary", style:{width:"100%"}, onPress:restart}) : null))
@@ -23998,7 +24021,7 @@
         useLanguage();
         const ui = reviewUI(), on = enabled("appLock");
         if (!RN) return null;
-        const Group = ui.TableRowGroup || RN.View, Radio = ui.TableRadioRow, Switch = ui.TableSwitchRow;
+        const Group = ui.TableRowGroup || RN.View, Switch = ui.TableSwitchRow;
         const [bioSupported, setBioSupported] = React.useState(null);
         React.useEffect(() => {
             diagCall("biometricCheck", "").then(res => setBioSupported(res === "1")).catch(() => setBioSupported(false));
@@ -24006,6 +24029,12 @@
         const pinStr = String(settings.appLockPin || "");
         const hasPin = pinStr.length >= 4;
         const timeouts = [[0, "Immediately"], [30, "After 30 seconds"], [60, "After 1 minute"], [300, "After 5 minutes"], [900, "After 15 minutes"]];
+        const animChoices = [
+            ["slideUp", "Lock opens & slides up", "Opens the padlock icon and slides the lock screen up."],
+            ["fadeScale", "Fade & zoom", "Gently fades and zooms out after unlocking."],
+            ["curtain", "Split & dissolve", "Slides the header up and keypad down in opposite directions."],
+            ["none", "Instant", "Closes immediately with no animation."]
+        ];
         const openPinSheet = () => {
             if (!on) return;
             haptic("SELECTION");
@@ -24035,20 +24064,8 @@
                     icon:rowIcon(15004, "ShieldLockIcon"),
                     onValueChange:v => { haptic("SELECTION"); setSetting("appLockBiometric", !!v); }}) : null,
                 hasPin ? actionRow(ui, "clearPin", "Remove PIN", "Clears your custom PIN passcode.", clearPin, !on, true) : null),
-            el(Group, {key:"timeout", title:tr("Relock timeout")},
-                timeouts.map(([sec, label]) => Radio ? el(Radio, {key:String(sec), label:tr(label), selected:settings.appLockTimeout === sec,
-                    disabled:!on, onPress:() => { haptic("SELECTION"); setSetting("appLockTimeout", sec); }}) : null)),
-            el(Group, {key:"anim", title:tr("Unlock animation")},
-                Radio ? [
-                    el(Radio, {key:"slideUp", label:tr("Lock opens & slides up"), subLabel:tr("Opens the padlock icon and slides the lock screen up."),
-                        selected:settings.appLockAnim === "slideUp", disabled:!on, onPress:() => { haptic("SELECTION"); setSetting("appLockAnim", "slideUp"); }}),
-                    el(Radio, {key:"fadeScale", label:tr("Fade & zoom"), subLabel:tr("Gently fades and zooms out after unlocking."),
-                        selected:settings.appLockAnim === "fadeScale", disabled:!on, onPress:() => { haptic("SELECTION"); setSetting("appLockAnim", "fadeScale"); }}),
-                    el(Radio, {key:"curtain", label:tr("Split & dissolve"), subLabel:tr("Slides the header up and keypad down in opposite directions."),
-                        selected:settings.appLockAnim === "curtain", disabled:!on, onPress:() => { haptic("SELECTION"); setSetting("appLockAnim", "curtain"); }}),
-                    el(Radio, {key:"none", label:tr("Instant"), subLabel:tr("Closes immediately with no animation."),
-                        selected:settings.appLockAnim === "none", disabled:!on, onPress:() => { haptic("SELECTION"); setSetting("appLockAnim", "none"); }})
-                ] : null),
+            radioGroup(ui, "timeout", "Relock timeout", "appLockTimeout", on, timeouts),
+            radioGroup(ui, "anim", "Unlock animation", "appLockAnim", on, animChoices),
             el(Group, {key:"test", title:tr("Test")},
                 actionRow(ui, "testLock", "Test lock screen now", "Opens the native lock overlay right now to verify your PIN.",
                     () => { haptic("SELECTION"); appLockSync(false); diagCall("lockTest", "").catch(() => {}); }, !on, false, rowIcon(8771, "LockIcon"))),

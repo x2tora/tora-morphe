@@ -1601,6 +1601,8 @@ object Diagnostics {
             val root = LinearLayout(activity)
             root.orientation = LinearLayout.VERTICAL
             root.gravity = Gravity.CENTER_HORIZONTAL
+            root.clipChildren = false
+            root.clipToPadding = false
             root.setBackgroundColor(BG)
             root.setPadding(dpPx(activity, 24), dpPx(activity, 36), dpPx(activity, 24), dpPx(activity, 32))
 
@@ -1807,6 +1809,8 @@ object Diagnostics {
                 val keyContainer = LinearLayout(activity)
                 keyContainer.orientation = LinearLayout.VERTICAL
                 keyContainer.gravity = Gravity.CENTER_HORIZONTAL
+                keyContainer.clipChildren = false
+                keyContainer.clipToPadding = false
                 keyContainerRef = keyContainer
                 val dm = activity.resources.displayMetrics
                 val colGap = dpPx(activity, 16)
@@ -1818,14 +1822,30 @@ object Diagnostics {
                     val rowView = LinearLayout(activity)
                     rowView.orientation = LinearLayout.HORIZONTAL
                     rowView.gravity = Gravity.CENTER
+                    rowView.clipChildren = false
+                    rowView.clipToPadding = false
                     val rowArr = rows[r]
                     for (cIdx in 0 until rowArr.size) {
                         val code = rowArr[cIdx]
+                        val keySlot = android.widget.FrameLayout(activity)
+                        keySlot.clipChildren = false
+                        keySlot.clipToPadding = false
+
+                        val pulseRing = View(activity)
+                        val pulseBg = GradientDrawable()
+                        pulseBg.shape = GradientDrawable.OVAL
+                        pulseBg.setColor(if ((code as java.lang.String).equals("BIO")) 0x385865F2 else 0x2E7289DA)
+                        pulseBg.setStroke(dpPx(activity, 2), if (code.equals("BIO")) 0xCC7289DA.toInt() else 0xAAFFFFFF.toInt())
+                        pulseRing.background = pulseBg
+                        pulseRing.alpha = 0f
+                        pulseRing.visibility = View.INVISIBLE
+                        keySlot.addView(pulseRing, android.widget.FrameLayout.LayoutParams(keySize, keySize))
+
                         val keyBtn = TextView(activity)
                         keyBtn.gravity = Gravity.CENTER
                         keyBtn.setTextColor(TEXT)
                         keyBtn.typeface = Typeface.create("sans-serif-medium", Typeface.BOLD)
-                        if ((code as java.lang.String).equals("DEL")) {
+                        if (code.equals("DEL")) {
                             keyBtn.text = "\u232B"
                             keyBtn.textSize = 22f
                         } else if (code.equals("CLR")) {
@@ -1854,7 +1874,19 @@ object Diagnostics {
                                 if (v == null || event == null) return false
                                 val action = event.actionMasked
                                 if (action == android.view.MotionEvent.ACTION_DOWN) {
-                                    v.animate().scaleX(0.90f).scaleY(0.90f).setDuration(60L).start()
+                                    v.animate().scaleX(0.92f).scaleY(0.92f).setDuration(60L).start()
+                                    pulseRing.animate().cancel()
+                                    pulseRing.visibility = View.VISIBLE
+                                    pulseRing.scaleX = 1.0f
+                                    pulseRing.scaleY = 1.0f
+                                    pulseRing.alpha = 0.90f
+                                    pulseRing.animate()
+                                        .scaleX(1.65f)
+                                        .scaleY(1.65f)
+                                        .alpha(0f)
+                                        .setDuration(360L)
+                                        .setInterpolator(android.view.animation.DecelerateInterpolator(1.8f))
+                                        .start()
                                 } else if (action == android.view.MotionEvent.ACTION_UP || action == android.view.MotionEvent.ACTION_CANCEL) {
                                     v.animate().scaleX(1.0f).scaleY(1.0f).setDuration(140L)
                                         .setInterpolator(android.view.animation.OvershootInterpolator(1.6f)).start()
@@ -1905,9 +1937,10 @@ object Diagnostics {
                                 }
                             }
                         })
+                        keySlot.addView(keyBtn, android.widget.FrameLayout.LayoutParams(keySize, keySize))
                         val kLp = LinearLayout.LayoutParams(keySize, keySize)
                         if (cIdx > 0) kLp.leftMargin = colGap
-                        rowView.addView(keyBtn, kLp)
+                        rowView.addView(keySlot, kLp)
                     }
                     val rLp = LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT)
                     if (r > 0) rLp.topMargin = rowGap
