@@ -903,11 +903,11 @@ def build():
         "--output", dex, classes)
     # Same JVM classes + classes.dex layout and manifest keys as the official plugin.
     manifest = "\r\n".join([
-        "Manifest-Version: 1.0", "Name: Venus Patches",
+        "Manifest-Version: 1.0", "Name: Venus Patches (xitora)",
         "Description: Extra features and privacy options for Discord on Android.",
         f"Version: {VERSION}", "Patcher-Version: 1.15.0",
-        "Source: https://github.com/VenusIsJaded/Venus-Patches",
-        "Author: VenusIsJaded", "License: GPL-3.0", "", "",
+        "Source: https://github.com/x2tora/Venus-Patches",
+        "Author: xitora", "License: GPL-3.0", "", "",
     ])
     bundle = libs / ASSET_NAME
     # Normalize ZIP timestamps, order and modes so identical inputs produce identical bundles.
