@@ -87,7 +87,7 @@
     if (features.appLock) selectModules([1385]);
     if (features.mediaEditor) selectModules([8311, 8333, 9901, 10366, 10680]);
     if (features.latexRender) selectModules([572, 6226, 8481, 10340, 11763]);
-    const revision = "1.23.5";
+    const revision = "1.23.6";
     // The Discord build these patches are pinned to (DiscordPatches.kt compatibleWith); shown on the About page.
     const DISCORD_VERSION = "354.12";
     // Module 120 owns setUpDefaltReactNativeEnvironment in this exact asset.
@@ -334,6 +334,7 @@
         i18n.version++; i18n.shownIn = uiLanguage();
         diagSendStrings();
         if (features.backgroundMedia) backgroundMediaLabels();
+        if (features.appLock) appLockSync(false);
         notify("*");
         // Only the "Translated from ..." line under a translation is in Venus's language: redraw just those rows,
         // not every message on screen, and nothing while the feature is off or that line isn't shown.
@@ -877,7 +878,7 @@
             if (features.hideBlocked && enabled("hideBlocked")) hideBlockedChanged();
             if (features.experiments && enabled("experiments")) experimentsEnable();
             if (features.keywordNotify) { keywordNotifyCompile(); keywordNotifySync(); }
-            if (features.appLock) appLockSync(false);
+            if (features.appLock && (uiLanguage() === "en" || i18n.packs.has(uiLanguage()))) appLockSync(false);
             if (features.reminders) remindersSync();
             if (features.quests || features.badges || features.userNotif || features.removedAlerts || features.keywordNotify) backgroundSync();
             // Saved translations are read as soon as Discord starts, so the first chat you open already has them.
@@ -23080,7 +23081,16 @@
         useLanguage();
         const ui = reviewUI(), on = enabled("keywordNotify");
         if (!RN) return null;
-        const Group = ui.TableRowGroup || RN.View, Switch = ui.TableSwitchRow, Radio = ui.TableRadioRow, Row = ui.TableRow;
+        const Group = ui.TableRowGroup || RN.View, Switch = ui.TableSwitchRow, Row = ui.TableRow;
+        const RadioGroup = inspectedExport(7157, "TableRadioGroup"), Radio = inspectedExport(7160, "TableRadioRow");
+        const modeChoices = [
+            ["contains", tr("Contains phrase"), tr("Matches anywhere in a message (e.g. giveaway).")],
+            ["exact", tr("Exact word"), tr("Matches only as a whole word (won't match inside another word).")],
+            ["all", tr("All words"), tr("Matches when every space-separated word appears anywhere in the message.")],
+            ["starts", tr("Starts with"), tr("Matches messages that begin with this text.")],
+            ["ends", tr("Ends with"), tr("Matches messages that end with this text.")],
+            ["regex", tr("Regex (advanced)"), tr("Custom regular expression pattern (e.g. v\\d+\\.\\d+).")]
+        ];
         const [mode, setMode] = React.useState("contains");
         const [draft, setDraft] = React.useState("");
         const [showServers, setShowServers] = React.useState(false);
@@ -23134,9 +23144,12 @@
                     inputWithButton(ui, "kwInput", {value:draft, label:tr("Keyword or phrase"), placeholder:tr(placeholders[mode] || "Type word"),
                         editable:on, isDisabled:!on, returnKeyType:"done", onSubmitEditing:addRule},
                         text => setDraft(String(text || "")), "Add", addRule, !on || !String(draft || "").trim()))),
-            el(Group, {key:"matchMode", title:tr("Match mode")},
-                KEYWORD_MODES.map(([m, label, sub]) => Radio ? el(Radio, {key:m, label:tr(label), subLabel:tr(sub), selected:mode === m,
-                    disabled:!on, onPress:() => { haptic("SELECTION"); setMode(m); }}) : null)),
+            RadioGroup && Radio
+                ? el(RadioGroup, {key:"matchMode", title:tr("Match mode"), value:mode, onChange:v => { haptic("SELECTION"); setMode(v); }},
+                    modeChoices.map(([m, label, sub]) => el(Radio, {key:m, value:m, label, subLabel:sub, disabled:!on})))
+                : el(Group, {key:"matchMode", title:tr("Match mode")},
+                    modeChoices.map(([m, label, sub]) => Row ? el(Row, {key:m, label:(mode === m ? "\u2713 " : "") + label, subLabel:sub,
+                        disabled:!on, onPress:() => { haptic("SELECTION"); setMode(m); }}) : null)),
             rules.length && Row ? el(Group, {key:"activeRules", title:pl(rules.length, "{n} active rule", "{n} active rules")},
                 rules.map((r, i) => el(Row, {key:i + ":" + r.mode + ":" + r.value, label:r.value, subLabel:tr(KEYWORD_MODE_LABEL[r.mode] || "Contains phrase"),
                     icon:rowIcon(9321, "BellIcon"), trailing:venusIcon(5894, "TrashIcon") ? el(venusIcon(5894, "TrashIcon"), {size:"sm", color:"#f23f43"}) : undefined,
@@ -24028,7 +24041,6 @@
         }, []);
         const pinStr = String(settings.appLockPin || "");
         const hasPin = pinStr.length >= 4;
-        const timeouts = [[0, "Immediately"], [30, "After 30 seconds"], [60, "After 1 minute"], [300, "After 5 minutes"], [900, "After 15 minutes"]];
         const openPinSheet = () => {
             if (!on) return;
             haptic("SELECTION");
@@ -24058,7 +24070,13 @@
                     icon:rowIcon(15004, "ShieldLockIcon"),
                     onValueChange:v => { haptic("SELECTION"); setSetting("appLockBiometric", !!v); }}) : null,
                 hasPin ? actionRow(ui, "clearPin", "Remove PIN", "Clears your custom PIN passcode.", clearPin, !on, true) : null),
-            radioGroup(ui, "timeout", "Relock timeout", "appLockTimeout", on, timeouts),
+            radioGroup(ui, "timeout", "Relock timeout", "appLockTimeout", on, [
+                [0, "Immediately"],
+                [30, "After 30 seconds"],
+                [60, "After 1 minute"],
+                [300, "After 5 minutes"],
+                [900, "After 15 minutes"]
+            ]),
             radioGroup(ui, "anim", "Unlock animation", "appLockAnim", on, [
                 ["slideUp", "Lock opens & slides up", "Opens the padlock icon and slides the lock screen up."],
                 ["fadeScale", "Fade & zoom", "Gently fades and zooms out after unlocking."],
@@ -24324,18 +24342,15 @@
         useLanguage();
         const ui = reviewUI(), on = enabled("mediaEditor");
         if (!RN) return null;
-        const Group = ui.TableRowGroup || RN.View, Switch = ui.TableSwitchRow, Radio = ui.TableRadioRow;
-        const modes = [
-            ["ask", "Ask before uploading", "Also opens the Trim & Mute dialog on Send if you didn't edit in attachment preview."],
-            ["manual", "Attachment preview button only", "Tap an attached video or audio item to open Trim & Mute; never prompts automatically on Send."],
-            ["mute", "Always mute videos automatically", "Strips the audio track from uploaded videos right away without showing a dialog."]
-        ];
+        const Group = ui.TableRowGroup || RN.View, Switch = ui.TableSwitchRow;
         const groups = [
             on ? null : offCard("status", venusIcon(10383, "PencilIcon"), "mediaEditor"),
             el(MediaEditorPreview, {key:"preview", on}),
-            el(Group, {key:"mode", title:tr("When attaching or sending media")},
-                modes.map(([m, label, sub]) => Radio ? el(Radio, {key:m, label:tr(label), subLabel:tr(sub), selected:settings.mediaEditorMode === m,
-                    disabled:!on, onPress:() => { haptic("SELECTION"); setSetting("mediaEditorMode", m); }}) : null)),
+            radioGroup(ui, "mode", "When attaching or sending media", "mediaEditorMode", on, [
+                ["ask", "Ask before uploading", "Also opens the Trim & Mute dialog on Send if you didn't edit in attachment preview."],
+                ["manual", "Attachment preview button only", "Tap an attached video or audio item to open Trim & Mute; never prompts automatically on Send."],
+                ["mute", "Always mute videos automatically", "Strips the audio track from uploaded videos right away without showing a dialog."]
+            ]),
             el(Group, {key:"defaults", title:tr("Dialog defaults")},
                 switchRow(Switch, "mediaEditorDefaultMute", "Pre-select Remove audio in dialog", "Starts the Trim & Mute dialog with the mute checkbox checked.", rowIcon(9351, "HeadphonesSlashIcon"))),
             footnote("info", "Tap any attached video or audio thumbnail in the composer bar to open Trim & Mute Media, right next to Spoiler and Description.")

@@ -138,6 +138,28 @@ object Diagnostics {
                 appLockBiometric = json.optBoolean("biometric", false)
                 val anim = json.optString("anim", "slideUp")
                 if (anim.length > 0) appLockAnim = anim
+                val lTitle = json.optString("title", "")
+                if (lTitle.length > 0) lockLabelTitle = lTitle
+                val lSub = json.optString("subtitle", "")
+                if (lSub.length > 0) lockLabelSub = lSub
+                val lHint = json.optString("hint", "")
+                if (lHint.length > 0) lockLabelPinHint = lHint
+                val lWrong = json.optString("wrongPin", "")
+                if (lWrong.length > 0) lockLabelWrong = lWrong
+                val lUnlock = json.optString("unlock", "")
+                if (lUnlock.length > 0) lockLabelUnlock = lUnlock
+                val lNoPin = json.optString("noPin", "")
+                if (lNoPin.length > 0) lockLabelNoPin = lNoPin
+                val lBioTitle = json.optString("bioTitle", "")
+                if (lBioTitle.length > 0) lockLabelBioTitle = lBioTitle
+                val lBioSub = json.optString("bioSub", "")
+                if (lBioSub.length > 0) lockLabelBioSub = lBioSub
+                val lUsePin = json.optString("usePin", "")
+                if (lUsePin.length > 0) lockLabelUsePin = lUsePin
+                val lClear = json.optString("clear", "")
+                if (lClear.length > 0) lockLabelClear = lClear
+                val lUseBio = json.optString("useBio", "")
+                if (lUseBio.length > 0) lockLabelUseBio = lUseBio
                 if (appLockOn) {
                     appLockUnlockedInSession = false
                     lockRequired = true
@@ -1618,8 +1640,13 @@ object Diagnostics {
             badgeBg.setColor(0x265865F2)
             badgeWrap.background = badgeBg
             val lockImg = android.widget.ImageView(activity)
-            val lockResId = activity.resources.getIdentifier("lock", "drawable", activity.packageName)
-            lockImg.setImageResource(if (lockResId != 0) lockResId else android.R.drawable.ic_lock_lock)
+            val lockResId = activity.resources.getIdentifier(
+                "design_components_icon_native_redesign_generated_images_lockicon",
+                "drawable",
+                activity.packageName
+            )
+            val fallbackLockId = if (lockResId != 0) lockResId else activity.resources.getIdentifier("lock", "drawable", activity.packageName)
+            lockImg.setImageResource(if (fallbackLockId != 0) fallbackLockId else android.R.drawable.ic_lock_lock)
             lockImg.setColorFilter(BRAND, android.graphics.PorterDuff.Mode.SRC_IN)
             badgeWrap.addView(lockImg, LinearLayout.LayoutParams(dpPx(activity, 28), dpPx(activity, 28)))
             val badgeLp = LinearLayout.LayoutParams(dpPx(activity, 60), dpPx(activity, 60))
@@ -1691,22 +1718,26 @@ object Diagnostics {
                     okBg.setColor(0x2623A55A)
                     badgeWrap.background = okBg
                     lockImg.setColorFilter(0xFF23A55A.toInt(), android.graphics.PorterDuff.Mode.SRC_IN)
+                    val openResId = activity.resources.getIdentifier(
+                        "design_components_icon_native_redesign_generated_images_lockunlockedicon",
+                        "drawable",
+                        activity.packageName
+                    )
+                    if (openResId != 0) lockImg.setImageResource(openResId)
+                    lockImg.animate()
+                        .translationY(-dpPx(activity, 3).toFloat())
+                        .rotation(-12f)
+                        .scaleX(1.16f)
+                        .scaleY(1.16f)
+                        .setDuration(130L)
+                        .start()
+                    badgeWrap.animate()
+                        .scaleX(1.14f)
+                        .scaleY(1.14f)
+                        .setDuration(130L)
+                        .start()
 
                     if (animMode.equals("slideUp")) {
-                        val openResId = activity.resources.getIdentifier("lock_open", "drawable", activity.packageName)
-                        if (openResId != 0) lockImg.setImageResource(openResId)
-                        lockImg.animate()
-                            .translationY(-dpPx(activity, 3).toFloat())
-                            .rotation(-14f)
-                            .scaleX(1.15f)
-                            .scaleY(1.15f)
-                            .setDuration(130L)
-                            .start()
-                        badgeWrap.animate()
-                            .scaleX(1.14f)
-                            .scaleY(1.14f)
-                            .setDuration(130L)
-                            .start()
                         val dm = activity.resources.displayMetrics
                         val slideDist = (if (root.height > 0) root.height else dm.heightPixels).toFloat()
                         root.animate()

@@ -1,3 +1,10 @@
+## [1.23.6](https://github.com/x2tora/tora-morphe/compare/v1.23.5...v1.23.6) (2026-11-21)
+
+### 🐛 Bug Fixes
+
+* **Discord - App lock:** Fixed the padlock not opening on unlock by using Discord's native closed/unlocked padlock drawables, and fixed localized lock screen labels reverting to English on launch
+* **Discord - Settings:** Fixed radio groups in **Keyword notifications** and **Trim and mute media** (`TableRadioRow`), and translated all **Relock timeout** and **Keyword match mode** options across all 29 non-English language packs
+
 ## [1.23.5](https://github.com/x2tora/tora-morphe/compare/v1.23.4...v1.23.5) (2026-11-21)
 
 ### 🐛 Bug Fixes
