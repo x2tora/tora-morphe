@@ -1,3 +1,17 @@
+## [1.23.10](https://github.com/x2tora/tora-morphe/compare/v1.23.9...v1.23.10) (2026-11-22)
+
+### 🐛 Bug Fixes
+
+* **Discord - Bookmarks & Reminders:** Fixed bookmark search bar props (`value`/`onChange`) and replaced Android `Alert` popups with Discord's native action sheet (`showSimpleActionSheet`)
+* **Discord - Privacy blur:** Fixed "Blur revealed messages again" not immediately redrawing already-open chat messages
+* **Discord - ZIP preview:** Fixed multiple ZIP archives overwriting a single cache file (`preview.zip`) by hashing cache paths per URL and capping `zipDropdown` memory
+* **Discord - App lock:** Fixed `appLockPin` being included in exported backup JSON and guarded PIN keypad pulse color against non-hex theme tokens
+
+### 🔧 Improvements
+
+* **Discord - Trim and mute media:** Unified the "Ask before uploading" prompt onto Discord's native `MediaEditorSheet` instead of an unlocalized Android dialog
+* **Discord - LaTeX & Reminders:** Synced LaTeX formula modal theme (light/dark) and localized all remaining native dialog and notification channel strings across all 29 non-English language packs
+
 ## [1.23.9](https://github.com/x2tora/tora-morphe/compare/v1.23.8...v1.23.9) (2026-11-21)
 
 ### 🔧 Improvements

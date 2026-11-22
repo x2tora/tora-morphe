@@ -87,7 +87,7 @@
     if (features.appLock) selectModules([1385]);
     if (features.mediaEditor) selectModules([8311, 8333, 9901, 10366, 10680]);
     if (features.latexRender) selectModules([572, 6226, 8481, 10340, 11763]);
-    const revision = "1.23.9";
+    const revision = "1.23.10";
     // The Discord build these patches are pinned to (DiscordPatches.kt compatibleWith); shown on the About page.
     const DISCORD_VERSION = "354.12";
     // Module 120 owns setUpDefaltReactNativeEnvironment in this exact asset.
@@ -2704,7 +2704,9 @@
         return Object.keys(defaults).every(key => !features[featureFor(key)] && key !== "language" || settings[key] === defaults[key]);
     }
     function backupText() {
-        const out = {app:BACKUP_APP, format:BACKUP_FORMAT, version:revision, created:new Date().toISOString(), settings:Object.assign({}, settings)};
+        const exported = Object.assign({}, settings);
+        delete exported.appLockPin;
+        const out = {app:BACKUP_APP, format:BACKUP_FORMAT, version:revision, created:new Date().toISOString(), settings:exported};
         if (features.userNotif && userNotif.ids.size) out.people = Array.from(userNotif.ids);
         if (features.customThemes && customThemes.list.length) out.themes = {active:customThemes.active || "", list:customThemes.list.slice(0, THEMES_MAX)};
         if (features.iconPacks && (iconPacks.active || iconPacks.custom.length))
@@ -23382,17 +23384,29 @@
                 switchRow(Switch, "bookmarksHighlight", "Highlight bookmarked messages", "Shows a gold tint and ★ Bookmarked tag on saved messages in chat.", rowIcon(10216, "StarIcon")),
                 switchRow(Switch, "bookmarksProfileShortcut", "Profile menu shortcut", "Adds a Bookmarks icon next to Quests, Shop and Settings on the You tab.", rowIcon(10216, "StarIcon"))),
             SearchField ? el(RN.View, {key:"search", style:{paddingHorizontal:4}},
-                el(SearchField, {placeholder:tr("Search bookmarks\u2026"), query, onChangeText:setQuery, onClear:() => setQuery("")})) : null,
+                el(SearchField, {placeholder:tr("Search bookmarks\u2026"), accessibilityLabel:tr("Search bookmarks\u2026"), value:query, onChange:t => setQuery(String(t || "")), autoCorrect:false, autoCapitalize:"none"})) : null,
             filtered.length && Row ? el(Group, {key:"list", title:pl(filtered.length, "{n} bookmark", "{n} bookmarks")},
                 filtered.slice(0, 100).map(b => el(Row, {key:b.id, label:b.u + " \u2022 " + new Date(b.t).toLocaleDateString(),
                     subLabel:b.x || tr("(No text content)"), arrow:true,
                     onPress:() => {
                         haptic("SELECTION");
+                        const bmKey = "VenusBookmarkAction";
+                        const options = [
+                            {label:tr("Jump to Message"), IconComponent:venusIcon(10962, "ArrowSmallRightIcon"), onPress:() => { hideReviewSheet(ui, bmKey); jumpToChatMessage(b.g, b.c, b.id); }},
+                            {label:tr("Delete"), IconComponent:venusIcon(5894, "TrashIcon"), isDestructive:true, onPress:() => {
+                                hideReviewSheet(ui, bmKey);
+                                bookmarks.ids.delete(b.id); bookmarks.list = bookmarks.list.filter(x => x.id !== b.id);
+                                save(); notify("bookmarks"); later(messageHighlightRedraw, 0);
+                            }}
+                        ];
+                        if (typeof ui.simpleSheet === "function") {
+                            try { ui.simpleSheet({key:bmKey, header:{title:b.u, onClose:() => hideReviewSheet(ui, bmKey)}, options}); return; } catch (_) {}
+                        }
                         if (RN.Alert && typeof RN.Alert.alert === "function") {
                             RN.Alert.alert(b.u, b.x || tr("(No text content)"), [
-                                {text:tr("Delete"), style:"destructive", onPress:() => { bookmarks.ids.delete(b.id); bookmarks.list = bookmarks.list.filter(x => x.id !== b.id); save(); notify("bookmarks"); later(messageHighlightRedraw, 0); }},
+                                {text:tr("Delete"), style:"destructive", onPress:options[1].onPress},
                                 {text:tr("Cancel"), style:"cancel"},
-                                {text:tr("Jump to Message"), onPress:() => jumpToChatMessage(b.g, b.c, b.id)}
+                                {text:tr("Jump to Message"), onPress:options[0].onPress}
                             ]);
                         } else {
                             jumpToChatMessage(b.g, b.c, b.id);
@@ -23473,7 +23487,7 @@
             privacyBlur.revealed.size ? el(Group, {key:"reset", title:tr("Revealed messages")},
                 actionRow(ui, "reblur", "Blur revealed messages again",
                     pl(privacyBlur.revealed.size, "{n} message currently revealed", "{n} messages currently revealed"),
-                    () => { haptic("SELECTION"); privacyBlur.revealed.clear(); notify("privacyBlur"); reviewToast(ui, "All media blurred again", venusIcon(7195, "EyeSlashIcon")); }, !on, false)) : null,
+                    () => { haptic("SELECTION"); privacyBlur.revealed.clear(); notify("privacyBlur"); later(messageHighlightRedraw, 0); reviewToast(ui, "All media blurred again", venusIcon(7195, "EyeSlashIcon")); }, !on, false)) : null,
             footnote("hint", "Media uses Discord's native spoiler overlay for maximum stability. Tap once in chat or use the hold menu to reveal.")
         ];
         return settingsBody(ui, groups);
@@ -23579,6 +23593,15 @@
     // ------------------------------------------------- 6. ZIP archive preview
     const ZIP_PREVIEW_SHEET = "VenusZipPreview";
     const zipDropdown = new Map();
+    function zipDropdownSet(id, state) {
+        if (zipDropdown.has(id)) zipDropdown.delete(id);
+        zipDropdown.set(id, state);
+        while (zipDropdown.size > 40) {
+            const oldest = zipDropdown.keys().next().value;
+            if (oldest == null) break;
+            zipDropdown.delete(oldest);
+        }
+    }
     function zipPreviewAttachment(message) {
         if (!message || !Array.isArray(message.attachments)) return null;
         for (let i = 0; i < message.attachments.length; i++) {
@@ -23628,11 +23651,11 @@
             localEditRedraw(channelId, messageId);
             return true;
         }
-        zipDropdown.set(messageId, {loading:true, expanded:false, entries:null, total:0});
+        zipDropdownSet(messageId, {loading:true, expanded:false, entries:null, total:0});
         localEditRedraw(channelId, messageId);
         diagCall("zipList", JSON.stringify({url:zip.url, name:zip.filename || "archive.zip"})).then(raw => {
             const parsed = JSON.parse(raw);
-            zipDropdown.set(messageId, {loading:false, expanded:true, entries:parsed.entries || [], total:parsed.total || 0});
+            zipDropdownSet(messageId, {loading:false, expanded:true, entries:parsed.entries || [], total:parsed.total || 0});
             localEditRedraw(channelId, messageId);
         }, err => {
             zipDropdown.delete(messageId);
@@ -23663,7 +23686,7 @@
         diagCall("zipList", JSON.stringify({url:att.url, name:att.filename || "archive.zip"})).then(raw => {
             const data = JSON.parse(raw);
             if (typeof ui.showSheet === "function") {
-                ui.showSheet({key:ZIP_PREVIEW_SHEET, content:el(ZipPreviewSheet, {name:att.filename || "archive.zip", data}), stackingBehavior:"stack"});
+                ui.showSheet({key:ZIP_PREVIEW_SHEET, content:el(ZipPreviewSheet, {name:att.filename || "archive.zip", url:att.url, data}), stackingBehavior:"stack"});
             }
         }, err => {
             showToast(ui, "venus-zip-err", tr("Couldn't read ZIP archive: {err}", {err:String(err)}), icon);
@@ -23683,7 +23706,7 @@
                 return;
             }
             haptic("SELECTION");
-            diagCall("zipRead", JSON.stringify({entry:entry.name})).then(raw => {
+            diagCall("zipRead", JSON.stringify({url:props.url || "", entry:entry.name})).then(raw => {
                 setReading(JSON.parse(raw));
             }, err => {
                 showToast(ui, "venus-zip-read-err", String(err), venusIcon(11226, "FileIcon"));
@@ -23778,7 +23801,11 @@
                 changed = true;
                 const title = tr("Reminder: {user}", {user:r.u});
                 showToast(reviewUI(), "venus-rem:" + r.id, title + " \u2014 " + r.x, venusIcon(5896, "ClockIcon"));
-                diagCall("reminderNotify", JSON.stringify({id:r.id, title, text:r.x || tr("Tap to open Discord"), channelId:r.c, messageId:r.m})).catch(() => {});
+                diagCall("reminderNotify", JSON.stringify({
+                    id:r.id, title, text:r.x || tr("Tap to open Discord"),
+                    channelName:tr("Venus Reminders"), channelDesc:tr("Scheduled message reminders"),
+                    channelId:r.c, messageId:r.m
+                })).catch(() => {});
             }
         }
         if (changed) { save(); notify("reminders"); }
@@ -23931,11 +23958,22 @@
             subLabel:r.x, arrow:true,
             onPress:() => {
                 haptic("SELECTION");
+                const remKey = "VenusReminderAction";
+                const options = [
+                    {label:tr("Jump to Message"), IconComponent:venusIcon(10962, "ArrowSmallRightIcon"), onPress:() => { hideReviewSheet(ui, remKey); jumpToChatMessage(r.g, r.c, r.m); }},
+                    {label:tr("Delete"), IconComponent:venusIcon(5894, "TrashIcon"), isDestructive:true, onPress:() => {
+                        hideReviewSheet(ui, remKey);
+                        reminders.list = reminders.list.filter(x => x.id !== r.id); save(); notify("reminders");
+                    }}
+                ];
+                if (typeof ui.simpleSheet === "function") {
+                    try { ui.simpleSheet({key:remKey, header:{title:r.u, onClose:() => hideReviewSheet(ui, remKey)}, options}); return; } catch (_) {}
+                }
                 if (RN.Alert && typeof RN.Alert.alert === "function") {
                     RN.Alert.alert(r.u, r.x, [
-                        {text:tr("Delete"), style:"destructive", onPress:() => { reminders.list = reminders.list.filter(x => x.id !== r.id); save(); notify("reminders"); }},
+                        {text:tr("Delete"), style:"destructive", onPress:options[1].onPress},
                         {text:tr("Cancel"), style:"cancel"},
-                        {text:tr("Jump to Message"), onPress:() => jumpToChatMessage(r.g, r.c, r.m)}
+                        {text:tr("Jump to Message"), onPress:options[0].onPress}
                     ]);
                 } else {
                     jumpToChatMessage(r.g, r.c, r.m);
@@ -23987,8 +24025,7 @@
         const activePin = step === 1 ? firstPin : confirmPin;
         const targetDots = step === 1 ? Math.max(4, Math.min(8, firstPin.length || 4)) : firstPin.length;
         const closeSheet = () => {
-            if (ui.sheets && typeof ui.sheets.hideActionSheet === "function") ui.sheets.hideActionSheet(APP_LOCK_PIN_SHEET);
-            else if (ui.ActionSheetActionCreators && typeof ui.ActionSheetActionCreators.hideActionSheet === "function") ui.ActionSheetActionCreators.hideActionSheet(APP_LOCK_PIN_SHEET);
+            hideReviewSheet(ui, APP_LOCK_PIN_SHEET);
         };
         const goNext = () => {
             if (firstPin.length < 4) return;
@@ -24041,12 +24078,12 @@
             }
         };
 
-        const Header = ui.Header || ui.BottomSheetTitleHeader, Close = ui.Close || ui.ActionSheetCloseButton;
-        const header = Header
-            ? el(Header, {title:tr(step === 1 ? "Enter new PIN (4-8 digits)" : "Confirm your PIN"),
-                trailing:Close ? el(Close, {onPress:closeSheet}) : null})
+        const header = ui.Header
+            ? el(ui.Header, {title:tr(step === 1 ? "Enter new PIN (4-8 digits)" : "Confirm your PIN"),
+                trailing:ui.Close ? el(ui.Close, {onPress:closeSheet}) : null})
             : null;
         const brandColor = (k.brand && k.brand.backgroundColor) || "#5865f2";
+        const pulseBgColor = /^#[0-9a-f]{6}$/i.test(brandColor) ? brandColor + "33" : "rgba(88,101,242,0.22)";
         const winW = (RN.Dimensions && typeof RN.Dimensions.get === "function" && RN.Dimensions.get("window")?.width) || 360;
         const keySize = Math.min(86, Math.max(72, Math.floor((winW - 88) / 3)));
         const rows = [["1", "2", "3"], ["4", "5", "6"], ["7", "8", "9"], ["CLR", "0", "DEL"]];
@@ -24070,7 +24107,7 @@
             const pv = Anim && pulseRef.current && pulseRef.current[code];
             const ring = pv ? el(Anim.View, {pointerEvents:"none", style:{
                 position:"absolute", width:keySize, height:keySize, borderRadius:keySize / 2,
-                borderWidth:2, borderColor:brandColor, backgroundColor:brandColor + "33",
+                borderWidth:2, borderColor:brandColor, backgroundColor:pulseBgColor,
                 opacity:pv.interpolate({inputRange:[0, 0.2, 1], outputRange:[0, 0.85, 0]}),
                 transform:[{scale:pv.interpolate({inputRange:[0, 1], outputRange:[1, 1.65]})}]
             }}) : null;
@@ -24221,7 +24258,23 @@
         const [endSec, setEndSec] = React.useState("");
         const [mute, setMute] = React.useState(!!settings.mediaEditorDefaultMute);
         const [busy, setBusy] = React.useState(false);
-        const close = () => hideReviewSheet(ui, MEDIA_EDITOR_SHEET);
+        const settledRef = React.useRef(false);
+        const finishAsk = decision => {
+            if (settledRef.current) return;
+            settledRef.current = true;
+            hideReviewSheet(ui, MEDIA_EDITOR_SHEET);
+            if (typeof props.onDecision === "function") props.onDecision(decision);
+        };
+        React.useEffect(() => () => {
+            if (props.askMode && !settledRef.current) {
+                settledRef.current = true;
+                if (typeof props.onDecision === "function") props.onDecision({action:"original"});
+            }
+        }, []);
+        const close = () => {
+            if (props.askMode) { finishAsk({action:"cancel"}); return; }
+            hideReviewSheet(ui, MEDIA_EDITOR_SHEET);
+        };
         const header = ui.Header ? el(ui.Header, {title:tr("Trim & Mute Media"), trailing:ui.Close ? el(ui.Close, {onPress:close}) : undefined}) : null;
         React.useEffect(() => {
             if (!uri) return;
@@ -24243,6 +24296,12 @@
             const startMs = Math.round(sVal * 1000);
             const endMs = Number.isFinite(eVal) && eVal > sVal && (durationSec <= 0 || eVal < durationSec) ? Math.round(eVal * 1000) : -1;
             const doMute = hasVideo && hasAudio && mute;
+            if (props.askMode) {
+                haptic("SELECTION");
+                if (startMs <= 0 && endMs <= 0 && !doMute) finishAsk({action:"original"});
+                else finishAsk({action:"trim", startMs, endMs, mute:doMute});
+                return;
+            }
             if (startMs <= 0 && endMs <= 0 && !doMute) { close(); return; }
             setBusy(true);
             haptic("SELECTION");
@@ -24285,7 +24344,8 @@
             hasVideo && hasAudio ? el(Group, {key:"audioOpt", title:tr("Audio")},
                 Switch ? el(Switch, {key:"muteSw", label:tr("Remove audio track (Mute)"), subLabel:tr("Drops the microphone/sound track from the video without re-encoding."),
                     value:mute, onValueChange:v => setMute(!!v), icon:rowIcon(9351, "HeadphonesSlashIcon")}) : null) : null,
-            Button ? el(Button, {text:busy ? tr("Processing\u2026") : tr("Apply Trim & Mute"), size:"lg", variant:"primary", disabled:busy, onPress:applyEdit}) : null
+            Button ? el(Button, {text:busy ? tr("Processing\u2026") : props.askMode ? tr("Apply & Send") : tr("Apply Trim & Mute"), size:"lg", variant:"primary", disabled:busy, onPress:applyEdit}) : null,
+            props.askMode && Button ? el(Button, {text:tr("Send Original"), size:"md", variant:"secondary", disabled:busy, onPress:() => { haptic("SELECTION"); finishAsk({action:"original"}); }}) : null
         );
         return serverEditScroll(ui, header, content);
     }
@@ -24319,7 +24379,7 @@
                                 .then(raw => {
                                     const c = JSON.parse(raw);
                                     if (c && c.action === "trim") mediaEditorApplyTrim(upload, {id:"e" + Date.now().toString(36)}, compressUri(upload), c.startMs || 0, c.endMs || -1, !!c.mute)
-                                        .then(() => { upload.venusTrimmed = true; applyEditedUpload(props.channelId, upload, {uri:upload.uri, mimeType:upload.mimeType, extension:"mp4", size:upload.currentSize}); }, () => {});
+                                        .then(() => { upload.venusTrimmed = true; applyEditedUpload(props.channelId, upload, {uri:upload.uri, mimeType:upload.mimeType, extension:upload.isVideo ? "mp4" : "m4a", size:upload.currentSize}); }, () => {});
                                 }, () => {});
                         }
                     }, 120);
@@ -24403,8 +24463,17 @@
         }
         const item = upload.item || {};
         const name = upload.filename || item.filename || (job.kind === "video" ? "video.mp4" : "audio.m4a");
-        return diagCall("mediaEditDialog", JSON.stringify({uri, name, kind:job.kind, defaultMute:!!settings.mediaEditorDefaultMute})).then(raw => {
-            const choice = JSON.parse(raw);
+        const ui = reviewUI();
+        const askPromise = (typeof ui.showSheet === "function" && ui.ActionSheet)
+            ? new Promise(resolve => {
+                ui.showSheet({
+                    key:MEDIA_EDITOR_SHEET,
+                    content:el(MediaEditorSheet, {upload, channelId:upload.channelId, askMode:true, onDecision:resolve}),
+                    stackingBehavior:"stack"
+                });
+            })
+            : diagCall("mediaEditDialog", JSON.stringify({uri, name, kind:job.kind, defaultMute:!!settings.mediaEditorDefaultMute})).then(raw => JSON.parse(raw));
+        return askPromise.then(choice => {
             if (!choice || choice.action === "original") return undefined;
             if (choice.action === "cancel") {
                 job.cancelled = true;
@@ -24560,7 +24629,14 @@
             "<div class=\"formula-card\">" + latexToMathMLBody(f.expr) + "</div><pre>" + latexEscapeHtml(f.expr) + "</pre>"
         ).join("");
         const rawJoined = formulas.map(f => f.expr).join("\n\n");
-        diagCall("latexModal", JSON.stringify({html:cards, raw:rawJoined})).catch(() => {});
+        diagCall("latexModal", JSON.stringify({
+            html:cards, raw:rawJoined,
+            title:tr("LaTeX Formula View"),
+            copyLabel:tr("Copy LaTeX"),
+            closeLabel:tr("Close"),
+            copiedLabel:tr("LaTeX copied"),
+            light:nativeThemeSlot() === "light"
+        })).catch(() => {});
     }
     function latexCtaMessage(message, source) {
         if (!message || message.ctaButton || !source || typeof source.content !== "string") return message;

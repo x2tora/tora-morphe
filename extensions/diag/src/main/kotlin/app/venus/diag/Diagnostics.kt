@@ -1359,16 +1359,50 @@ object Diagnostics {
         return true
     }
 
-    private fun zipCacheFile(c: Context): File {
+    private fun zipCacheFile(c: Context, url: String): File {
         val dir = File(c.cacheDir, "venus-zip")
         if (!dir.isDirectory) dir.mkdirs()
-        return File(dir, "preview.zip")
+        if (url.length == 0) return File(dir, "preview.zip")
+        val md = java.security.MessageDigest.getInstance("SHA-256")
+        val digest = md.digest((url as java.lang.String).getBytes("UTF-8"))
+        val hex = StringBuilder(16)
+        val digits = "0123456789abcdef"
+        for (i in 0 until 8) {
+            val b = digest[i].toInt() and 0xFF
+            hex.append(digits.get(b ushr 4))
+            hex.append(digits.get(b and 0x0F))
+        }
+        return File(dir, "zip-" + hex.toString() + ".zip")
+    }
+
+    private fun pruneZipCache(c: Context, keep: File) {
+        try {
+            val dir = File(c.cacheDir, "venus-zip")
+            val files = dir.listFiles() ?: return
+            if (files.size <= 8) return
+            java.util.Arrays.sort(files, object : java.util.Comparator<File> {
+                override fun compare(a: File, b: File): Int {
+                    val diff = a.lastModified() - b.lastModified()
+                    return if (diff < 0L) -1 else if (diff > 0L) 1 else 0
+                }
+            })
+            var remove = files.size - 8
+            for (i in 0 until files.size) {
+                if (remove <= 0) break
+                val f = files[i]
+                if (f != keep && f.isFile) {
+                    try { f.delete() } catch (_: Throwable) { }
+                    remove--
+                }
+            }
+        } catch (_: Throwable) { }
     }
 
     private fun zipList(c: Context, arg: String): String {
         val req = JSONObject(arg)
         val url = req.getString("url")
-        val target = zipCacheFile(c)
+        val target = zipCacheFile(c, url)
+        pruneZipCache(c, target)
         val conn = java.net.URL(url).openConnection() as java.net.HttpURLConnection
         try {
             conn.connectTimeout = 8000
@@ -1431,8 +1465,9 @@ object Diagnostics {
     private fun zipRead(c: Context, arg: String): String {
         val req = JSONObject(arg)
         val entryName = req.getString("entry")
+        val url = req.optString("url", "")
         if (!isSafeZipEntryName(entryName)) throw IllegalArgumentException("Unsafe ZIP path rejected (Zip Slip protection)")
-        val target = zipCacheFile(c)
+        val target = zipCacheFile(c, url)
         if (!target.isFile) throw IllegalStateException("ZIP cache expired; reopen the archive")
         val zip = java.util.zip.ZipFile(target)
         try {
@@ -1456,12 +1491,14 @@ object Diagnostics {
         val req = JSONObject(arg)
         val title = req.optString("title", "Message Reminder")
         val text = req.optString("text", "")
+        val channelName = req.optString("channelName", "Venus Reminders")
+        val channelDesc = req.optString("channelDesc", "Scheduled message reminders")
         val idHash = req.optString("id", "0").hashCode()
         val nm = c.getSystemService(Context.NOTIFICATION_SERVICE) as android.app.NotificationManager
         val channelId = "venus_reminders"
         if (Build.VERSION.SDK_INT >= 26) {
-            val channel = android.app.NotificationChannel(channelId, "Venus Reminders", android.app.NotificationManager.IMPORTANCE_HIGH)
-            channel.description = "Scheduled message reminders"
+            val channel = android.app.NotificationChannel(channelId, channelName, android.app.NotificationManager.IMPORTANCE_HIGH)
+            channel.description = channelDesc
             nm.createNotificationChannel(channel)
         }
         val launch = c.packageManager.getLaunchIntentForPackage(c.packageName)
@@ -2213,30 +2250,39 @@ object Diagnostics {
             val req = JSONObject(arg)
             val htmlBody = req.optString("html", "")
             val rawLatex = req.optString("raw", "")
+            val titleText = req.optString("title", "LaTeX Formula View")
+            val copyText = req.optString("copyLabel", "Copy LaTeX")
+            val closeText = req.optString("closeLabel", "Close")
+            val copiedText = req.optString("copiedLabel", "LaTeX copied")
+            val light = req.optBoolean("light", false)
+            val bgCol = if (light) 0xFFFFFFFF.toInt() else BG
+            val cardCol = if (light) 0xFFF2F3F5.toInt() else CARD
+            val textCol = if (light) 0xFF060607.toInt() else TEXT
+            val neutralCol = if (light) 0xFFE3E5E8.toInt() else NEUTRAL
             val density = activity.resources.displayMetrics.density
             fun dp(v: Int): Int = (v * density + 0.5f).toInt()
 
             val dialog = Dialog(activity, android.R.style.Theme_DeviceDefault_NoActionBar)
             val root = LinearLayout(activity)
             root.orientation = LinearLayout.VERTICAL
-            root.setBackgroundColor(BG)
+            root.setBackgroundColor(bgCol)
             root.setPadding(dp(18), dp(20), dp(18), dp(18))
 
             val headerRow = LinearLayout(activity)
             headerRow.orientation = LinearLayout.HORIZONTAL
             headerRow.gravity = Gravity.CENTER_VERTICAL
             val title = TextView(activity)
-            title.text = "LaTeX Formula View"
+            title.text = titleText
             title.textSize = 19f
-            title.setTextColor(TEXT)
+            title.setTextColor(textCol)
             title.typeface = Typeface.create("sans-serif-medium", Typeface.BOLD)
             headerRow.addView(title, LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f))
 
-            fun pillBtn(label: String, col: Int): TextView {
+            fun pillBtn(label: String, col: Int, fg: Int): TextView {
                 val b = TextView(activity)
                 b.text = label
                 b.textSize = 13f
-                b.setTextColor(TEXT)
+                b.setTextColor(fg)
                 b.typeface = Typeface.create("sans-serif-medium", Typeface.BOLD)
                 b.setPadding(dp(14), dp(8), dp(14), dp(8))
                 val d = GradientDrawable()
@@ -2246,8 +2292,8 @@ object Diagnostics {
                 return b
             }
 
-            val copyBtn = pillBtn("Copy LaTeX", BRAND)
-            val closeBtn = pillBtn("Close", NEUTRAL)
+            val copyBtn = pillBtn(copyText, BRAND, Color.WHITE)
+            val closeBtn = pillBtn(closeText, neutralCol, textCol)
             val closeLp = LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT)
             closeLp.leftMargin = dp(8)
             headerRow.addView(copyBtn)
@@ -2255,17 +2301,25 @@ object Diagnostics {
             root.addView(headerRow, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT))
 
             val web = android.webkit.WebView(activity)
-            web.setBackgroundColor(CARD)
+            web.setBackgroundColor(cardCol)
             val ws = web.settings
             ws.javaScriptEnabled = false
             ws.blockNetworkLoads = true
             ws.builtInZoomControls = true
             ws.displayZoomControls = false
-            val fullHtml = "<!DOCTYPE html><html><head><meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width,initial-scale=1\">" +
-                "<style>body{background:#242429;color:#f2f3f5;font-family:sans-serif;padding:16px;margin:0;line-height:1.6}" +
+            val css = if (light) {
+                "body{background:#f2f3f5;color:#060607;font-family:sans-serif;padding:16px;margin:0;line-height:1.6}" +
+                ".formula-card{background:#ffffff;border:1px solid rgba(0,0,0,0.08);border-radius:12px;padding:18px;margin-bottom:14px;overflow-x:auto;font-size:20px;text-align:center}" +
+                "math{font-size:22px;color:#060607}" +
+                "pre{background:#e3e5e8;color:#313338;padding:12px;border-radius:8px;overflow-x:auto;font-size:13px;white-space:pre-wrap}"
+            } else {
+                "body{background:#242429;color:#f2f3f5;font-family:sans-serif;padding:16px;margin:0;line-height:1.6}" +
                 ".formula-card{background:#1a1a1e;border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:18px;margin-bottom:14px;overflow-x:auto;font-size:20px;text-align:center}" +
                 "math{font-size:22px;color:#f2f3f5}" +
-                "pre{background:#141417;color:#dbdee1;padding:12px;border-radius:8px;overflow-x:auto;font-size:13px;white-space:pre-wrap}</style></head><body>" +
+                "pre{background:#141417;color:#dbdee1;padding:12px;border-radius:8px;overflow-x:auto;font-size:13px;white-space:pre-wrap}"
+            }
+            val fullHtml = "<!DOCTYPE html><html><head><meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width,initial-scale=1\">" +
+                "<style>" + css + "</style></head><body>" +
                 htmlBody + "</body></html>"
             web.loadDataWithBaseURL(null, fullHtml, "text/html", "UTF-8", null)
             val webLp = LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1f)
@@ -2277,7 +2331,7 @@ object Diagnostics {
                     try {
                         val cm = activity.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
                         cm.setPrimaryClip(ClipData.newPlainText("LaTeX", rawLatex))
-                        Toast.makeText(activity, "LaTeX copied", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(activity, copiedText, Toast.LENGTH_SHORT).show()
                     } catch (_: Throwable) { }
                 }
             })
@@ -2287,10 +2341,11 @@ object Diagnostics {
                 }
             })
             dialog.setContentView(root)
-            dialog.window?.let { w ->
+            val w = dialog.window
+            if (w != null) {
                 w.setLayout(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT)
-                w.statusBarColor = BG
-                w.navigationBarColor = BG
+                w.statusBarColor = bgCol
+                w.navigationBarColor = bgCol
             }
             dialog.show()
             promise.resolve("ok")

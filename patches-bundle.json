@@ -1,8 +1,8 @@
 {
-  "created_at": "2026-11-20T18:38:31",
-  "description": "### \ud83d\udd27 Improvements\n\n* **Discord - Settings:** Organized the Features page into native category navigation rows and an **Active features** shortcut with live enabled counts while keeping global search and Edit list intact\n* **Discord - Performance:** Cached active feature keys, reduced `FeatureListBar` re-renders via `@features` subscription, switched hidden feature lookups to `Set`, and reused PIN dot `GradientDrawable` instances in `Diagnostics`\n",
-  "download_url": "https://github.com/x2tora/tora-morphe/releases/download/v1.23.9/patches-1.23.9.mpp",
-  "page_url": "https://github.com/x2tora/tora-morphe/releases/tag/v1.23.9",
+  "created_at": "2026-11-22T00:46:08",
+  "description": "### \ud83d\udc1b Bug Fixes\n\n* **Discord - Bookmarks & Reminders:** Fixed bookmark search bar props (`value`/`onChange`) and replaced Android `Alert` popups with Discord's native action sheet (`showSimpleActionSheet`)\n* **Discord - Privacy blur:** Fixed \"Blur revealed messages again\" not immediately redrawing already-open chat messages\n* **Discord - ZIP preview:** Fixed multiple ZIP archives overwriting a single cache file (`preview.zip`) by hashing cache paths per URL and capping `zipDropdown` memory\n* **Discord - App lock:** Fixed `appLockPin` being included in exported backup JSON and guarded PIN keypad pulse color against non-hex theme tokens\n\n### \ud83d\udd27 Improvements\n\n* **Discord - Trim and mute media:** Unified the \"Ask before uploading\" prompt onto Discord's native `MediaEditorSheet` instead of an unlocalized Android dialog\n* **Discord - LaTeX & Reminders:** Synced LaTeX formula modal theme (light/dark) and localized all remaining native dialog and notification channel strings across all 29 non-English language packs\n",
+  "download_url": "https://github.com/x2tora/tora-morphe/releases/download/v1.23.10/patches-1.23.10.mpp",
+  "page_url": "https://github.com/x2tora/tora-morphe/releases/tag/v1.23.10",
   "signature_download_url": "",
-  "version": "1.23.9"
+  "version": "1.23.10"
 }
