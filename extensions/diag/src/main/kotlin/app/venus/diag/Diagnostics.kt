@@ -100,13 +100,88 @@ object Diagnostics {
     @Volatile private var appLockPin = ""
     @Volatile private var appLockBiometric = false
     @Volatile private var appLockAnim = "slideUp"
+    @Volatile private var appLockLight = false
     @Volatile private var appLockUnlockedInSession = false
     @Volatile private var lockRequired = false
     @Volatile private var lockShowing = false
     @Volatile private var appLockDialog: Dialog? = null
     @Volatile private var lastPausedAt = 0L
     @Volatile private var activeCount = 0
+    @Volatile private var pendingJumpJson = ""
     private val main = Handler(Looper.getMainLooper())
+
+    private fun hashPin(pin: String): String {
+        val raw = pin as java.lang.String
+        if (raw.startsWith("sha256:")) return pin
+        val digits = StringBuilder()
+        for (i in 0 until pin.length) {
+            val ch = pin.get(i)
+            if (ch >= '0' && ch <= '9') digits.append(ch)
+        }
+        val clean = digits.toString()
+        if (clean.length < 4 || clean.length > 8) return ""
+        val md = java.security.MessageDigest.getInstance("SHA-256")
+        val input = ("venus-pin-v1:" + clean) as java.lang.String
+        val digest = md.digest(input.getBytes("UTF-8"))
+        val hex = StringBuilder(64)
+        val hexChars = "0123456789abcdef"
+        for (i in 0 until digest.size) {
+            val b = digest[i].toInt() and 0xFF
+            hex.append(hexChars.get(b ushr 4))
+            hex.append(hexChars.get(b and 0x0F))
+        }
+        return "sha256:" + clean.length + ":" + hex.toString()
+    }
+
+    private fun pinLengthOf(stored: String): Int {
+        val raw = stored as java.lang.String
+        if (raw.startsWith("sha256:")) {
+            val second = raw.indexOf(58, 7)
+            if (second > 7) {
+                return try {
+                    val n = java.lang.Integer.parseInt(raw.substring(7, second))
+                    if (n >= 4 && n <= 8) n else 0
+                } catch (_: Throwable) { 0 }
+            }
+            return 0
+        }
+        return if (raw.length >= 4 && raw.length <= 8) raw.length else 0
+    }
+
+    private fun verifyPin(candidate: String, stored: String): Boolean {
+        val raw = stored as java.lang.String
+        if (raw.startsWith("sha256:")) {
+            val hashed = hashPin(candidate) as java.lang.String
+            return hashed.equals(stored)
+        }
+        return (candidate as java.lang.String).equals(stored)
+    }
+
+    private fun normalizeStoredPin(rawPin: String): String {
+        val raw = rawPin as java.lang.String
+        if (raw.length == 0) return ""
+        if (raw.startsWith("sha256:")) return if (pinLengthOf(rawPin) >= 4) rawPin else ""
+        return hashPin(rawPin)
+    }
+
+    private fun captureJumpIntent(activity: Activity) {
+        try {
+            val intent = activity.intent ?: return
+            val cId = intent.getStringExtra("venus_rem_c") ?: ""
+            val mId = intent.getStringExtra("venus_rem_m") ?: ""
+            if (cId.length > 0 && mId.length > 0) {
+                val gId = intent.getStringExtra("venus_rem_g") ?: ""
+                pendingJumpJson = JSONObject()
+                    .put("g", gId)
+                    .put("c", cId)
+                    .put("m", mId)
+                    .toString()
+                intent.removeExtra("venus_rem_g")
+                intent.removeExtra("venus_rem_c")
+                intent.removeExtra("venus_rem_m")
+            }
+        } catch (_: Throwable) { }
+    }
 
     /** Right after Application.onCreate's super call. Any problem here leaves Discord exactly as it was. */
     @JvmStatic
@@ -134,10 +209,11 @@ object Diagnostics {
                 appLockOn = json.optBoolean("enabled", false)
                 val sec = json.optInt("timeoutSec", 0)
                 appLockTimeoutMs = if (sec > 0) sec.toLong() * 1000L else 0L
-                appLockPin = json.optString("pin", "")
+                appLockPin = normalizeStoredPin(json.optString("pin", ""))
                 appLockBiometric = json.optBoolean("biometric", false)
                 val anim = json.optString("anim", "slideUp")
                 if (anim.length > 0) appLockAnim = anim
+                appLockLight = json.optBoolean("light", false)
                 val lTitle = json.optString("title", "")
                 if (lTitle.length > 0) lockLabelTitle = lTitle
                 val lSub = json.optString("subtitle", "")
@@ -160,7 +236,7 @@ object Diagnostics {
                 if (lClear.length > 0) lockLabelClear = lClear
                 val lUseBio = json.optString("useBio", "")
                 if (lUseBio.length > 0) lockLabelUseBio = lUseBio
-                if (appLockOn && appLockPin.length >= 4) {
+                if (appLockOn && pinLengthOf(appLockPin) >= 4) {
                     appLockUnlockedInSession = false
                     lockRequired = true
                 }
@@ -171,11 +247,11 @@ object Diagnostics {
             appLockOn = json.optBoolean("appLock", false)
             val sec = json.optInt("appLockTimeout", 0)
             appLockTimeoutMs = if (sec > 0) sec.toLong() * 1000L else 0L
-            appLockPin = json.optString("appLockPin", "")
+            appLockPin = normalizeStoredPin(json.optString("appLockPin", ""))
             appLockBiometric = json.optBoolean("appLockBiometric", false)
             val anim = json.optString("appLockAnim", "slideUp")
             if (anim.length > 0) appLockAnim = anim
-            if (appLockOn && appLockPin.length >= 4) {
+            if (appLockOn && pinLengthOf(appLockPin) >= 4) {
                 appLockUnlockedInSession = false
                 lockRequired = true
             }
@@ -194,7 +270,7 @@ object Diagnostics {
     }
 
     private fun maybeLockActivity(activity: Activity) {
-        if (!appLockOn || appLockPin.length < 4) return
+        if (!appLockOn || pinLengthOf(appLockPin) < 4) return
         val now = System.currentTimeMillis()
         val timedOut = lastPausedAt > 0L && now - lastPausedAt >= appLockTimeoutMs
         if (!appLockUnlockedInSession || lockRequired || timedOut) {
@@ -215,17 +291,22 @@ object Diagnostics {
         override fun onActivityStarted(activity: Activity) {
             activeCount++
             current = WeakReference(activity)
+            captureJumpIntent(activity)
             maybeLockActivity(activity)
         }
         override fun onActivityResumed(activity: Activity) {
             current = WeakReference(activity)
+            captureJumpIntent(activity)
             maybeLockActivity(activity)
             // After Discord's first frames, so the page lands on top of its splash instead of under it.
             main.postDelayed(object : Runnable { override fun run() { showPending() } }, 700)
         }
         override fun onActivityPaused(activity: Activity) {
-            if (appLockOn && appLockPin.length >= 4) {
-                try { activity.window?.addFlags(android.view.WindowManager.LayoutParams.FLAG_SECURE) } catch (_: Throwable) { }
+            if (appLockOn && pinLengthOf(appLockPin) >= 4) {
+                try {
+                    val w = activity.window
+                    if (w != null) w.addFlags(android.view.WindowManager.LayoutParams.FLAG_SECURE)
+                } catch (_: Throwable) { }
             }
         }
         override fun onActivityStopped(activity: Activity) {
@@ -1028,6 +1109,28 @@ object Diagnostics {
                     promise.resolve("ok")
                 } catch (error: Throwable) { promise.reject("VENUS_DIAG", error.toString()) }
             }
+            "reminderSchedule" -> {
+                try {
+                    scheduleReminderAlarm(c, argument ?: "")
+                    promise.resolve("ok")
+                } catch (error: Throwable) { promise.reject("VENUS_DIAG", error.toString()) }
+            }
+            "reminderCancel" -> {
+                try {
+                    cancelReminderAlarm(c, argument ?: "")
+                    promise.resolve("ok")
+                } catch (error: Throwable) { promise.reject("VENUS_DIAG", error.toString()) }
+            }
+            "reminderTakeJump" -> {
+                val j = pendingJumpJson
+                pendingJumpJson = ""
+                promise.resolve(j)
+            }
+            "hashPin" -> {
+                try {
+                    promise.resolve(hashPin(argument ?: ""))
+                } catch (error: Throwable) { promise.reject("VENUS_DIAG", error.toString()) }
+            }
             "lockConfig" -> {
                 try {
                     updateLockConfig(c, argument ?: "")
@@ -1487,30 +1590,94 @@ object Diagnostics {
 
     // --------------------------------------------------------- reminders
 
-    private fun postReminderNotification(c: Context, arg: String) {
-        val req = JSONObject(arg)
-        val title = req.optString("title", "Message Reminder")
-        val text = req.optString("text", "")
-        val channelName = req.optString("channelName", "Venus Reminders")
-        val channelDesc = req.optString("channelDesc", "Scheduled message reminders")
-        val idHash = req.optString("id", "0").hashCode()
+    @JvmStatic
+    fun showReminderNotification(
+        c: Context,
+        id: String,
+        title: String,
+        text: String,
+        channelName: String,
+        channelDesc: String,
+        guildId: String,
+        channelId: String,
+        messageId: String
+    ) {
+        val idHash = id.hashCode()
         val nm = c.getSystemService(Context.NOTIFICATION_SERVICE) as android.app.NotificationManager
-        val channelId = "venus_reminders"
+        val chId = "venus_reminders"
         if (Build.VERSION.SDK_INT >= 26) {
-            val channel = android.app.NotificationChannel(channelId, channelName, android.app.NotificationManager.IMPORTANCE_HIGH)
+            val channel = android.app.NotificationChannel(chId, channelName, android.app.NotificationManager.IMPORTANCE_HIGH)
             channel.description = channelDesc
             nm.createNotificationChannel(channel)
         }
         val launch = c.packageManager.getLaunchIntentForPackage(c.packageName)
+        if (launch != null) {
+            launch.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK)
+            if (guildId.length > 0) launch.putExtra("venus_rem_g", guildId)
+            if (channelId.length > 0) launch.putExtra("venus_rem_c", channelId)
+            if (messageId.length > 0) launch.putExtra("venus_rem_m", messageId)
+        }
         val piFlags = if (Build.VERSION.SDK_INT >= 23) android.app.PendingIntent.FLAG_UPDATE_CURRENT or android.app.PendingIntent.FLAG_IMMUTABLE else android.app.PendingIntent.FLAG_UPDATE_CURRENT
         val pending = if (launch != null) android.app.PendingIntent.getActivity(c, idHash, launch, piFlags) else null
-        val builder = if (Build.VERSION.SDK_INT >= 26) android.app.Notification.Builder(c, channelId) else android.app.Notification.Builder(c)
+        val builder = if (Build.VERSION.SDK_INT >= 26) android.app.Notification.Builder(c, chId) else android.app.Notification.Builder(c)
         builder.setSmallIcon(android.R.drawable.ic_popup_reminder)
             .setContentTitle(title)
             .setContentText(text)
             .setAutoCancel(true)
         if (pending != null) builder.setContentIntent(pending)
         nm.notify(0x56454E00 + (idHash and 0xFFFF), builder.build())
+    }
+
+    private fun postReminderNotification(c: Context, arg: String) {
+        val req = JSONObject(arg)
+        showReminderNotification(
+            c,
+            req.optString("id", "0"),
+            req.optString("title", "Message Reminder"),
+            req.optString("text", ""),
+            req.optString("channelName", "Venus Reminders"),
+            req.optString("channelDesc", "Scheduled message reminders"),
+            req.optString("guildId", ""),
+            req.optString("channelId", ""),
+            req.optString("messageId", "")
+        )
+    }
+
+    private fun scheduleReminderAlarm(c: Context, arg: String) {
+        val req = JSONObject(arg)
+        val id = req.optString("id", "0")
+        val due = req.optLong("due", 0L)
+        if (due <= 0L) return
+        val am = c.getSystemService(Context.ALARM_SERVICE) as android.app.AlarmManager
+        val intent = Intent(c, ReminderReceiver::class.java)
+            .putExtra("id", id)
+            .putExtra("title", req.optString("title", "Message Reminder"))
+            .putExtra("text", req.optString("text", ""))
+            .putExtra("channelName", req.optString("channelName", "Venus Reminders"))
+            .putExtra("channelDesc", req.optString("channelDesc", "Scheduled message reminders"))
+            .putExtra("guildId", req.optString("guildId", ""))
+            .putExtra("channelId", req.optString("channelId", ""))
+            .putExtra("messageId", req.optString("messageId", ""))
+        val piFlags = if (Build.VERSION.SDK_INT >= 23) android.app.PendingIntent.FLAG_UPDATE_CURRENT or android.app.PendingIntent.FLAG_IMMUTABLE else android.app.PendingIntent.FLAG_UPDATE_CURRENT
+        val pi = android.app.PendingIntent.getBroadcast(c, id.hashCode(), intent, piFlags)
+        if (Build.VERSION.SDK_INT >= 23) {
+            am.setAndAllowWhileIdle(android.app.AlarmManager.RTC_WAKEUP, due, pi)
+        } else {
+            am.set(android.app.AlarmManager.RTC_WAKEUP, due, pi)
+        }
+    }
+
+    private fun cancelReminderAlarm(c: Context, arg: String) {
+        val req = JSONObject(arg)
+        val id = req.optString("id", "0")
+        val am = c.getSystemService(Context.ALARM_SERVICE) as android.app.AlarmManager
+        val intent = Intent(c, ReminderReceiver::class.java)
+        val piFlags = if (Build.VERSION.SDK_INT >= 23) android.app.PendingIntent.FLAG_NO_CREATE or android.app.PendingIntent.FLAG_IMMUTABLE else android.app.PendingIntent.FLAG_NO_CREATE
+        val pi = android.app.PendingIntent.getBroadcast(c, id.hashCode(), intent, piFlags)
+        if (pi != null) {
+            am.cancel(pi)
+            pi.cancel()
+        }
     }
 
     // --------------------------------------------------------- app lock
@@ -1574,12 +1741,13 @@ object Diagnostics {
         appLockOn = req.optBoolean("enabled", false)
         val sec = req.optInt("timeoutSec", 0)
         appLockTimeoutMs = if (sec > 0) sec.toLong() * 1000L else 0L
-        if (req.has("pin")) appLockPin = req.optString("pin", "")
+        if (req.has("pin")) appLockPin = normalizeStoredPin(req.optString("pin", ""))
         if (req.has("biometric")) appLockBiometric = req.optBoolean("biometric", false)
         if (req.has("anim")) {
             val a = req.optString("anim", "slideUp")
             if (a.length > 0) appLockAnim = a
         }
+        if (req.has("light")) appLockLight = req.optBoolean("light", false)
         if (req.optString("title", "").length > 0) lockLabelTitle = req.optString("title")
         if (req.optString("subtitle", "").length > 0) lockLabelSub = req.optString("subtitle")
         if (req.optString("hint", "").length > 0) lockLabelPinHint = req.optString("hint")
@@ -1598,6 +1766,7 @@ object Diagnostics {
                 .put("pin", appLockPin)
                 .put("biometric", appLockBiometric)
                 .put("anim", appLockAnim)
+                .put("light", appLockLight)
                 .put("title", lockLabelTitle)
                 .put("subtitle", lockLabelSub)
                 .put("hint", lockLabelPinHint)
@@ -1611,7 +1780,7 @@ object Diagnostics {
                 .put("useBio", lockLabelUseBio)
             write(File(c.filesDir, LOCK_FILE), saved.toString())
         } catch (_: Throwable) { }
-        if (!appLockOn || appLockPin.length < 4) {
+        if (!appLockOn || pinLengthOf(appLockPin) < 4) {
             lockRequired = false
             appLockUnlockedInSession = true
             main.post(object : Runnable {
@@ -1642,9 +1811,21 @@ object Diagnostics {
 
     private fun showLockOverlay(activity: Activity, isTest: Boolean) {
         if (lockShowing || activity.isFinishing || activity.isDestroyed) return
-        if (!isTest && (!appLockOn || appLockPin.length < 4)) return
+        val pinLen = pinLengthOf(appLockPin)
+        if (!isTest && (!appLockOn || pinLen < 4)) return
         try {
             lockShowing = true
+            val isLight = appLockLight
+            val bgCol = if (isLight) 0xFFFFFFFF.toInt() else BG
+            val cardCol = if (isLight) 0xFFEBECEF.toInt() else CARD
+            val textCol = if (isLight) 0xFF060607.toInt() else TEXT
+            val mutedCol = if (isLight) 0xFF4E5058.toInt() else MUTED
+            val dotEmptyCol = if (isLight) 0x1A000000 else 0x18FFFFFF
+            val dotStrokeCol = if (isLight) 0x44000000 else 0x44FFFFFF
+            val keyStrokeCol = if (isLight) 0x1F000000 else 0x1FFFFFFF
+            val bioTextCol = if (isLight) BRAND else 0xFFDDE2FF.toInt()
+            val rippleKeyCol = if (isLight) 0x335865F2 else 0x55FFFFFF
+            val pulseStrokeCol = if (isLight) 0xAA5865F2.toInt() else 0xAAFFFFFF.toInt()
             val dialog = Dialog(activity, android.R.style.Theme_DeviceDefault_NoActionBar)
             appLockDialog = dialog
             dialog.setCancelable(false)
@@ -1670,7 +1851,7 @@ object Diagnostics {
             root.gravity = Gravity.CENTER_HORIZONTAL
             root.clipChildren = false
             root.clipToPadding = false
-            root.setBackgroundColor(BG)
+            root.setBackgroundColor(bgCol)
             root.setPadding(dpPx(activity, 24), dpPx(activity, 36), dpPx(activity, 24), dpPx(activity, 32))
 
             val headerArea = LinearLayout(activity)
@@ -1701,16 +1882,16 @@ object Diagnostics {
             val title = TextView(activity)
             title.text = lockLabelTitle
             title.textSize = 21f
-            title.setTextColor(TEXT)
+            title.setTextColor(textCol)
             title.typeface = Typeface.create("sans-serif-medium", Typeface.BOLD)
             title.gravity = Gravity.CENTER
             headerArea.addView(title)
 
-            val hasPin = appLockPin.length >= 4
+            val hasPin = pinLen >= 4
             val sub = TextView(activity)
             sub.text = if (hasPin) lockLabelSub else lockLabelNoPin
             sub.textSize = 13f
-            sub.setTextColor(MUTED)
+            sub.setTextColor(mutedCol)
             sub.gravity = Gravity.CENTER
             val subLp = LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT)
             subLp.topMargin = dpPx(activity, 6)
@@ -1830,7 +2011,6 @@ object Diagnostics {
             }
 
             if (hasPin) {
-                val pinLen = appLockPin.length
                 val dotsRow = LinearLayout(activity)
                 dotsRow.orientation = LinearLayout.HORIZONTAL
                 dotsRow.gravity = Gravity.CENTER
@@ -1841,8 +2021,8 @@ object Diagnostics {
                     val dot = View(activity)
                     val gd = GradientDrawable()
                     gd.shape = GradientDrawable.OVAL
-                    gd.setColor(0x18FFFFFF)
-                    gd.setStroke(dotStrokePx, 0x44FFFFFF)
+                    gd.setColor(dotEmptyCol)
+                    gd.setStroke(dotStrokePx, dotStrokeCol)
                     dot.background = gd
                     val lp = LinearLayout.LayoutParams(dotSize, dotSize)
                     lp.leftMargin = dotGap
@@ -1871,8 +2051,8 @@ object Diagnostics {
                                 gd.setColor(BRAND)
                                 gd.setStroke(0, 0)
                             } else {
-                                gd.setColor(0x18FFFFFF)
-                                gd.setStroke(dotStrokePx, 0x44FFFFFF)
+                                gd.setColor(dotEmptyCol)
+                                gd.setStroke(dotStrokePx, dotStrokeCol)
                             }
                         }
                     }
@@ -1915,7 +2095,7 @@ object Diagnostics {
                         val pulseBg = GradientDrawable()
                         pulseBg.shape = GradientDrawable.OVAL
                         pulseBg.setColor(if ((code as java.lang.String).equals("BIO")) 0x385865F2 else 0x2E7289DA)
-                        pulseBg.setStroke(dpPx(activity, 2), if (code.equals("BIO")) 0xCC7289DA.toInt() else 0xAAFFFFFF.toInt())
+                        pulseBg.setStroke(dpPx(activity, 2), if (code.equals("BIO")) 0xCC7289DA.toInt() else pulseStrokeCol)
                         pulseRing.background = pulseBg
                         pulseRing.alpha = 0f
                         pulseRing.visibility = View.INVISIBLE
@@ -1923,7 +2103,7 @@ object Diagnostics {
 
                         val keyBtn = TextView(activity)
                         keyBtn.gravity = Gravity.CENTER
-                        keyBtn.setTextColor(TEXT)
+                        keyBtn.setTextColor(textCol)
                         keyBtn.typeface = Typeface.create("sans-serif-medium", Typeface.BOLD)
                         if (code.equals("DEL")) {
                             keyBtn.text = "\u232B"
@@ -1931,23 +2111,23 @@ object Diagnostics {
                         } else if (code.equals("CLR")) {
                             keyBtn.text = lockLabelClear
                             keyBtn.textSize = 14f
-                            keyBtn.setTextColor(MUTED)
+                            keyBtn.setTextColor(mutedCol)
                         } else if (code.equals("BIO")) {
                             keyBtn.text = lockLabelUseBio
                             keyBtn.textSize = 14f
-                            keyBtn.setTextColor(0xFFDDE2FF.toInt())
+                            keyBtn.setTextColor(bioTextCol)
                         } else {
                             keyBtn.text = code
                             keyBtn.textSize = 27f
                         }
                         val normalBg = GradientDrawable()
                         normalBg.shape = GradientDrawable.OVAL
-                        normalBg.setColor(if (code.equals("BIO")) 0x335865F2 else CARD)
-                        normalBg.setStroke(dpPx(activity, 1), if (code.equals("BIO")) 0x555865F2 else 0x1FFFFFFF)
+                        normalBg.setColor(if (code.equals("BIO")) 0x335865F2 else cardCol)
+                        normalBg.setStroke(dpPx(activity, 1), if (code.equals("BIO")) 0x555865F2 else keyStrokeCol)
                         val maskBg = GradientDrawable()
                         maskBg.shape = GradientDrawable.OVAL
                         maskBg.setColor(Color.WHITE)
-                        val rippleColor = android.content.res.ColorStateList.valueOf(if (code.equals("BIO")) 0x665865F2 else 0x55FFFFFF)
+                        val rippleColor = android.content.res.ColorStateList.valueOf(if (code.equals("BIO")) 0x665865F2 else rippleKeyCol)
                         keyBtn.background = android.graphics.drawable.RippleDrawable(rippleColor, normalBg, maskBg)
                         keyBtn.setOnTouchListener(object : View.OnTouchListener {
                             override fun onTouch(v: View?, event: android.view.MotionEvent?): Boolean {
@@ -2001,8 +2181,8 @@ object Diagnostics {
                                 errView.visibility = View.INVISIBLE
                                 refreshDots.run()
                                 if (enteredBuf.length == pinLen) {
-                                    val candidate = enteredBuf.toString() as java.lang.String
-                                    if (candidate.equals(appLockPin)) {
+                                    val candidate = enteredBuf.toString()
+                                    if (verifyPin(candidate, appLockPin)) {
                                         unlockNow.run()
                                     } else {
                                         errView.text = lockLabelWrong
@@ -2055,8 +2235,11 @@ object Diagnostics {
             if (w != null) {
                 w.setLayout(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT)
                 w.addFlags(android.view.WindowManager.LayoutParams.FLAG_SECURE)
-                w.statusBarColor = BG
-                w.navigationBarColor = BG
+                w.statusBarColor = bgCol
+                w.navigationBarColor = bgCol
+                if (isLight && Build.VERSION.SDK_INT >= 23) {
+                    w.decorView.systemUiVisibility = w.decorView.systemUiVisibility or View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR
+                }
                 w.setSoftInputMode(android.view.WindowManager.LayoutParams.SOFT_INPUT_STATE_HIDDEN)
             }
             dialog.show()

@@ -87,7 +87,7 @@
     if (features.appLock) selectModules([1385]);
     if (features.mediaEditor) selectModules([8311, 8333, 9901, 10366, 10680]);
     if (features.latexRender) selectModules([572, 6226, 8481, 10340, 11763]);
-    const revision = "1.23.10";
+    const revision = "1.23.11";
     // The Discord build these patches are pinned to (DiscordPatches.kt compatibleWith); shown on the About page.
     const DISCORD_VERSION = "354.12";
     // Module 120 owns setUpDefaltReactNativeEnvironment in this exact asset.
@@ -500,7 +500,11 @@
         if (key === "materialYouTint") return MY_TINTS.includes(value) ? value : undefined;
         if (key === "keywordNotifyWords") return typeof value === "string" && value.length <= 4000 ? value : undefined;
         if (key === "keywordNotifyExcluded") return typeof value === "string" && value.length <= 4000 ? value : undefined;
-        if (key === "appLockPin") return typeof value === "string" && value.length <= 8 ? value.replace(/\D/g, "") : undefined;
+        if (key === "appLockPin") {
+            if (typeof value !== "string") return undefined;
+            if (/^sha256:[4-8]:[0-9a-f]{64}$/.test(value)) return value;
+            return value.length <= 8 ? value.replace(/\D/g, "") : undefined;
+        }
         if (key === "appLockTimeout") return [0, 30, 60, 300, 900].includes(value) ? value : undefined;
         if (key === "appLockAnim") return ["slideUp", "fadeScale", "curtain", "none"].includes(value) ? value : undefined;
         if (key === "mediaEditorMode") return ["ask", "mute", "manual"].includes(value) ? value : undefined;
@@ -694,7 +698,9 @@
             return true;
         }
         if (key === "appLockPin") {
-            const cleanPin = typeof value === "string" ? value.replace(/\D/g, "").slice(0, 8) : "";
+            const cleanPin = typeof value === "string"
+                ? (/^sha256:[4-8]:[0-9a-f]{64}$/.test(value) ? value : value.replace(/\D/g, "").slice(0, 8))
+                : "";
             if (settings.appLockPin === cleanPin && status.storage !== "loading" && status.storage !== "waiting") return true;
             settings.appLockPin = cleanPin; dirty.add(key); save(); notify(key); appLockSync(false); return true;
         }
@@ -23790,8 +23796,28 @@
             });
         }
     }
+    function reminderCheckJump() {
+        if (!enabled("reminders")) return;
+        diagCall("reminderTakeJump", "").then(raw => {
+            if (!raw) return;
+            try {
+                const j = JSON.parse(raw);
+                if (j && j.c && j.m) later(() => jumpToChatMessage(j.g || "", j.c, j.m), 250);
+            } catch (_) {}
+        }, () => {});
+    }
+    function reminderScheduleNative(r) {
+        if (!r || r.done || r.due <= Date.now()) return;
+        const title = tr("Reminder: {user}", {user:r.u});
+        diagCall("reminderSchedule", JSON.stringify({
+            id:r.id, due:r.due, title, text:r.x || tr("Tap to open Discord"),
+            channelName:tr("Venus Reminders"), channelDesc:tr("Scheduled message reminders"),
+            guildId:r.g || "", channelId:r.c || "", messageId:r.m || ""
+        })).catch(() => {});
+    }
     function remindersCheck() {
         if (!enabled("reminders")) return;
+        reminderCheckJump();
         const now = Date.now();
         let changed = false;
         for (let i = 0; i < reminders.list.length; i++) {
@@ -23801,10 +23827,11 @@
                 changed = true;
                 const title = tr("Reminder: {user}", {user:r.u});
                 showToast(reviewUI(), "venus-rem:" + r.id, title + " \u2014 " + r.x, venusIcon(5896, "ClockIcon"));
+                diagCall("reminderCancel", JSON.stringify({id:r.id})).catch(() => {});
                 diagCall("reminderNotify", JSON.stringify({
                     id:r.id, title, text:r.x || tr("Tap to open Discord"),
                     channelName:tr("Venus Reminders"), channelDesc:tr("Scheduled message reminders"),
-                    channelId:r.c, messageId:r.m
+                    guildId:r.g || "", channelId:r.c, messageId:r.m
                 })).catch(() => {});
             }
         }
@@ -23814,6 +23841,7 @@
         if (reminders.timer !== undefined) { clearInterval(reminders.timer); reminders.timer = undefined; }
         if (enabled("reminders")) {
             remindersCheck();
+            for (let i = 0; i < reminders.list.length; i++) reminderScheduleNative(reminders.list[i]);
             reminders.timer = setInterval(remindersCheck, 15000);
         }
     }
@@ -23963,6 +23991,7 @@
                     {label:tr("Jump to Message"), IconComponent:venusIcon(10962, "ArrowSmallRightIcon"), onPress:() => { hideReviewSheet(ui, remKey); jumpToChatMessage(r.g, r.c, r.m); }},
                     {label:tr("Delete"), IconComponent:venusIcon(5894, "TrashIcon"), isDestructive:true, onPress:() => {
                         hideReviewSheet(ui, remKey);
+                        diagCall("reminderCancel", JSON.stringify({id:r.id})).catch(() => {});
                         reminders.list = reminders.list.filter(x => x.id !== r.id); save(); notify("reminders");
                     }}
                 ];
@@ -23991,13 +24020,26 @@
 
     // ------------------------------------------------- 8. App lock
     const APP_LOCK_PIN_SHEET = "VenusAppLockPin";
+    function appLockPinLength(stored) {
+        const s = String(stored || "");
+        const m = /^sha256:([4-8]):[0-9a-f]{64}$/.exec(s);
+        if (m) return Number(m[1]);
+        return /^\d{4,8}$/.test(s) ? s.length : 0;
+    }
     function appLockSync(lockNow) {
+        const pinVal = String(settings.appLockPin || "");
+        if (/^\d{4,8}$/.test(pinVal)) {
+            diagCall("hashPin", pinVal).then(hashed => {
+                if (/^sha256:[4-8]:[0-9a-f]{64}$/.test(String(hashed || ""))) setSetting("appLockPin", hashed);
+            }, () => {});
+        }
         diagCall("lockConfig", JSON.stringify({
             enabled:enabled("appLock"),
             timeoutSec:Number(settings.appLockTimeout) || 0,
-            pin:String(settings.appLockPin || ""),
+            pin:pinVal,
             biometric:!!settings.appLockBiometric,
             anim:String(settings.appLockAnim || "slideUp"),
+            light:nativeThemeSlot() === "light",
             lockNow:!!lockNow,
             title:tr("Discord is Locked"),
             subtitle:tr("Enter your PIN passcode to unlock"),
@@ -24066,7 +24108,10 @@
                 if (next.length === firstPin.length) {
                     if (next === firstPin) {
                         haptic("SELECTION");
-                        setSetting("appLockPin", next);
+                        diagCall("hashPin", next).then(
+                            hashed => setSetting("appLockPin", /^sha256:[4-8]:[0-9a-f]{64}$/.test(String(hashed || "")) ? hashed : next),
+                            () => setSetting("appLockPin", next)
+                        );
                         reviewToast(ui, tr("App lock PIN saved"), Lock);
                         closeSheet();
                     } else {
@@ -24147,7 +24192,7 @@
     }
     function AppLockPreview(props) {
         const s = useChatPreviewStyles(), k = usePreviewChrome(), Lock = venusIcon(8771, "LockIcon");
-        const pinLen = String(settings.appLockPin || "").length;
+        const pinLen = appLockPinLength(settings.appLockPin);
         const hasPin = pinLen >= 4;
         return previewScreen(s, "lockPreview", "App lock preview", [
             el(RN.View, {style:[k.card, {margin:12, padding:16, borderRadius:14, borderWidth:1, alignItems:"center", gap:8}]},
@@ -24168,8 +24213,8 @@
         React.useEffect(() => {
             diagCall("biometricCheck", "").then(res => setBioSupported(res === "1")).catch(() => setBioSupported(false));
         }, []);
-        const pinStr = String(settings.appLockPin || "");
-        const hasPin = pinStr.length >= 4;
+        const pinLen = appLockPinLength(settings.appLockPin);
+        const hasPin = pinLen >= 4;
         const openPinSheet = () => {
             if (!on) return;
             haptic("SELECTION");
@@ -24188,7 +24233,7 @@
             el(AppLockPreview, {key:"preview", on}),
             el(Group, {key:"pinSetup", title:hasPin ? tr("PIN passcode (Active)") : tr("PIN passcode")},
                 actionRow(ui, "setPin", hasPin ? "Change PIN (4-8 digits)" : "Set PIN (4-8 digits)",
-                    hasPin ? tr("{n}-digit PIN configured", {n:pinStr.length}) : tr("Opens custom keypad to set and confirm a 4-8 digit PIN."),
+                    hasPin ? tr("{n}-digit PIN configured", {n:pinLen}) : tr("Opens custom keypad to set and confirm a 4-8 digit PIN."),
                     openPinSheet, !on, false, rowIcon(8771, "LockIcon")),
                 Switch ? el(Switch, {key:"bio", label:tr("Unlock with biometrics"),
                     subLabel:!hasPin ? tr("Set a PIN first so you always have a fallback.")
@@ -24555,12 +24600,60 @@
         }
         return out;
     }
+    function latexReadGroup(str, pos) {
+        while (pos < str.length && /\s/.test(str[pos])) pos++;
+        if (pos >= str.length) return null;
+        if (str[pos] !== "{") return {content:str[pos], end:pos + 1};
+        let depth = 0, start = pos + 1;
+        for (let i = pos; i < str.length; i++) {
+            if (str[i] === "\\" && i + 1 < str.length) { i++; continue; }
+            if (str[i] === "{") depth++;
+            else if (str[i] === "}") {
+                depth--;
+                if (depth === 0) return {content:str.slice(start, i), end:i + 1};
+            }
+        }
+        return null;
+    }
+    function latexReplaceCmd1(str, cmdRe, fn) {
+        let out = "", pos = 0, m;
+        cmdRe.lastIndex = 0;
+        while ((m = cmdRe.exec(str)) !== null) {
+            out += str.slice(pos, m.index);
+            const g1 = latexReadGroup(str, m.index + m[0].length);
+            if (!g1) { out += m[0]; pos = m.index + m[0].length; continue; }
+            out += fn(g1.content, m[1] || "");
+            pos = g1.end;
+            cmdRe.lastIndex = pos;
+        }
+        return out + str.slice(pos);
+    }
+    function latexReplaceCmd2(str, cmdRe, fn) {
+        let out = "", pos = 0, m;
+        cmdRe.lastIndex = 0;
+        while ((m = cmdRe.exec(str)) !== null) {
+            out += str.slice(pos, m.index);
+            const g1 = latexReadGroup(str, m.index + m[0].length);
+            const g2 = g1 ? latexReadGroup(str, g1.end) : null;
+            if (!g1 || !g2) { out += m[0]; pos = m.index + m[0].length; continue; }
+            out += fn(g1.content, g2.content);
+            pos = g2.end;
+            cmdRe.lastIndex = pos;
+        }
+        return out + str.slice(pos);
+    }
     function latexToUnicodeExpr(expr) {
-        let s = expr;
-        for (let pass = 0; pass < 3; pass++) {
-            s = s.replace(/\\frac\s*\{([^{}]+)\}\s*\{([^{}]+)\}/g, "($1)\u2044($2)");
-            s = s.replace(/\\sqrt\s*\{([^{}]+)\}/g, "\u221a($1)");
-            s = s.replace(/\\(?:text|mathrm|mathbf|mathit|operatorname)\s*\{([^{}]+)\}/g, "$1");
+        let s = String(expr || "").replace(/\\(?:left|right)\s*/g, "").replace(/\\(?:quad|qquad|,|;|!)/g, " ");
+        s = s.replace(/\\begin\{(p|b|v)?matrix\}([\s\S]*?)\\end\{\1matrix\}/g, (full, kind, body) => {
+            const rows = body.trim().split(/\\\\/).map(r => r.split("&").map(c => latexToUnicodeExpr(c.trim())).join(", "));
+            const open = kind === "p" ? "(" : kind === "b" ? "[" : kind === "v" ? "|" : "[";
+            const close = kind === "p" ? ")" : kind === "b" ? "]" : kind === "v" ? "|" : "]";
+            return open + rows.join(" ; ") + close;
+        });
+        for (let pass = 0; pass < 4; pass++) {
+            s = latexReplaceCmd2(s, /\\(?:d|t)?frac\b/g, (a, b) => "(" + latexToUnicodeExpr(a) + ")\u2044(" + latexToUnicodeExpr(b) + ")");
+            s = latexReplaceCmd1(s, /\\sqrt\b/g, a => "\u221a(" + latexToUnicodeExpr(a) + ")");
+            s = latexReplaceCmd1(s, /\\(?:text|mathrm|mathbf|mathit|operatorname|overline|hat|vec)\b/g, a => a);
         }
         s = s.replace(/\\([A-Za-z]+)/g, (full, cmd) => LATEX_SYMBOLS[cmd] || cmd);
         s = s.replace(/\^\{([^{}]+)\}|\^([0-9+\-=()nixy])/g, (full, g1, g2) => {
@@ -24607,19 +24700,36 @@
     function latexEscapeHtml(s) {
         return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
     }
-    function latexToMathMLBody(expr) {
-        let s = latexEscapeHtml(expr);
+    function latexToMathMLInner(expr) {
+        let s = latexEscapeHtml(expr).replace(/\\(?:left|right)\s*/g, "").replace(/\\(?:quad|qquad|,|;|!)/g, "<mspace width=\"0.3em\"/>");
+        s = s.replace(/\\begin\{(p|b|v)?matrix\}([\s\S]*?)\\end\{\1matrix\}/g, (full, kind, body) => {
+            const trs = body.trim().split(/\\\\/).map(row =>
+                "<mtr>" + row.split("&").map(cell => "<mtd>" + latexToMathMLInner(cell.trim()) + "</mtd>").join("") + "</mtr>"
+            ).join("");
+            const open = kind === "p" ? "<mo>(</mo>" : kind === "b" ? "<mo>[</mo>" : kind === "v" ? "<mo>|</mo>" : "";
+            const close = kind === "p" ? "<mo>)</mo>" : kind === "b" ? "<mo>]</mo>" : kind === "v" ? "<mo>|</mo>" : "";
+            return "<mrow>" + open + "<mtable>" + trs + "</mtable>" + close + "</mrow>";
+        });
         for (let pass = 0; pass < 4; pass++) {
-            s = s.replace(/\\frac\s*\{([^{}]+)\}\s*\{([^{}]+)\}/g, "<mfrac><mrow>$1</mrow><mrow>$2</mrow></mfrac>");
-            s = s.replace(/\\sqrt\s*\{([^{}]+)\}/g, "<msqrt><mrow>$1</mrow></msqrt>");
-            s = s.replace(/([A-Za-z0-9\u0391-\u03c9)]+)\s*\^\s*\{([^{}]+)\}/g, "<msup><mrow>$1</mrow><mrow>$2</mrow></msup>");
-            s = s.replace(/([A-Za-z0-9\u0391-\u03c9)]+)\s*_\s*\{([^{}]+)\}/g, "<msub><mrow>$1</mrow><mrow>$2</mrow></msub>");
+            s = latexReplaceCmd2(s, /\\(?:d|t)?frac\b/g, (a, b) => "<mfrac><mrow>" + latexToMathMLInner(a) + "</mrow><mrow>" + latexToMathMLInner(b) + "</mrow></mfrac>");
+            s = latexReplaceCmd1(s, /\\sqrt\b/g, a => "<msqrt><mrow>" + latexToMathMLInner(a) + "</mrow></msqrt>");
+            s = latexReplaceCmd1(s, /\\(?:text|mathrm|operatorname)\b/g, a => "<mtext>" + a + "</mtext>");
+            s = latexReplaceCmd1(s, /\\mathbf\b/g, a => "<mi mathvariant=\"bold\">" + a + "</mi>");
+            s = latexReplaceCmd1(s, /\\overline\b/g, a => "<mover><mrow>" + latexToMathMLInner(a) + "</mrow><mo>\u00af</mo></mover>");
+            s = latexReplaceCmd1(s, /\\hat\b/g, a => "<mover><mrow>" + latexToMathMLInner(a) + "</mrow><mo>^</mo></mover>");
+            s = latexReplaceCmd1(s, /\\vec\b/g, a => "<mover><mrow>" + latexToMathMLInner(a) + "</mrow><mo>\u2192</mo></mover>");
         }
         s = s.replace(/\\([A-Za-z]+)/g, (full, cmd) => LATEX_SYMBOLS[cmd] ? "<mi>" + LATEX_SYMBOLS[cmd] + "</mi>" : "<mi>" + cmd + "</mi>");
-        s = s.replace(/\^([0-9a-zA-Z+-])/g, "<msup><mrow></mrow><mn>$1</mn></msup>");
-        s = s.replace(/_([0-9a-zA-Z+-])/g, "<msub><mrow></mrow><mn>$1</mn></msub>");
-        s = s.replace(/[{}]/g, "");
-        return "<math xmlns=\"http://www.w3.org/1998/Math/MathML\" display=\"block\"><mrow>" + s + "</mrow></math>";
+        for (let pass = 0; pass < 3; pass++) {
+            s = s.replace(/(<m[a-z]+[^>]*>[\s\S]*?<\/m[a-z]+>|[A-Za-z0-9\u0391-\u03c9)]+)\s*\^\s*\{([^{}]+)\}/g, "<msup><mrow>$1</mrow><mrow>$2</mrow></msup>");
+            s = s.replace(/(<m[a-z]+[^>]*>[\s\S]*?<\/m[a-z]+>|[A-Za-z0-9\u0391-\u03c9)]+)\s*_\s*\{([^{}]+)\}/g, "<msub><mrow>$1</mrow><mrow>$2</mrow></msub>");
+            s = s.replace(/(<m[a-z]+[^>]*>[\s\S]*?<\/m[a-z]+>|[A-Za-z0-9\u0391-\u03c9)])\^([0-9a-zA-Z+-])/g, "<msup><mrow>$1</mrow><mn>$2</mn></msup>");
+            s = s.replace(/(<m[a-z]+[^>]*>[\s\S]*?<\/m[a-z]+>|[A-Za-z0-9\u0391-\u03c9)])_([0-9a-zA-Z+-])/g, "<msub><mrow>$1</mrow><mn>$2</mn></msub>");
+        }
+        return s.replace(/[{}]/g, "");
+    }
+    function latexToMathMLBody(expr) {
+        return "<math xmlns=\"http://www.w3.org/1998/Math/MathML\" display=\"block\"><mrow>" + latexToMathMLInner(expr) + "</mrow></math>";
     }
     function latexOpenModal(message) {
         const raw = message && typeof message.content === "string" ? message.content : "";
@@ -24639,25 +24749,43 @@
         })).catch(() => {});
     }
     function latexCtaMessage(message, source) {
-        if (!message || message.ctaButton || !source || typeof source.content !== "string") return message;
+        if (!message || !source || typeof source.content !== "string") return message;
         if (!latexExtractFormulas(source.content).length) return message;
         const slot = nativeThemeSlot(), light = slot === "light";
         const textColor = highlightProcess(light ? "#313338" : "#dbdee1"), backgroundColor = highlightProcess(light ? "#0000000f" : "#ffffff14");
         if (textColor == null || backgroundColor == null) return message;
+        if (message.ctaButton) {
+            if (message.ctaButton.callback === "venus-zip-dropdown") {
+                return Object.assign({}, message, {ctaButton:{text:"\u25be " + tr("ZIP & math options"), textColor, backgroundColor, callback:"venus-multi-cta"}});
+            }
+            return message;
+        }
         return Object.assign({}, message, {ctaButton:{text:"\u2211 " + tr("View math formula"), textColor, backgroundColor, callback:"venus-latex-view"}});
     }
     function latexRenderTapCta(event) {
-        if (!enabled("latexRender")) return false;
+        if (!enabled("latexRender") && !enabled("zipPreview")) return false;
         let data = event && event.nativeEvent;
         if (!data || data.callback == null) {
             const read = inspectedExport(10338, "getNativeSyntheticEventData");
             try { data = typeof read === "function" ? read(event) : data; } catch (_) {}
         }
-        if (!data || data.callback !== "venus-latex-view") return false;
+        if (!data || (data.callback !== "venus-latex-view" && data.callback !== "venus-multi-cta")) return false;
         const store = msgStore || (msgStore = inspectedExport(6226, "default"));
         let message = null;
         try { message = store && typeof store.getMessage === "function" ? store.getMessage(String(data.channelId), String(data.messageId)) : null; } catch (_) {}
-        if (message) latexOpenModal(message);
+        if (!message) return true;
+        if (data.callback === "venus-multi-cta") {
+            const ui = reviewUI(), zipAtt = zipPreviewAttachment(message), mKey = "VenusMultiCta";
+            const options = [];
+            if (zipAtt) options.push({label:tr("Preview ZIP archive"), IconComponent:venusIcon(11226, "FileIcon"), onPress:() => { hideReviewSheet(ui, mKey); zipPreviewOpen(zipAtt); }});
+            options.push({label:tr("View math formula"), IconComponent:venusIcon(18022, "LettersIcon"), onPress:() => { hideReviewSheet(ui, mKey); latexOpenModal(message); }});
+            if (typeof ui.simpleSheet === "function") {
+                try { ui.simpleSheet({key:mKey, header:{title:tr("ZIP & math options"), onClose:() => hideReviewSheet(ui, mKey)}, options}); return true; } catch (_) {}
+            }
+            latexOpenModal(message);
+            return true;
+        }
+        latexOpenModal(message);
         return true;
     }
     function LatexRenderPreview(props) {

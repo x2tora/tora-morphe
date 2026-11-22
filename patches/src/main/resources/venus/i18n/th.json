@@ -1859,6 +1859,7 @@
     "Your settings can't be saved right now. Changes last until Discord restarts.": "ไม่สามารถบันทึกการตั้งค่าได้ในขณะนี้ การเปลี่ยนแปลงจะมีผลจนกว่าจะปิดเปิด Discord ใหม่",
     "Your sounds show up here once Discord has loaded them. Open the soundboard in a voice channel if the list is empty.": "เสียงของคุณจะแสดงที่นี่เมื่อ Discord โหลดเสร็จ หากรายการว่าง ให้เปิดซาวด์บอร์ดในช่องเสียง",
     "Your theme and Nitro theme follow you when you switch. Venus settings are always shared.": "ธีมและธีม Nitro ของคุณจะคงเดิมเมื่อสลับบัญชี การตั้งค่า Venus ใช้ร่วมกันทุกบัญชีเสมอ",
+    "ZIP & math options": "ตัวเลือก ZIP และสูตรคณิต",
     "ZIP archive preview": "ตัวอย่างไฟล์ ZIP",
     "a link": "ลิงก์",
     "a short link": "ลิงก์แบบสั้น",

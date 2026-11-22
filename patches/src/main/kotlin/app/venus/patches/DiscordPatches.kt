@@ -1317,9 +1317,38 @@ val stripExif = bytecodePatch(
 val zipPreview = bundledPlugin("zipPreview", "Preview ZIP archives",
     "Expand and inspect files or read text inside .zip attachments without leaving Discord.")
 
+private val remindersManifest = resourcePatch {
+    execute {
+        document("AndroidManifest.xml").use { manifest ->
+            val application = manifest.getElementsByTagName("application").item(0) as Element
+            val receivers = application.getElementsByTagName("receiver")
+            var exists = false
+            for (i in 0 until receivers.length) {
+                if ((receivers.item(i) as Element).getAttribute("android:name") == "app.venus.diag.ReminderReceiver") {
+                    exists = true
+                    break
+                }
+            }
+            if (!exists) {
+                val rec = manifest.createElement("receiver")
+                rec.setAttribute("android:name", "app.venus.diag.ReminderReceiver")
+                rec.setAttribute("android:exported", "false")
+                application.appendChild(rec)
+            }
+        }
+    }
+}
+
 @Suppress("unused")
-val localReminders = bundledPlugin("reminders", "Message reminders",
-    "Set a reminder on any message from the hold menu to get notified at a set delay or clock time.")
+val localReminders = bytecodePatch(
+    name = "Message reminders",
+    description = "Set a reminder on any message from the hold menu to get notified at a set delay or clock time."
+) {
+    compatibleWith(discord)
+    section(PLUGINS)
+    dependsOn(venusSettings, remindersManifest)
+    execute { additionalSelections += "reminders" }
+}
 
 private val appLockManifest = resourcePatch {
     execute {

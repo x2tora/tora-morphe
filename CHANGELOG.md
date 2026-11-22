@@ -1,3 +1,11 @@
+## [1.23.11](https://github.com/x2tora/tora-morphe/compare/v1.23.10...v1.23.11) (2026-11-22)
+
+### 🔧 Improvements
+
+* **Discord - Message reminders:** Scheduled reminders now fire reliably in the background even when Discord is closed, and tapping a reminder notification jumps directly to the message
+* **Discord - App lock:** Stored PINs are now hashed instead of saved in plain text (existing PINs migrate automatically), and the lock screen matches Discord's light and dark themes
+* **Discord - LaTeX & ZIP preview:** Improved math rendering for nested expressions and matrices, and added a combined menu when a message has both a ZIP archive and math formulas
+
 ## [1.23.10](https://github.com/x2tora/tora-morphe/compare/v1.23.9...v1.23.10) (2026-11-22)
 
 ### 🐛 Bug Fixes
