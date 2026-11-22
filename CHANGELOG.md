@@ -1,3 +1,17 @@
+## [1.23.12](https://github.com/x2tora/tora-morphe/compare/v1.23.11...v1.23.12) (2026-11-22)
+
+### 🐛 Bug Fixes
+
+* **Discord - Message bookmarks:** Fixed bookmarked messages not showing their gold highlight and tag in chat until switching channels
+* **Discord - Message reminders:** Fixed background-fired reminders notifying a second time on launch, and cancelled pending native alarms when the Reminders feature is turned off
+* **Discord - Keyword notifications:** Fixed double-translated toast messages, persisted recent keyword matches across restarts, and linked keyword push notifications to jump directly to the matched message
+
+### 🔧 Improvements
+
+* **Discord - Keyword notifications:** Added in-chat keyword match tags, a live **Test your rules** sample input, and a **Clear recent matches** button
+* **Discord - Bookmarks & Reminders:** Included saved bookmarks and reminders in Venus backups and added **Clear all bookmarks** and **Clear completed reminders** actions
+* **Discord - App lock & ZIP preview:** Added a 15-second cooldown after 5 wrong PIN attempts with haptic feedback, and added inline ZIP toggle to the combined **ZIP & math options** menu
+
 ## [1.23.11](https://github.com/x2tora/tora-morphe/compare/v1.23.10...v1.23.11) (2026-11-22)
 
 ### 🔧 Improvements

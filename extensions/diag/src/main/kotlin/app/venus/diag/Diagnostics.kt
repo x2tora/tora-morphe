@@ -236,6 +236,8 @@ object Diagnostics {
                 if (lClear.length > 0) lockLabelClear = lClear
                 val lUseBio = json.optString("useBio", "")
                 if (lUseBio.length > 0) lockLabelUseBio = lUseBio
+                val lCooldown = json.optString("cooldown", "")
+                if (lCooldown.length > 0) lockLabelCooldown = lCooldown
                 if (appLockOn && pinLengthOf(appLockPin) >= 4) {
                     appLockUnlockedInSession = false
                     lockRequired = true
@@ -1126,6 +1128,14 @@ object Diagnostics {
                 pendingJumpJson = ""
                 promise.resolve(j)
             }
+            "reminderTakeFired" -> {
+                try {
+                    val f = File(c.filesDir, "venus_fired_reminders.txt")
+                    val text = if (f.isFile) read(f) else ""
+                    if (f.isFile) try { f.delete() } catch (_: Throwable) { }
+                    promise.resolve(text)
+                } catch (_: Throwable) { promise.resolve("") }
+            }
             "hashPin" -> {
                 try {
                     promise.resolve(hashPin(argument ?: ""))
@@ -1591,6 +1601,16 @@ object Diagnostics {
     // --------------------------------------------------------- reminders
 
     @JvmStatic
+    fun recordFiredReminder(c: Context, id: String) {
+        if (id.length == 0) return
+        try {
+            val f = File(c.filesDir, "venus_fired_reminders.txt")
+            val prev = if (f.isFile && f.length() < 16384L) read(f) else ""
+            write(f, if (prev.length > 0) prev + "\n" + id else id)
+        } catch (_: Throwable) { }
+    }
+
+    @JvmStatic
     fun showReminderNotification(
         c: Context,
         id: String,
@@ -1613,6 +1633,11 @@ object Diagnostics {
         val launch = c.packageManager.getLaunchIntentForPackage(c.packageName)
         if (launch != null) {
             launch.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK)
+            if (channelId.length > 0 && messageId.length > 0) {
+                val gPart = if (guildId.length > 0) guildId else "@me"
+                launch.setAction(Intent.ACTION_VIEW)
+                launch.setData(android.net.Uri.parse("https://discord.com/channels/" + gPart + "/" + channelId + "/" + messageId))
+            }
             if (guildId.length > 0) launch.putExtra("venus_rem_g", guildId)
             if (channelId.length > 0) launch.putExtra("venus_rem_c", channelId)
             if (messageId.length > 0) launch.putExtra("venus_rem_m", messageId)
@@ -1693,6 +1718,9 @@ object Diagnostics {
     @Volatile private var lockLabelUsePin = "Use PIN"
     @Volatile private var lockLabelClear = "Clear"
     @Volatile private var lockLabelUseBio = "Bio"
+    @Volatile private var lockLabelCooldown = "Too many attempts. Try again in 15s."
+    @Volatile private var lockFailedAttempts = 0
+    @Volatile private var lockCooldownUntilMs = 0L
 
     private fun canUseBiometric(c: Context): Boolean {
         if (Build.VERSION.SDK_INT < 28) return false
@@ -1759,6 +1787,7 @@ object Diagnostics {
         if (req.optString("usePin", "").length > 0) lockLabelUsePin = req.optString("usePin")
         if (req.optString("clear", "").length > 0) lockLabelClear = req.optString("clear")
         if (req.optString("useBio", "").length > 0) lockLabelUseBio = req.optString("useBio")
+        if (req.optString("cooldown", "").length > 0) lockLabelCooldown = req.optString("cooldown")
         try {
             val saved = JSONObject()
                 .put("enabled", appLockOn)
@@ -1778,6 +1807,7 @@ object Diagnostics {
                 .put("usePin", lockLabelUsePin)
                 .put("clear", lockLabelClear)
                 .put("useBio", lockLabelUseBio)
+                .put("cooldown", lockLabelCooldown)
             write(File(c.filesDir, LOCK_FILE), saved.toString())
         } catch (_: Throwable) { }
         if (!appLockOn || pinLengthOf(appLockPin) < 4) {
@@ -2158,6 +2188,13 @@ object Diagnostics {
                         keyBtn.setOnClickListener(object : View.OnClickListener {
                             override fun onClick(v: View?) {
                                 if (unlocking) return
+                                val nowMs = System.currentTimeMillis()
+                                if (nowMs < lockCooldownUntilMs) {
+                                    errView.text = lockLabelCooldown
+                                    errView.visibility = View.VISIBLE
+                                    try { root.performHapticFeedback(android.view.HapticFeedbackConstants.LONG_PRESS) } catch (_: Throwable) { }
+                                    return
+                                }
                                 if ((code as java.lang.String).equals("BIO")) {
                                     launchBiometricPrompt(activity, unlockNow)
                                     return
@@ -2183,9 +2220,19 @@ object Diagnostics {
                                 if (enteredBuf.length == pinLen) {
                                     val candidate = enteredBuf.toString()
                                     if (verifyPin(candidate, appLockPin)) {
+                                        lockFailedAttempts = 0
+                                        lockCooldownUntilMs = 0L
                                         unlockNow.run()
                                     } else {
-                                        errView.text = lockLabelWrong
+                                        lockFailedAttempts++
+                                        try { root.performHapticFeedback(android.view.HapticFeedbackConstants.LONG_PRESS) } catch (_: Throwable) { }
+                                        if (lockFailedAttempts >= 5) {
+                                            lockFailedAttempts = 0
+                                            lockCooldownUntilMs = System.currentTimeMillis() + 15000L
+                                            errView.text = lockLabelCooldown
+                                        } else {
+                                            errView.text = lockLabelWrong
+                                        }
                                         errView.visibility = View.VISIBLE
                                         android.animation.ObjectAnimator.ofFloat(
                                             dotsRow, "translationX",

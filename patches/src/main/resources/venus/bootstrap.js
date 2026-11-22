@@ -87,7 +87,7 @@
     if (features.appLock) selectModules([1385]);
     if (features.mediaEditor) selectModules([8311, 8333, 9901, 10366, 10680]);
     if (features.latexRender) selectModules([572, 6226, 8481, 10340, 11763]);
-    const revision = "1.23.11";
+    const revision = "1.23.12";
     // The Discord build these patches are pinned to (DiscordPatches.kt compatibleWith); shown on the About page.
     const DISCORD_VERSION = "354.12";
     // Module 120 owns setUpDefaltReactNativeEnvironment in this exact asset.
@@ -402,6 +402,7 @@
         if ((features.nitroThemes || features.accountSwitcher) && nitroThemeHasAny()) extra.nitroThemes = nitroThemeData();
         if (features.bookmarks && bookmarks.list.length) extra.bookmarksList = bookmarks.list.slice(0, 300);
         if (features.reminders && reminders.list.length) extra.remindersList = reminders.list.slice(0, 100);
+        if (features.keywordNotify && keywordNotify.matches.length) extra.keywordMatches = keywordNotify.matches.slice(0, 50);
         return JSON.stringify(Object.keys(extra).length ? Object.assign({}, settings, extra) : settings);
     }
     function save() {
@@ -836,6 +837,8 @@
                     bookmarksLoad(loaded.bookmarksList);
                 if (features.reminders && Array.isArray(loaded.remindersList) && !reminders.list.length)
                     remindersLoad(loaded.remindersList);
+                if (features.keywordNotify && Array.isArray(loaded.keywordMatches) && !keywordNotify.matches.length)
+                    keywordMatchesLoad(loaded.keywordMatches);
                 if (features.badges) {
                     const accounts = loaded.badgesAccounts, played = loaded.badgesPlayed, snowflake = id => typeof id === "string" && /^\d{17,20}$/.test(id);
                     if (Array.isArray(accounts)) accounts.slice(0, 50).forEach(id => { if (snowflake(id)) badges.accounts.add(id); });
@@ -2720,6 +2723,8 @@
         // Pictures from this phone stay on it: a backup keeps the names and the icons that are links.
         if (features.serverEdit && serverEdits.size) { const servers = serverEditData(true); if (Object.keys(servers).length) out.servers = servers; }
         if (features.localEdit && localEdits.size) out.localEdits = localEditData();
+        if (features.bookmarks && bookmarks.list.length) out.bookmarks = bookmarks.list.slice(0, 300);
+        if (features.reminders && reminders.list.length) out.reminders = reminders.list.slice(0, 100);
         return JSON.stringify(out, null, 1);
     }
     // A backup, or a plain venus-patches.json settings file, read back. Throws a message you can show when it isn't one.
@@ -2770,7 +2775,9 @@
                 if (/^\d{17,20}:\d{17,20}$/.test(key) && typeof text === "string" && text.length <= LOCAL_EDIT_TEXT) edited.set(key, text);
             });
         }
-        return {values, people, themes, iconPacks:packs, servers, localEdits:edited, version:wrapped && typeof data.version === "string" ? data.version.slice(0, 24) : "", created:Number.isFinite(created) ? created : 0};
+        const bms = wrapped && Array.isArray(data.bookmarks) ? data.bookmarks : (Array.isArray(data.bookmarksList) ? data.bookmarksList : null);
+        const rems = wrapped && Array.isArray(data.reminders) ? data.reminders : (Array.isArray(data.remindersList) ? data.remindersList : null);
+        return {values, people, themes, iconPacks:packs, servers, localEdits:edited, bookmarks:bms, reminders:rems, version:wrapped && typeof data.version === "string" ? data.version.slice(0, 24) : "", created:Number.isFinite(created) ? created : 0};
     }
     // Puts a backup in place: every setting it has, the rest back to how Venus starts. Switches go through setSetting,
     // so everything they start or stop (Quests, themes, kept messages) happens as if you'd flipped them yourself.
@@ -2809,6 +2816,14 @@
             if (features.iconPacks && parsed.iconPacks) {
                 iconPacks.loaded = true; iconPacks.custom = parsed.iconPacks.custom; iconPacks.active = parsed.iconPacks.active; iconPacks.error = "";
                 iconPacksPersist(); iconPacksApply(); notify("iconPacks");
+            }
+            if (features.bookmarks && (parsed.bookmarks || reset)) {
+                bookmarksLoad(reset ? [] : parsed.bookmarks);
+                save(); notify("bookmarks"); later(messageHighlightRedraw, 0);
+            }
+            if (features.reminders && (parsed.reminders || reset)) {
+                remindersLoad(reset ? [] : parsed.reminders);
+                save(); remindersSync(); notify("reminders");
             }
         } finally { backup.restoring = false; }
         notify("*");
@@ -8755,7 +8770,7 @@
         try { return !!check({rawMessage:raw, userId:me.id, suppressEveryone:true, suppressRoles:false}); } catch (_) { return false; }
     }
     function highlightRemember(channelId, id, source) {
-        if (!features.messageHighlight || typeof channelId !== "string" || !channelId || typeof id !== "string" || !id) return;
+        if ((!features.messageHighlight && !features.bookmarks && !features.keywordNotify) || typeof channelId !== "string" || !channelId || typeof id !== "string" || !id) return;
         const key = channelId + ":" + id;
         const existing = highlightRecent.get(key);
         if (existing && existing.source === source) return;
@@ -8829,9 +8844,11 @@
         if (!result || !row || row.rowType !== 1 || !result.message) return result;
         const pastelOn = enabled("pastelize"), translateOn = enabled("translate"), noDeleteOn = enabled("noDelete"), highlightOn = enabled("messageHighlight"), bulkOn = features.bulkDelete && bulkDelete.active;
         const bmOn = !!(features.bookmarks && enabled("bookmarks") && settings.bookmarksHighlight);
+        const kwOn = !!(features.keywordNotify && enabled("keywordNotify") && keywordNotify.rules.length);
         let message = result.message;
         if (features.privacyBlur && enabled("privacyBlur")) message = privacyBlurPostMessage(message, row.message);
         if (bmOn) message = bookmarksTagMessage(message, row.message);
+        if (kwOn) message = keywordTagMessage(message, row.message);
         if (pastelOn) message = pastelMessage(message,row.message);
         if (features.pastelize && message.referencedMessage && message.referencedMessage.message) {
             const reply = pastelReply(message.referencedMessage.message);
@@ -8885,7 +8902,10 @@
         }
         if (bmOn && !next.backgroundHighlight && !isDeletedRow && !isMentionRow) {
             const bmRow = bookmarksHighlightRow(next, source);
-            if (bmRow !== next) next = bmRow;
+            if (bmRow !== next) {
+                next = bmRow;
+                highlightRemember(String(channelId || ""), String(id || ""), source);
+            }
         }
         if (bulkOn && RN && typeof RN.processColor === "function" &&
             bulkDeleteCanSelect(source, channelId, isDeletedRow, bulkDeleteManageCached(channelId))) {
@@ -20817,15 +20837,24 @@
         return hit.row;
     }
     // A row is drawn again only when its message changes, so the message is updated twice, to what it is.
-    function localEditRedraw(channelId, id) {
-        const d = dispatcher;
-        if (typeof d !== "function") return;
+    function localEditRedraw(channelId, id, fallbackContent) {
+        let d = dispatcher;
+        if (typeof d !== "function") {
+            const mod = inspectedExport(572, "default");
+            if (mod && typeof mod.dispatch === "function") d = mod.dispatch.bind(mod);
+        }
+        const chId = String(channelId || selectedChannelId() || ""), msgId = String(id || "");
+        if (typeof d !== "function" || !chId || !msgId) return;
         let live = null;
-        try { live = msgStore && typeof msgStore.getMessage === "function" ? msgStore.getMessage(channelId, id) : null; } catch (_) { live = null; }
-        const content = live && typeof live.content === "string" ? live.content : null;
-        if (content === null) return;
-        const update = value => { try { d({type:"MESSAGE_UPDATE", message:{id, channel_id:channelId, content:value}}); } catch (_) {} };
-        update(content + "\u200b"); later(() => update(content), 80);
+        const store = msgStore || (msgStore = inspectedExport(6226, "default"));
+        try { live = store && typeof store.getMessage === "function" ? store.getMessage(chId, msgId) : null; } catch (_) { live = null; }
+        const content = live && typeof live.content === "string" ? live.content : (typeof fallbackContent === "string" ? fallbackContent : "");
+        const base = {id:msgId, channel_id:chId};
+        if (live && Array.isArray(live.embeds) && live.embeds.length) base.embeds = live.embeds.slice();
+        if (live && Array.isArray(live.components) && live.components.length) base.components = live.components.slice();
+        const update = value => { try { d({type:"MESSAGE_UPDATE", message:Object.assign({}, base, {content:value})}); } catch (_) {} };
+        update(content + "\u200b");
+        later(() => update(content), 70);
     }
     function localEditSet(channelId, id, text) {
         const key = channelId + ":" + id;
@@ -23109,6 +23138,32 @@
             if (/^\d{15,22}$/.test(id)) keywordNotify.excluded.add(id);
         }
     }
+    function keywordMatchesLoad(arr) {
+        keywordNotify.matches = [];
+        if (!Array.isArray(arr)) return;
+        for (let i = 0; i < arr.length && keywordNotify.matches.length < 50; i++) {
+            const it = arr[i];
+            if (!it || typeof it.id !== "string" || typeof it.kw !== "string") continue;
+            keywordNotify.matches.push({
+                id:it.id, c:String(it.c || ""), g:String(it.g || ""),
+                u:String(it.u || "Someone").slice(0, 80), kw:it.kw.slice(0, 100),
+                x:String(it.x || "").slice(0, 140), t:typeof it.t === "number" ? it.t : Date.now()
+            });
+        }
+    }
+    function keywordTagMessage(message, source) {
+        if (!message || message.tagText || !source || typeof source.content !== "string" || !source.content) return message;
+        const me = currentUser(), authorId = source.author && source.author.id;
+        if (me && authorId === me.id) return message;
+        let matched = null;
+        for (let i = 0; i < keywordNotify.rules.length; i++) {
+            if (keywordRuleMatches(keywordNotify.rules[i], source.content)) { matched = keywordNotify.rules[i].value; break; }
+        }
+        if (!matched) return message;
+        const fg = highlightProcess("#ffffff"), bg = highlightProcess("#d97706");
+        if (fg == null || bg == null) return message;
+        return Object.assign({}, message, {tagText:"\uD83D\uDD14 " + matched.slice(0, 18), tagTextColor:fg, tagBackgroundColor:bg});
+    }
     function keywordNotifyEvent(event) {
         if (!enabled("keywordNotify") || !keywordNotify.rules.length || !event || event.optimistic) return;
         const message = event.message;
@@ -23134,10 +23189,15 @@
         const entry = {id:String(message.id || now), c:channelId, g:guildId, u:authorName, kw:matched, x:snippet, t:now};
         keywordNotify.matches.unshift(entry);
         if (keywordNotify.matches.length > 50) keywordNotify.matches.length = 50;
+        save();
         const title = tr("Keyword \"{kw}\" from {name}", {kw:matched, name:authorName});
         showToast(reviewUI(), "venus-kw:" + now, title + ": " + snippet, venusIcon(9321, "BellIcon"));
         if (settings.keywordNotifyPush) {
-            diagCall("reminderNotify", JSON.stringify({id:"kw-" + entry.id, title, text:snippet})).catch(() => {});
+            diagCall("reminderNotify", JSON.stringify({
+                id:"kw-" + entry.id, title, text:snippet,
+                channelName:tr("Venus Reminders"), channelDesc:tr("Scheduled message reminders"),
+                guildId, channelId, messageId:entry.id
+            })).catch(() => {});
         }
         notify("keywordNotify");
     }
@@ -23191,6 +23251,7 @@
         ];
         const [mode, setMode] = React.useState("contains");
         const [draft, setDraft] = React.useState("");
+        const [testText, setTestText] = React.useState("");
         const [showServers, setShowServers] = React.useState(false);
         const [manualExcl, setManualExcl] = React.useState(settings.keywordNotifyExcluded || "");
         const [showManual, setShowManual] = React.useState(false);
@@ -23209,7 +23270,7 @@
             const next = rules.concat([{mode, value:val}]);
             setSetting("keywordNotifyWords", serializeKeywordEntries(next));
             setDraft("");
-            reviewToast(ui, tr("Rule added"), venusIcon(9321, "BellIcon"));
+            reviewToast(ui, "Rule added", venusIcon(9321, "BellIcon"));
         };
         const removeRule = index => {
             haptic("SELECTION");
@@ -23234,6 +23295,12 @@
             setSetting("keywordNotifyExcluded", joined);
         };
         const placeholders = {contains:"e.g. giveaway", exact:"e.g. ping", all:"e.g. urgent deploy", starts:"e.g. [Notice]", ends:"e.g. ?", regex:"e.g. v\\d+\\.\\d+"};
+        let matchedTestRule = null;
+        if (testText.trim() && keywordNotify.rules.length) {
+            for (let i = 0; i < keywordNotify.rules.length; i++) {
+                if (keywordRuleMatches(keywordNotify.rules[i], testText)) { matchedTestRule = keywordNotify.rules[i].value; break; }
+            }
+        }
         const groups = [
             on ? null : offCard("status", venusIcon(9321, "BellIcon"), "keywordNotify"),
             el(KeywordNotifyPreview, {key:"preview", on, firstRule:rules[0]}),
@@ -23252,6 +23319,12 @@
                 rules.map((r, i) => el(Row, {key:i + ":" + r.mode + ":" + r.value, label:r.value, subLabel:tr(KEYWORD_MODE_LABEL[r.mode] || "Contains phrase"),
                     icon:rowIcon(9321, "BellIcon"), trailing:venusIcon(5894, "TrashIcon") ? el(venusIcon(5894, "TrashIcon"), {size:"sm", color:"#f23f43"}) : undefined,
                     onPress:() => removeRule(i)}))) : footnote("noRules", "Add your first rule above — no coding or regex knowledge needed."),
+            rules.length ? el(Group, {key:"testRules", title:tr("Test your rules")},
+                ui.TextInput ? el(ui.TextInput, {value:testText, onChange:t => setTestText(String(t || "")), placeholder:tr("Type a sample message to test\u2026"),
+                    subLabel:!testText.trim() ? tr("Checks whether a sample sentence triggers any of your active rules.")
+                        : matchedTestRule ? "\u2713 " + tr("Matches rule: {rule}", {rule:matchedTestRule})
+                        : tr("No active rules matched.")})
+                    : el(RN.TextInput, {value:testText, onChangeText:setTestText, placeholder:tr("Type a sample message to test\u2026"), style:{padding:12}})) : null,
             el(Group, {key:"servers", title:tr("Server & channel filters")},
                 switchRow(Switch, "keywordNotifyIgnoreOpen", "Ignore currently open channel", "Won't notify for messages in the chat you're currently reading.", rowIcon(7197, "EyeIcon")),
                 Row ? el(Row, {key:"pickServers", label:tr("Excluded servers"), subLabel:pl(excludedSet.size, "{n} excluded server or channel", "{n} excluded servers or channels"),
@@ -23265,14 +23338,16 @@
                 showManual ? el(RN.View, {style:{paddingHorizontal:4, paddingVertical:4}},
                     inputWithButton(ui, "exclIds", {value:manualExcl, placeholder:"123456789012345678, ...", editable:on, isDisabled:!on},
                         text => setManualExcl(String(text || "")), "Save",
-                        () => { setSetting("keywordNotifyExcluded", manualExcl.trim()); reviewToast(ui, tr("Saved"), venusIcon(7434, "CircleCheckIcon")); }, !on)) : null) : null,
+                        () => { setSetting("keywordNotifyExcluded", manualExcl.trim()); reviewToast(ui, "Saved", venusIcon(7434, "CircleCheckIcon")); }, !on)) : null) : null,
             el(Group, {key:"opts", title:tr("Delivery & matching")},
                 switchRow(Switch, "keywordNotifyCase", "Case-sensitive matching", "Match exact uppercase and lowercase letters.", rowIcon(18022, "LettersIcon")),
                 switchRow(Switch, "keywordNotifyPush", "System notifications", "Also post an Android notification when a keyword matches.", rowIcon(9321, "BellIcon")),
                 switchRow(Switch, "keywordNotifyLog", "Keep recent matches here", "Lists the latest 50 keyword matches below.", rowIcon(5896, "ClockIcon"))),
             settings.keywordNotifyLog && keywordNotify.matches.length && Row ? el(Group, {key:"recent", title:tr("Recent Matches")},
                 keywordNotify.matches.slice(0, 20).map(m => el(Row, {key:m.id + ":" + m.t, label:"[" + m.kw + "] " + m.u, subLabel:m.x, arrow:true,
-                    onPress:() => { haptic("SELECTION"); jumpToChatMessage(m.g, m.c, m.id); }}))) : null
+                    onPress:() => { haptic("SELECTION"); jumpToChatMessage(m.g, m.c, m.id); }})),
+                actionRow(ui, "clearMatches", "Clear recent matches", "Removes all logged keyword matches from this list.",
+                    () => { haptic("SELECTION"); keywordNotify.matches = []; save(); notify("keywordNotify"); }, !on, true)) : null
         ];
         return settingsBody(ui, groups, {keyboardShouldPersistTaps:"handled"});
     }
@@ -23297,12 +23372,15 @@
     }
     function bookmarkToggle(message) {
         if (!message || !message.id) return;
-        const id = String(message.id), channelId = String(message.channel_id || message.channelId || "");
+        const id = String(message.id), channelId = String(message.channel_id || message.channelId || selectedChannelId() || "");
+        const rawText = typeof message.content === "string" ? message.content : "";
         const ui = reviewUI(), icon = venusIcon(10216, "StarIcon");
         if (bookmarks.ids.has(id)) {
             bookmarks.ids.delete(id);
             bookmarks.list = bookmarks.list.filter(b => b.id !== id);
-            save(); notify("bookmarks"); later(messageHighlightRedraw, 0);
+            save(); notify("bookmarks");
+            localEditRedraw(channelId, id, rawText);
+            later(messageHighlightRedraw, 0);
             showToast(ui, "venus-bm", tr("Bookmark removed"), icon);
             return;
         }
@@ -23310,7 +23388,7 @@
         const guildId = String(message.guild_id || message.guildId || (ch && (ch.guild_id || ch.guildId)) || "");
         const author = message.author || {};
         const authorName = String(author.globalName || author.global_name || author.username || "Unknown").slice(0, 80);
-        let text = typeof message.content === "string" ? message.content : "";
+        let text = rawText;
         if (!text && Array.isArray(message.attachments) && message.attachments.length) {
             text = "[" + message.attachments.length + " attachment(s)] " + (message.attachments[0].filename || "");
         }
@@ -23320,7 +23398,9 @@
             const dropped = bookmarks.list.pop();
             if (dropped) bookmarks.ids.delete(dropped.id);
         }
-        save(); notify("bookmarks"); later(messageHighlightRedraw, 0);
+        save(); notify("bookmarks");
+        localEditRedraw(channelId, id, rawText);
+        later(messageHighlightRedraw, 0);
         showToast(ui, "venus-bm", tr("Message bookmarked"), icon);
     }
     function bookmarksTagMessage(message, source) {
@@ -23402,7 +23482,7 @@
                             {label:tr("Delete"), IconComponent:venusIcon(5894, "TrashIcon"), isDestructive:true, onPress:() => {
                                 hideReviewSheet(ui, bmKey);
                                 bookmarks.ids.delete(b.id); bookmarks.list = bookmarks.list.filter(x => x.id !== b.id);
-                                save(); notify("bookmarks"); later(messageHighlightRedraw, 0);
+                                save(); notify("bookmarks"); localEditRedraw(b.c, b.id, b.x); later(messageHighlightRedraw, 0);
                             }}
                         ];
                         if (typeof ui.simpleSheet === "function") {
@@ -23417,7 +23497,16 @@
                         } else {
                             jumpToChatMessage(b.g, b.c, b.id);
                         }
-                    }}))) : footnote("empty", "Hold any message in chat and tap Bookmark message to save it here.")
+                    }})),
+                actionRow(ui, "clearAllBm", "Clear all bookmarks", "Removes every saved bookmark from your list.",
+                    () => {
+                        haptic("SELECTION");
+                        const prev = bookmarks.list.slice();
+                        bookmarks.ids.clear(); bookmarks.list = [];
+                        save(); notify("bookmarks");
+                        prev.forEach(item => localEditRedraw(item.c, item.id, item.x));
+                        later(messageHighlightRedraw, 0);
+                    }, !on, true)) : footnote("empty", "Hold any message in chat and tap Bookmark message to save it here.")
         ];
         return settingsBody(ui, groups);
     }
@@ -23815,13 +23904,17 @@
             guildId:r.g || "", channelId:r.c || "", messageId:r.m || ""
         })).catch(() => {});
     }
-    function remindersCheck() {
+    function remindersRunSweep(firedSet) {
         if (!enabled("reminders")) return;
-        reminderCheckJump();
         const now = Date.now();
         let changed = false;
         for (let i = 0; i < reminders.list.length; i++) {
             const r = reminders.list[i];
+            if (!r.done && firedSet && firedSet.has(r.id)) {
+                r.done = true;
+                changed = true;
+                continue;
+            }
             if (!r.done && r.due <= now) {
                 r.done = true;
                 changed = true;
@@ -23837,12 +23930,25 @@
         }
         if (changed) { save(); notify("reminders"); }
     }
+    function remindersCheck() {
+        if (!enabled("reminders")) return;
+        reminderCheckJump();
+        diagCall("reminderTakeFired", "").then(raw => {
+            const set = new Set(String(raw || "").split(/[\r\n]+/).map(s => s.trim()).filter(Boolean));
+            remindersRunSweep(set);
+        }, () => remindersRunSweep(null));
+    }
     function remindersSync() {
         if (reminders.timer !== undefined) { clearInterval(reminders.timer); reminders.timer = undefined; }
         if (enabled("reminders")) {
             remindersCheck();
             for (let i = 0; i < reminders.list.length; i++) reminderScheduleNative(reminders.list[i]);
             reminders.timer = setInterval(remindersCheck, 15000);
+        } else {
+            for (let i = 0; i < reminders.list.length; i++) {
+                const r = reminders.list[i];
+                if (r && !r.done) diagCall("reminderCancel", JSON.stringify({id:r.id})).catch(() => {});
+            }
         }
     }
     function remindersInit(d) {
@@ -24012,7 +24118,10 @@
             on ? null : offCard("status", venusIcon(5896, "ClockIcon"), "reminders"),
             el(RemindersPreview, {key:"preview", on}),
             pending.length && Row ? el(Group, {key:"pending", title:pl(pending.length, "{n} upcoming reminder", "{n} upcoming reminders")}, pending.map(renderRow)) : null,
-            past.length && Row ? el(Group, {key:"past", title:tr("Completed reminders")}, past.slice(0, 30).map(renderRow)) : null,
+            past.length && Row ? el(Group, {key:"past", title:tr("Completed reminders")},
+                past.slice(0, 30).map(renderRow),
+                actionRow(ui, "clearPastRem", "Clear completed reminders", "Removes all finished reminders from this list.",
+                    () => { haptic("SELECTION"); reminders.list = reminders.list.filter(r => !r.done); save(); notify("reminders"); }, !on, true)) : null,
             !pending.length && !past.length ? footnote("empty", "Hold any message in chat and tap Remind me later to pick a delay or specific clock time.") : null
         ];
         return settingsBody(ui, groups);
@@ -24051,7 +24160,8 @@
             bioSub:tr("Verify your fingerprint or face, or cancel to enter PIN"),
             usePin:tr("Use PIN"),
             clear:tr("Clear"),
-            useBio:tr("Biometric")
+            useBio:tr("Biometric"),
+            cooldown:tr("Too many attempts. Try again in 15s.")
         })).catch(() => {});
     }
     function PinSetupSheet() {
@@ -24776,8 +24886,17 @@
         if (!message) return true;
         if (data.callback === "venus-multi-cta") {
             const ui = reviewUI(), zipAtt = zipPreviewAttachment(message), mKey = "VenusMultiCta";
+            const chId = String(data.channelId || ""), msgId = String(data.messageId || "");
+            const curZip = zipDropdown.get(msgId);
             const options = [];
-            if (zipAtt) options.push({label:tr("Preview ZIP archive"), IconComponent:venusIcon(11226, "FileIcon"), onPress:() => { hideReviewSheet(ui, mKey); zipPreviewOpen(zipAtt); }});
+            if (zipAtt) {
+                options.push({
+                    label:curZip && curZip.expanded ? tr("Hide ZIP files ({n})", {n:curZip.total || (curZip.entries && curZip.entries.length) || 0}) : tr("Show ZIP files ({name})", {name:zipAtt.filename || "archive.zip"}),
+                    IconComponent:venusIcon(11226, "FileIcon"),
+                    onPress:() => { hideReviewSheet(ui, mKey); zipPreviewTapCta({nativeEvent:{callback:"venus-zip-dropdown", channelId:chId, messageId:msgId}}); }
+                });
+                options.push({label:tr("Preview ZIP archive"), IconComponent:venusIcon(11226, "FileIcon"), onPress:() => { hideReviewSheet(ui, mKey); zipPreviewOpen(zipAtt); }});
+            }
             options.push({label:tr("View math formula"), IconComponent:venusIcon(18022, "LettersIcon"), onPress:() => { hideReviewSheet(ui, mKey); latexOpenModal(message); }});
             if (typeof ui.simpleSheet === "function") {
                 try { ui.simpleSheet({key:mKey, header:{title:tr("ZIP & math options"), onClose:() => hideReviewSheet(ui, mKey)}, options}); return true; } catch (_) {}

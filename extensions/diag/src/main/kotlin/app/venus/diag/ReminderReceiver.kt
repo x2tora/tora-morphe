@@ -16,6 +16,7 @@ class ReminderReceiver : BroadcastReceiver() {
             val guildId = intent.getStringExtra("guildId") ?: ""
             val channelId = intent.getStringExtra("channelId") ?: ""
             val messageId = intent.getStringExtra("messageId") ?: ""
+            Diagnostics.recordFiredReminder(context, id)
             Diagnostics.showReminderNotification(
                 context, id, title, text, channelName, channelDesc, guildId, channelId, messageId
             )
